@@ -1,5 +1,5 @@
 import pandas as pd
-import datetime.datetime as date
+from datetime import date
 
 
 def exchange_rates(frequency='M', 
