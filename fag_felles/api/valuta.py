@@ -22,5 +22,4 @@ def exchange_rates(frequency='M',
     dec_point = ',' if language == 'no' else '.'   
     time_column = [14] if detail == 'full' else [8]   
     url = f'https://data.norges-bank.no/api/data/EXR/{frequency}.{currency}.NOK.SP?format=csv&startPeriod={date_from}&endPeriod={date_to}&locale={language}&detail={detail}'
-    result = pd.read_csv(url, sep=';', decimal=dec_point, parse_dates=time_column)
-    return result
+    return pd.read_csv(url, sep=';', decimal=dec_point, parse_dates=time_column)
