@@ -2,11 +2,11 @@ import pandas as pd
 import datetime.datetime as date
 
 
-def valutakurser(frekvens='M', 
-                 valuta='', 
-                 fradato='2021-01-01', 
-                 tildato=date.today().strftime('%Y-%m-%d'), 
-                 spraak='no', detalj='full'):
+def exchange_rates(frequency='M', 
+                 currency='', 
+                 date_from='2021-01-01', 
+                 date_to=date.today().strftime('%Y-%m-%d'), 
+                 language='no', detail='full'):
     """ 
     Henter valutakurser fra Norges Bank sitt API, se https://app.norges-bank.no/query/index.html#/no/
     Parametere:
@@ -19,8 +19,8 @@ def valutakurser(frekvens='M',
         detalj: full gir både data og attributter, dataonly gir kun data, serieskeysonly gir kun serier uten data eller attributter,
                 nodata gir serier og attributter uten data.
     """
-    desimal = ',' if spraak == 'no' else '.'   
-    tidskolonne = [14] if detalj == 'full' else [8]   
-    url = f'https://data.norges-bank.no/api/data/EXR/{frekvens}.{valuta}.NOK.SP?format=csv&startPeriod={fradato}&endPeriod={tildato}&locale={spraak}&detail={detalj}'
-    utdata = pd.read_csv(url, sep=';', decimal=desimal, parse_dates=tidskolonne)
-    return utdata
+    dec_point = ',' if language == 'no' else '.'   
+    time_column = [14] if detail == 'full' else [8]   
+    url = f'https://data.norges-bank.no/api/data/EXR/{frequency}.{currency}.NOK.SP?format=csv&startPeriod={date_from}&endPeriod={date_to}&locale={language}&detail={detail}'
+    result = pd.read_csv(url, sep=';', decimal=dec_point, parse_dates=time_column)
+    return result
