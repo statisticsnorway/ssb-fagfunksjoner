@@ -1,7 +1,6 @@
 import requests
 import json
 import pandas as pd
-from tqdm.notebook import tqdm_notebook as pbar
 
 def klass_get(URL: str, level: str, return_df=False):
     """
@@ -60,7 +59,7 @@ def korrespondanse_summer(data: pd.DataFrame,
         print('Forventer kolonnene "targetCode" og "sourceCode" fra Klass-korrespondanse tabeller.')
         raise e
     # Loop over korrespondansen
-    for t, s in pbar(corr.items()):
+    for t, s in corr.items():
         # Radene vi skal kopiere fra
         #print(t, s)
         t_rows = df[df[id_col] == t]
