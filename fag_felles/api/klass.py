@@ -50,3 +50,15 @@ def correspondance_dict(corr_id: str) -> dict:
     corr = json.loads(response)["correspondenceMaps"]
     return {s: t for s, t in zip([x["sourceCode"] for x in corr],
                                  [x["targetCode"] for x in corr])}
+
+
+def search_classifications(searchterm: str, page: int = 0, size: int = 20) -> list:
+    url = ("https://data.ssb.no/api/klass/v1/classifications/search?query=" + 
+           searchterm +
+          "&page=" + page +
+          "&size=" + size)
+    headers = {'Accept': 'application/json'}
+    response = requests.get(url, headers=headers).text
+    search_result = json.loads(response)
+    for result in search_result["_embedded"]["searchResults"]:
+        print(result["name"], result["_links"]["self"]["href"])
