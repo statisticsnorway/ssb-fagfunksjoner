@@ -1,3 +1,5 @@
+[build-system]
+
 [tool.poetry]
 name = "fag_fellesfunksjoner"
 version = "0.0.1"
