@@ -62,3 +62,4 @@ def search_classifications(searchterm: str, page: int = 0, size: int = 20) -> li
     search_result = json.loads(response)
     for result in search_result["_embedded"]["searchResults"]:
         print(result["name"], result["_links"]["self"]["href"])
+
