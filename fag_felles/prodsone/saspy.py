@@ -82,6 +82,7 @@ def saspy_df_from_path(path: str) -> pd.DataFrame:
         sas._endsas()
     return df
 
+
 def sasfile_to_parquet(path: str, out_path: str = "", gzip: bool = False) -> pd.DataFrame:
     path = Path(path)
     df = saspy_df_from_path(path)
@@ -101,3 +102,8 @@ def sasfile_to_parquet(path: str, out_path: str = "", gzip: bool = False) -> pd.
         df.to_parquet(out_path)
     print(f'Outputted to {out_path}')
     return df
+
+
+def cp(from_path: str, to_path: str) -> dict:
+    """Uses saspy and sas-server to copy files"""    
+    return saspy_session().file_copy(from_path, to_path)
