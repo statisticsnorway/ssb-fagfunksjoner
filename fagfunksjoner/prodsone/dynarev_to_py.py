@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
@@ -13,21 +12,21 @@
 #     name: python3
 # ---
 
-# Laster inn nødvendige bibliotek
-import cx_Oracle
-import pandas as pd
 import getpass
 import warnings
 
-# Funksjon for hente ut dynarev-data: 
-def dynarev_uttrekk(delreg_nr : str, 
-                    skjema : str,
-                    dublettsjekk : bool=False, 
-                    sfu_cols : list=[]):
+# Laster inn nødvendige bibliotek
+import cx_Oracle
+import pandas as pd
 
+
+# Funksjon for hente ut dynarev-data:
+def dynarev_uttrekk(
+    delreg_nr: str, skjema: str, dublettsjekk: bool = False, sfu_cols: list = []
+):
     """
     Parameters:
-        delreg_nr : Delregisternummer. 
+        delreg_nr : Delregisternummer.
         skjema : Skjemanavn.
         dublettsjekk (optional) : If set to True, will return a data.frame of duplicates. Default is False.
         sfu_cols (optional) : Provide a list for a subset of columns. If set to True, will return all columns in SFU for that delreg_nr and skjema. Default is an empty list (no sfu output).
@@ -36,7 +35,9 @@ def dynarev_uttrekk(delreg_nr : str,
         A dataframe or list of dataframes.
     """
     # Setter opp oppkobling mot DB1P i Oracle
-    conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
+    conn = cx_Oracle.connect(
+        getpass.getuser() + "/" + getpass.getpass(prompt="Oracle-passord: ") + "@DB1P"
+    )
 
     # SQL for metadata
     query_meta = f"""
@@ -55,16 +56,20 @@ def dynarev_uttrekk(delreg_nr : str,
     metadata_dynarev = pd.read_sql_query(query_meta, conn)
 
     # Skiller ut numeriske variabler
-    filter_numeric = (metadata_dynarev['FELT_TYPE'] == 'DESIMAL') | (metadata_dynarev['FELT_TYPE'] == 'NUMBER')
-    filter_numeric2 = metadata_dynarev.loc[filter_numeric, 'FELT_ID']
+    filter_numeric = (metadata_dynarev["FELT_TYPE"] == "DESIMAL") | (
+        metadata_dynarev["FELT_TYPE"] == "NUMBER"
+    )
+    filter_numeric2 = metadata_dynarev.loc[filter_numeric, "FELT_ID"]
     filter_numeric3 = pd.Series.tolist(filter_numeric2)
-    filter_numeric4 = ','.join(map("'{0}'".format, filter_numeric3))
+    filter_numeric4 = ",".join(map("'{}'".format, filter_numeric3))
 
     # Skiller ut alle ikke-numeriske variabler
-    filter_char = (metadata_dynarev['FELT_TYPE'] != 'DESIMAL') & (metadata_dynarev['FELT_TYPE'] != 'NUMBER')
-    filter_char2 = metadata_dynarev.loc[filter_char, 'FELT_ID']
+    filter_char = (metadata_dynarev["FELT_TYPE"] != "DESIMAL") & (
+        metadata_dynarev["FELT_TYPE"] != "NUMBER"
+    )
+    filter_char2 = metadata_dynarev.loc[filter_char, "FELT_ID"]
     filter_char3 = pd.Series.tolist(filter_char2)
-    filter_char4 = ','.join(map("'{0}'".format, filter_char3))
+    filter_char4 = ",".join(map("'{}'".format, filter_char3))
 
     # SQL for å hente Dynarev skjema-data for numeriske variabler
     query_numeric = f"""
@@ -126,7 +131,9 @@ def dynarev_uttrekk(delreg_nr : str,
     # Henter ut en data.frame for char og en for num og gjør en inner join på de to
     df1 = pd.read_sql_query(query_numeric, conn)
     df2 = pd.read_sql_query(query_char, conn)
-    skjema_data=pd.merge(df1, df2, on=['ENHETS_ID', 'ENHETS_TYPE', 'DELREG_NR', 'LOPENR', 'RAD_NR'])
+    skjema_data = pd.merge(
+        df1, df2, on=["ENHETS_ID", "ENHETS_TYPE", "DELREG_NR", "LOPENR", "RAD_NR"]
+    )
 
     # Fjerner fnutter fra noen kolonnenavn
     skjema_data.columns = skjema_data.columns.str.replace("'", "")
@@ -155,10 +162,12 @@ def dynarev_uttrekk(delreg_nr : str,
         HAVING COUNT(*) > 1
         """
         dublett = pd.read_sql_query(query_dublett, conn)
-        
-        # Sørger for at de som ikke har dubletter ikke får et tomt datasett tilbake. 
+
+        # Sørger for at de som ikke har dubletter ikke får et tomt datasett tilbake.
         if not len(dublett):
-            warnings.warn("Så etter dubletter, men fant ingen, dublettdataframen er derfor tom")
+            warnings.warn(
+                "Så etter dubletter, men fant ingen, dublettdataframen er derfor tom"
+            )
         else:
             print("Du har valgt å ta ut dublett-data")
         result += [dublett]
@@ -167,7 +176,7 @@ def dynarev_uttrekk(delreg_nr : str,
     if sfu_cols:
         # Henter inn SFU-data
         # SQl for å hente ut SFU-data
-        query_sfu=f"""
+        query_sfu = f"""
             SELECT b.*
             FROM dsbbase.dlr_enhet_i_delreg_skjema a, dsbbase.dlr_enhet_i_delreg b
             WHERE a.delreg_nr=b.delreg_nr
@@ -186,12 +195,14 @@ def dynarev_uttrekk(delreg_nr : str,
             result += [sfu[sfu_cols]]
             print("Du har valgt å ta ut sfu-data, tar med disse kolonnene:", *sfu_cols)
 
-    conn.close() # Bør lukkes før du returnerer ut av funksjonen, resultatene skal ligge i minnet alt
+    conn.close()  # Bør lukkes før du returnerer ut av funksjonen, resultatene skal ligge i minnet alt
 
     if len(result) == 1:
         return result[0]  # Bare returner en dataframe
     else:
-        return tuple(result)  # Ved å returnere en tuple, så kan man velge å bruke implisitt tuple unpacking
+        return tuple(
+            result
+        )  # Ved å returnere en tuple, så kan man velge å bruke implisitt tuple unpacking
 
 
 # +
