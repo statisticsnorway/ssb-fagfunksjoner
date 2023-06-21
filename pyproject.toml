@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ssb-fagfunksjoner"
-version = "0.0.3"
+version = "0.0.1"
 description = "Fellesfunksjoner for ssb i Python"
 authors = ["Fagressursgruppe for Python hos SSB <https://github.com/orgs/statisticsnorway/teams/ressursgruppe_python_fag/members>"]
 license = "MIT"
