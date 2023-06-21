@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "fag_fellesfunksjoner"
+name = "ssb-fagfunksjoner"
 version = "0.0.1"
-description = "Fellesfunksjoner lagd av ressursgruppen for Python"
+description = "Fellesfunksjoner for ssb i Python"
 authors = ["Fagressursgruppe for Python hos SSB <https://github.com/orgs/statisticsnorway/teams/ressursgruppe_python_fag/members>"]
 license = "MIT"
-packages = [{include = "fag_felles"}]
+packages = [{include = "fagfunksjoner"}]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
