@@ -1,15 +1,11 @@
-import pandas as pd
-import xml.etree.cElementTree as ET
-import os
 import fnmatch
+import os
+import xml.etree.ElementTree as ET
+
 from bs4 import BeautifulSoup
 
-def df2xml(data,
-            out : str,
-            outpath : str,
-            pstart : str,
-            ystart : str,
-            freq : str):
+
+def df2xml(data, out: str, outpath: str, pstart: str, ystart: str, freq: str):
     """
     Parameters:
         data : A Pandas DataFrame you want to convert.
@@ -24,25 +20,27 @@ def df2xml(data,
     # Deletes the first column since its because in our data thats a period-column
     RawSeries2 = data.drop(data.columns[0], axis=1)
     # Start building xml
-    root = ET.Element("tsworkspace",
-                      attrib={"xmlns": "eu/tstoolkit:core",
-                              "xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
-                              "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"})
-    timeseries = ET.SubElement(root, 'timeseries')
+    root = ET.Element(
+        "tsworkspace",
+        attrib={
+            "xmlns": "eu/tstoolkit:core",
+            "xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
+            "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+        },
+    )
+    timeseries = ET.SubElement(root, "timeseries")
     tscollection = ET.SubElement(timeseries, "tscollection")
-    tscollection.set('name', out)
+    tscollection.set("name", out)
     data = ET.SubElement(tscollection, "data")
 
     # Looping through colname and series
-    for (columnName, columnData) in RawSeries2.iteritems():
+    for columnName, columnData in RawSeries2.iteritems():
         ts = ET.SubElement(data, "ts")
         navn = columnName
-        ts.set('name', navn)
-        tsdata = ET.SubElement(ts,
-                               'tsdata',
-                               attrib={"pstart": pstart,
-                                       "ystart": ystart,
-                                       "freq": freq})
+        ts.set("name", navn)
+        tsdata = ET.SubElement(
+            ts, "tsdata", attrib={"pstart": pstart, "ystart": ystart, "freq": freq}
+        )
         data2 = ET.SubElement(tsdata, "data")
         verdier = columnData
         verdier2 = verdier.to_string(index=False)
@@ -51,12 +49,14 @@ def df2xml(data,
 
     xml_data = ET.tostring(root)
     xml_data2 = BeautifulSoup(xml_data, "xml").prettify()
-    with open(f"{outpath}/{out}.xml", 'w') as f:
+    with open(f"{outpath}/{out}.xml", "w") as f:
         f.write(xml_data2)
 
-    #return print(xml_data2)
-    return print(f"""Pandas DataFrame has been converted to an XML and has 
-    been saved at {outpath}/{out}.xml""")
+    # return print(xml_data2)
+    return print(
+        f"""Pandas DataFrame has been converted to an XML and has
+    been saved at {outpath}/{out}.xml"""
+    )
 
 
 def replace_input_paths(directory, find, replace, filePattern):
@@ -66,10 +66,10 @@ def replace_input_paths(directory, find, replace, filePattern):
         find: The text-string you want to search replace. Use the full path, i.e. "/ssb/stamme01/vakanse/wk1"
         replace: The text-string you want to insert. Use full path, i.e. "/home/jovyan/repos/sesjust/"
         filePattern: List of filepatterns to search through. For example: ["*.xml", "*.bak"])
-    
-    Returns: 
-        Modifys in place, aka returns the same, but modified, files. 
-    
+
+    Returns:
+        Modifys in place, aka returns the same, but modified, files.
+
     """
     find = find.replace("/", "%2F")
     replace = replace.replace("/", "%2F")
