@@ -14,16 +14,36 @@ We try to take responsibility for this functionality to be generalized and avail
 Please make contact with one of our team members, to see if you can join, or how to send in a PR for approval into the package.
 
 
-
-
 ## Installing
 ```bash
 poetry add ssb-fagfunksjoner
 ```
 
 ## Usage
-
+Check if you are on Dapla or in prodsone.
 ```python
 from fagfunksjoner.prodsone.miljo import sjekk_miljo
 sjekk_miljo()
+```
+
+Navigate to the root of your project and back again. Do stuff while in root, like importing local functions.
+```python
+from fagfunksjoner.paths.project_root import navigate_root, return_to_work_dir
+navigate_root()
+# Do your local imports here...
+return_to_work_dir()
+```
+
+Aggregate on all combinations of codes in certain columns (maybe before sending to statbank? Like proc means?)
+```python
+from fagfunksjoner.data.pandas_combinations import all_combos, fill_na_dict
+ialt_koder = {
+"skolefylk": "01-99",
+"almyrk": "00",
+"kjoenn_t": "0",
+"sluttkomp": "00",
+}
+kolonner = list(ialt_koder.keys())
+tab = all_combos(vgogjen, kolonner, {'antall': sum})
+tab = fill_na_dict(tab, ialt_koder)
 ```
