@@ -44,3 +44,15 @@ def load_config_toml(config_file: str) -> dict:
     else:
         raise OSError(f"Cant find that config-file: {config_file}")
     return toml.load(config_file)
+
+
+class ProjectRoot:
+    """Contextmanager to import locally "with"."""
+
+    @staticmethod
+    def __enter__():
+        navigate_root()
+
+    @staticmethod
+    def __exit__():
+        return_to_work_dir()

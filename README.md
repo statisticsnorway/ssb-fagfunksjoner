@@ -28,11 +28,26 @@ sjekk_miljo()
 
 Navigate to the root of your project and back again. Do stuff while in root, like importing local functions.
 ```python
-from fagfunksjoner.paths.project_root import navigate_root, return_to_work_dir
-navigate_root()
-# Do your local imports here...
-return_to_work_dir()
+from fagfunksjoner.paths.project_root import ProjectRoot
+with ProjectRoot:
+    ... # Do your local imports here...
 ```
+
+
+Querying internal oracle-database "DB1P"
+```python
+from fagfunksjoner.prodsone.db1p import query_db1p
+sporring = "SELECT SNR_NUDB FROM NUDB_ADM.TAB_UTD_PERSON"
+df = query_db1p(sporring)
+```
+
+
+Setting up password with saspy
+```python
+from fagfunksjoner.prodsone.saspy import set_password
+set_password() # Follow the instructions to set the password
+```
+
 
 Aggregate on all combinations of codes in certain columns (maybe before sending to statbank? Like proc means?)
 ```python
