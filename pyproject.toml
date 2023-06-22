@@ -4,6 +4,7 @@ version = "0.0.5"
 description = "Fellesfunksjoner for ssb i Python"
 authors = ["SSB-pythonistas <ssb-pythonistas@ssb.no>"]
 license = "MIT"
+readme = "README.md"
 packages = [{include = "fagfunksjoner"}]
 
 [tool.poetry.dependencies]
