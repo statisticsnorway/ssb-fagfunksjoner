@@ -2,10 +2,13 @@ import os
 
 
 def sjekk_miljo() -> str:
-    if os.uname()[1].startswith("sl-"):
+    if "bruker" in os.listdir("/ssb"):
         miljo = "PROD"
-    elif "dapla" in str(dict(os.environ).values()):
-        miljo = "DAPLA"
+    elif "DATA_MAINTENANCE_URL" in os.environ.keys():
+        if "dapla" in os.environ["DATA_MAINTENANCE_URL"]:
+            miljo = "DAPLA"
+        else:
+            raise ValueError("You are confusing me with your DATA_MAINTENANCE_URL")
     else:
         raise OSError("Ikke i prodsonen, eller på Dapla?")
     return miljo
