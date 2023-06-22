@@ -1,4 +1,5 @@
 import os
+import toml
 from pathlib import Path
 
 
@@ -28,4 +29,18 @@ def return_to_work_dir():
         os.chdir(START_DIR)
     else:
         print("START_DIR not set, assuming you never left the working dir")
-        
+
+
+def load_config_toml(config_file: str) -> dict:
+    # Toml is in current folder
+    if config_file in os.listdir():
+        ...
+    # User sent in complete path?
+    elif os.path.isfile(config_file):
+        ...
+    # We found the config-file in the project_root
+    elif os.path.isfile(Path(find_root()) / config_file):
+        config_file = Path(find_root()) / config_file
+    else:
+        raise OSError(f"Cant find that config-file: {config_file}")
+    return toml.load(config_file)
