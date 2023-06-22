@@ -12,3 +12,18 @@ We try to take responsibility for this functionality to be generalized and avail
 
 ## Contributing
 Please make contact with one of our team members, to see if you can join, or how to send in a PR for approval into the package.
+
+
+
+
+## Installing
+```bash
+poetry add ssb-fagfunksjoner
+```
+
+## Usage
+
+```python
+from fagfunksjoner.prodsone.miljo import sjekk_miljo
+sjekk_miljo()
+```
