@@ -44,14 +44,14 @@ df = query_db1p(sporring)
 
 Setting up password with saspy
 ```python
-from fagfunksjoner.prodsone.saspy import set_password
-set_password() # Follow the instructions to set the password
+from fagfunksjoner.prodsone import saspy_ssb
+saspy_ssb.set_password() # Follow the instructions to set the password
 ```
 
 
 Aggregate on all combinations of codes in certain columns (maybe before sending to statbank? Like proc means?)
 ```python
-from fagfunksjoner.data.pandas_combinations import all_combos, fill_na_dict
+from fagfunksjoner.data import pandas_combinations as combos
 ialt_koder = {
 "skolefylk": "01-99",
 "almyrk": "00",
@@ -59,6 +59,6 @@ ialt_koder = {
 "sluttkomp": "00",
 }
 kolonner = list(ialt_koder.keys())
-tab = all_combos(vgogjen, kolonner, {'antall': sum})
-tab = fill_na_dict(tab, ialt_koder)
+tab = combos.all_combos(vgogjen, kolonner, {'antall': sum})
+tab = combos.fill_na_dict(tab, ialt_koder)
 ```
