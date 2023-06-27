@@ -59,11 +59,12 @@ def find_root() -> Path:
     """
     global START_DIR
     START_DIR = os.getcwd()
-    for _ in range(40):
+    for _ in range(len(Path(START_DIR).parents)):
         if ".git" in os.listdir():
             break
         os.chdir("../")
     else:
+        os.chdir(START_DIR)
         raise OSError("Couldnt find .git navigating out from current folder.")
     project_root = os.getcwd()
     os.chdir(START_DIR)
