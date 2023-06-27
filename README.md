@@ -22,8 +22,8 @@ poetry add ssb-fagfunksjoner
 ## Usage
 Check if you are on Dapla or in prodsone.
 ```python
-from fagfunksjoner.prodsone.miljo import sjekk_miljo
-sjekk_miljo()
+from fagfunksjoner.prodsone.check_env import check_env
+check_env()
 ```
 
 Navigate to the root of your project and back again. Do stuff while in root, like importing local functions.
