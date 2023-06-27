@@ -1,3 +1,9 @@
+"""Simplifications of saspy package for SSB use. 
+Helps you store password in prodsone.
+Sets libnames automatically for you when just wanting to open a file, 
+or convert it."""
+
+
 import getpass
 import os
 import typing
@@ -8,18 +14,25 @@ import saspy
 
 
 def saspy_session() -> saspy.SASsession:
-    """Returnerer en initialisert sas-session, koblet mot default config."""
+    """Gives you an initialized saspy.SASsession object,
+    using the default config, getting your password if youve set one.
+    
+    Returns
+    -------
+    saspy.SASsession
+        An initialized saspy-session
+    """
     brukernavn = getpass.getuser()
     authpath = "/ssb/bruker/" + brukernavn + "/.authinfo"
     if not os.path.exists(authpath):
-        print("Finner ikke auth-file, vurder å kjøre saspy_session.set_password()")
+        print("Cant find the auth-file, consider running saspy_session.set_password()")
         print(help(set_password))
     else:
         with open(authpath) as f:
             file = f.read()
             if "IOM_Prod_Grid1" not in file:
                 print(
-                    "IOM_Prod_Grid1 mangler fra .authinfo, prøv å kjør saspy_session.set_password() på nytt."
+                    "IOM_Prod_Grid1 is missing from .authinfo, try running saspy_session.set_password() again."
                 )
                 return
     felles = os.environ["FELLES"]
@@ -30,13 +43,21 @@ def saspy_session() -> saspy.SASsession:
 
 
 def set_password(password: str):
-    """Genererer en kryptert versjon av passordet ditt i SAS EG med denne koden (husk å bytte MiTT Passord med ditt eget Linux-passord):
+    """Pass into this function, an encrypted version of your password that you can get
+    in SAS EG, running the following code (swap MY PASSWORD for your actual common-password):
 
-    proc pwencode in='MiTT Passord' method=sas004;
+    proc pwencode in='MY PASSWORD' method=sas004;
     run;
 
-    I log-vinduet i SAS EG ser du da det krypterte passordet for MiTT Passord som ser slik ut {SAS004}C598BA0A77F74607464634566CCD0D7BB8EBDEEA4B73C440.
-    Send dette som parameter inn i denne funksjonen"""
+    In the log-window in SAS EG you should then recieve an encrypted version of your password,
+    that looks something like this {SAS004}C598BA0A77F74607464634566CCD0D7BB8EBDEEA4B73C440
+    Send this as the parameter into this function.
+
+    Parameters
+    ----------
+    password: str
+        Your password encrypted using SAS EG
+    """
     brukernavn = getpass.getuser()
     authpath = "/ssb/bruker/" + brukernavn + "/.authinfo"
 
@@ -68,7 +89,18 @@ def set_password(password: str):
 
 
 def split_path_for_sas(path: Path) -> typing.Tuple[str, str, str]:
-    """Deler en path i tre, for innmating i libref hovedsaklig"""
+    """Splits a path in three parts, mainly for having a name for the libname
+
+    Parameters
+    ----------
+    path: pathlib.Path
+        The full path to be split
+
+    Returns
+    -------
+    tuple[str]
+        The three parts the path has been split into.
+    """
     librefpath = str(path.parents[0])
     librefname = path.parts[-2]
     filename = ".".join(path.parts[-1].split(".")[:-1])
@@ -76,8 +108,20 @@ def split_path_for_sas(path: Path) -> typing.Tuple[str, str, str]:
 
 
 def saspy_df_from_path(path: str) -> pd.DataFrame:
-    """Oppretter en session, setter libref, henter dataframe fra sas.
-    Terminerer koblingen til sas, og returnerer dataframen."""
+    """Gives you a pandas dataframe from the path to a sasfile, using saspy.
+    Creates saspy-session, create a libref, gets the dataframe,
+    terminates the connection to saspy cleanly, and returns the dataframe.
+
+    Parameters
+    ----------
+    path: str
+        The full path to the sasfile you want to open with sas.
+    
+    Returns
+    -------
+    pandas.DataFrame
+        The raw content of the sasfile straight from saspy
+    """
     librefpath, librefname, filename = split_path_for_sas(Path(path))
     librefname = "sasdata"  # Simplify... blergh
     sas = saspy_session()
@@ -95,6 +139,23 @@ def saspy_df_from_path(path: str) -> pd.DataFrame:
 def sasfile_to_parquet(
     path: str, out_path: str = "", gzip: bool = False
 ) -> pd.DataFrame:
+    """Converts a sasfile directly to a parquetfile, using saspy and pandas.
+
+    Parameters
+    ----------
+    path: str
+        The path to the in-sas-file.
+    out_path: str
+        The path to place the parquet-file on
+    gzip: bool
+        If you want the parquetfile gzipped or not.
+
+    Returns
+    -------
+    pandas.DataFrame
+        In case you want to use the content for something else.
+        I mean, we already read it into memory...
+    """
     path = Path(path)
     df = saspy_df_from_path(path)
     if not out_path:
@@ -118,5 +179,19 @@ def sasfile_to_parquet(
 
 
 def cp(from_path: str, to_path: str) -> dict:
-    """Uses saspy and sas-server to copy files"""
+    """Uses saspy and sas-server to copy files
+    
+    Parameters
+    ----------
+    from_path: str
+        The path for the source file to copy
+    to_path: str
+        The path to place the copy on
+        
+    Returns
+    -------
+    dict
+        
+    
+    """
     return saspy_session().file_copy(from_path, to_path)
