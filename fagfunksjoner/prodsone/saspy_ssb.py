@@ -180,18 +180,17 @@ def sasfile_to_parquet(
 
 def cp(from_path: str, to_path: str) -> dict:
     """Uses saspy and sas-server to copy files
-    
+
     Parameters
     ----------
     from_path: str
         The path for the source file to copy
     to_path: str
         The path to place the copy on
-        
+
     Returns
     -------
     dict
-        
-    
+        A key for if it succeded, and a key for holding the log as string.
     """
     return saspy_session().file_copy(from_path, to_path)

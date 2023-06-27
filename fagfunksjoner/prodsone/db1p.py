@@ -1,3 +1,6 @@
+"""One of Statistics Norway's biggest internal databases is called "DB1P"
+This module aims to make it easier to query this oracle database from Python."""
+
 import getpass
 import os
 
@@ -7,11 +10,22 @@ from dotenv import load_dotenv
 
 
 def query_db1p(query: str) -> pd.DataFrame:
-    """
-    Funksjon for å hente en dataframe fra DB1P oracle.
-    Send inn ferdig SQL-query som en string.
-    Forutsetter at getpass.getuser skaffer rett bruker, vil be om passord hver gang...
-    Om du ikke setter "DB1P_PASSWORD" i en .env eller i environment-variablene.
+    """Function for getting a pandas dataframe from DB1P oracle.
+    Send in a full SQL-query as a string.
+    Requires that getpass.getuser gets the right user.
+    If you dont put the variable "DB1P_PASSWORD" in a .env file in your user-folder,
+    It'll ask you for a password everytime it runs.
+
+    Parameters
+    ----------
+    query: str
+        The SQL-query you would like to run, as a single string.
+        Can be triple-quoted.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The content returned by DB1P converted to a pandas dataframe.
     """
     load_dotenv()
     # User has option to store password in .env / environment variables
