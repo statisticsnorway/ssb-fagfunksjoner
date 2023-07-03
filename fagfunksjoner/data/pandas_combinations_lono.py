@@ -1,7 +1,7 @@
 import pandas as pd
 from itertools import combinations
 
-def aggregate_all(df: pd.DataFrame,
+def all_combos_agg(df: pd.DataFrame,
                   groupcols: list,
                   fillna_dict: dict = None,
                   keep_empty: bool = False,
@@ -16,7 +16,7 @@ def aggregate_all(df: pd.DataFrame,
             fillna_dict: Dict 
             aggcols: List of columns to aggregate.
             aggfunc: List of aggregation function(s), like sum, mean, min, count.
-            
+
 
         Returns:
         --------
