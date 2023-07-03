@@ -5,8 +5,8 @@ def all_combos_agg(df: pd.DataFrame,
                   groupcols: list,
                   fillna_dict: dict = None,
                   keep_empty: bool = False,
-                  totals: bool = False,
-                  *aggargs, **aggkwargs):
+                  grand_total: bool = False,
+                  *aggargs, **aggkwargs) -> pd.DataFrame:
     """ Generate all aggregation levels for a set of columns in a dataframe
 
         Parameters:
@@ -68,11 +68,8 @@ def all_combos_agg(df: pd.DataFrame,
     
     # Generate all possible combinations of group columns
     combos = []
-    for r in range(1, len(groupcols) + 1):
-        combos.extend(list(combinations(groupcols, r)))
-
-    # Reverse the combinations to aggregate the most detailed first. This will give us the right column order of the output dataframe    
-    combos.reverse()
+    for r in range(len(groupcols) + 1, 0, -1):
+        combos += list(combinations(groupcols, r))
 
     # Create an empty DataFrame to store the results
     all_levels = pd.DataFrame()
@@ -107,7 +104,7 @@ def all_combos_agg(df: pd.DataFrame,
     gt['ways'] = 0
 
     # Append the grand total row to the combined results and sort by levels and groupcols
-    all_levels = pd.concat([all_levels, gt], ignore_index=True).sort_values(list(itertools.chain(['level'], groupcols)))
+    all_levels = pd.concat([all_levels, gt], ignore_index=True).sort_values(['level'] + groupcols)
 
     # Fill missing group columns with value
     if fillna_dict:
