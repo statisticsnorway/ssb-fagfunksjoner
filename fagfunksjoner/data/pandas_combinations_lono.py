@@ -8,27 +8,32 @@ def aggregate_all(df: pd.DataFrame,
                   totals: bool = False,
                   *aggargs, **aggkwargs):
     """ Generate all aggregation levels for a set of columns in a dataframe
-    
+
         Parameters:
-            dataframe: Name of dataframe to aggregate.
+        -----------
+            df: dataframe to aggregate.
             groupcols: List of columns to group by.
+            fillna_dict: Dict 
             aggcols: List of columns to aggregate.
             aggfunc: List of aggregation function(s), like sum, mean, min, count.
-            fillna: Value to fill the NaN values for the group-by columns.
             
+
         Returns:
+        --------
             dataframe with all the group-by columns, all the aggregation columns combined 
             with the aggregation functions, a column called aggregation_level which 
             separates the different aggregation levels, and a column called aggregation_ways which
             counts the number of group columns used for the aggregation.
-            
-        Advices:    
+
+        Advice:
+        -------
             When you want the frequency, create a column with the value 1 for each row first and then use that as the aggcol.
             Make sure that you don't have any values in the group columns that are the same as your fillna value.
-        
-        Known problems: 
+
+        Known problems:
+        ---------------
             You should not use dataframes with multi-index columns as they cause trouble.
-        
+
         Examples:
         data = {
                 'alder': [20, 60, 33, 33, 20],
@@ -124,6 +129,6 @@ def aggregate_all(df: pd.DataFrame,
 
 
 def fill_na_dict(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
-    for col, fill_val in vmapping.items():
+    for col, fill_val in mapping.items():
         df[col] = df[col].fillna(fill_val)
     return df
