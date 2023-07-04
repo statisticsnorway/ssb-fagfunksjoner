@@ -95,17 +95,23 @@ def all_combos_agg(df: pd.DataFrame,
         all_levels = pd.concat([all_levels, result], ignore_index=True)
 
     # Calculate the grand total
-    gt = pd.DataFrame(dataframe.agg(*aggargs, **aggkwargs)).reset_index()
-    gt = (pd.DataFrame(gt
-                       .agg(*aggargs, **aggkwargs)
-                       .T)
-          .T)
-    gt['level'] = 0
-    gt['ways'] = 0
+    if grand_total:
+        gt = pd.DataFrame(dataframe[aggcols].agg(*aggargs, **aggkwargs)).reset_index()
+        gt['x','z'] = 1
+        gt = gt.pivot(index=[('x','z')], columns='index', values= aggcols).reset_index().drop(columns=[('x','z')])
+#        gt = pd.DataFrame(dataframe.agg(*aggargs, **aggkwargs)).reset_index()
+#        gt = (pd.DataFrame(gt
+#                           .agg(*aggargs, **aggkwargs)
+#                           .T)
+#              .T)
+        gt['level'] = 0
+        gt['ways'] = 0
 
-    # Append the grand total row to the combined results and sort by levels and groupcols
-    all_levels = pd.concat([all_levels, gt], ignore_index=True).sort_values(['level'] + groupcols)
-
+        # Append the grand total row to the combined results and sort by levels and groupcols
+        all_levels = pd.concat([all_levels, gt], ignore_index=True).sort_values(['level'] + groupcols)
+    else:
+        all_levels = all_levels.sort_values(['level'] + groupcols)
+        
     # Fill missing group columns with value
     if fillna_dict:
         all_levels = fill_na_dict(all_levels, fillna_dict)
