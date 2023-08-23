@@ -23,16 +23,28 @@ display(agg1)
 agg2 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], func={'inntekt':['mean', 'sum']})
 display(agg2)
 
-agg3 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True, func={'inntekt':['mean', 'sum']})
-#agg3 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], func={'inntekt':['mean', 'sum']})
+agg3 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True,
+                                               grand_total_text='Grand total',
+                                               func={'inntekt':['mean', 'sum']})
 display(agg3)
 
 agg4 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], 
                                                fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'}, 
-                                               func={'inntekt':['mean', 'sum']}, 
+                                               func={'inntekt':['mean', 'sum'], 'formue': ['count', 'min', 'max']}, 
                                                grand_total=True
                                               )
 display(agg4)
+
+groupcols = pers.columns[0:3].tolist()
+func_dict = {'inntekt':['mean', 'sum'], 'formue': ['sum', 'std', 'count']}
+fillna_dict = {'kjonn': 'Total kjønn', 'alder': 'Total alder', 'kommune': 'Total kommune'}
+agg5 = pandas_combinations_lono.all_combos_agg(pers, groupcols=groupcols, 
+                                               func=func_dict,
+                                               fillna_dict=fillna_dict, 
+                                               grand_total=True,
+                                               grand_total_text='All'
+                                              )
+display(agg5)
 
 agg5 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], 
                                                fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'}, 

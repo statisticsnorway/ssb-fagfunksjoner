@@ -6,6 +6,7 @@ def all_combos_agg(df: pd.DataFrame,
                   fillna_dict: dict = None,
                   keep_empty: bool = False,
                   grand_total: bool = False,
+                  grand_total_text: str = 'Total',
                   *aggargs, **aggkwargs) -> pd.DataFrame:
     """ Generate all aggregation levels for a set of columns in a dataframe
 
@@ -13,9 +14,9 @@ def all_combos_agg(df: pd.DataFrame,
         -----------
             df: dataframe to aggregate.
             groupcols: List of columns to group by.
-            fillna_dict: Dict 
-            aggcols: List of columns to aggregate.
-            aggfunc: List of aggregation function(s), like sum, mean, min, count.
+            fillna_dict: Dict. 
+            *aggargs: aggregation arguments.
+            *kwargs: other arguments.
 
 
         Returns:
@@ -27,7 +28,6 @@ def all_combos_agg(df: pd.DataFrame,
 
         Advice:
         -------
-            When you want the frequency, create a column with the value 1 for each row first and then use that as the aggcol.
             Make sure that you don't have any values in the group columns that are the same as your fillna value.
 
         Known problems:
@@ -44,22 +44,33 @@ def all_combos_agg(df: pd.DataFrame,
             }
         pers = pd.DataFrame(data)
 
-        agg1 = aggregate_all(pers, groupcols=['kjonn'], aggcols=['inntekt'])
+        agg1 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn'], keep_empty=True, func={'inntekt':['mean', 'sum']})
         display(agg1)
 
-        agg2 = aggregate_all(pers, groupcols=['kommune', 'kjonn', 'alder'], aggcols=['inntekt', 'formue'])
+        agg2 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], func={'inntekt':['mean', 'sum']})
         display(agg2)
 
-        agg3 = aggregate_all(pers, groupcols=['kommune', 'kjonn', 'alder'], aggcols=['inntekt'], fillna='T', aggfunc=['mean', 'std'])
+        agg3 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True,
+                                                       grand_total_text='Grand total',
+                                                       func={'inntekt':['mean', 'sum']})
         display(agg3)
-
+        agg4 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], 
+                                                       fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'}, 
+                                                       func={'inntekt':['mean', 'sum'], 'formue': ['count', 'min', 'max']}, 
+                                                       grand_total=True
+                                                      )
+        display(agg4)        
         pers['antall'] = 1
-        groupcols = pers.columns[0:2].tolist()
-        aggcols = pers.columns[3:5].tolist()
-        aggcols.extend(['antall'])
-        agg4 = aggregate_all(pers, groupcols=groupcols, aggcols=aggcols, fillna='T')
-        display(agg4)
-    """
+        groupcols = pers.columns[0:3].tolist()
+        func_dict = {'inntekt':['mean', 'sum'], 'formue': ['sum', 'std', 'count']}
+        fillna_dict = {'kjonn': 'Total kjønn', 'alder': 'Total alder', 'kommune': 'Total kommune'}
+        agg5 = pandas_combinations_lono.all_combos_agg(pers, groupcols=groupcols, 
+                                                       func=func_dict,
+                                                       fillna_dict=fillna_dict, 
+                                                       grand_total=True,
+                                                       grand_total_text='All'
+                                                      )
+        display(agg5)    """
     dataframe = df.copy()
     
     # Hack using categoricals to keep all unobserved groups
@@ -83,7 +94,7 @@ def all_combos_agg(df: pd.DataFrame,
         else:
             result = dataframe.groupby(list(comb), as_index=False)
 
-        result = result.agg(*aggargs, **aggkwargs).reset_index()
+        result = result.agg(*aggargs, **aggkwargs)
 
         # Add a column to differentiate the combinations
         result['level'] = len(combos) - i
@@ -107,8 +118,8 @@ def all_combos_agg(df: pd.DataFrame,
 #              .T)
         gt['level'] = 0
         gt['ways'] = 0
-        gt[groupcols] = 'Total'
-
+        gt[groupcols] = grand_total_text
+        
         # Append the grand total row to the combined results and sort by levels and groupcols
         all_levels = pd.concat([all_levels, gt], ignore_index=True).sort_values(['level'] + groupcols)
     else:
