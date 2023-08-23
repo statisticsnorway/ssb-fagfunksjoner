@@ -18,20 +18,27 @@ pers
 agg1 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn'], keep_empty=True, func={'inntekt':['mean', 'sum']})
 display(agg1)
 
-agg2 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], keep_empty=True, func={'inntekt':['mean', 'sum']})
+# keep_empty=True gir feilmelding
+#agg2 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], keep_empty=True, func={'inntekt':['mean', 'sum']})
+agg2 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], func={'inntekt':['mean', 'sum']})
 display(agg2)
 
 agg3 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True, func={'inntekt':['mean', 'sum']})
+#agg3 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], func={'inntekt':['mean', 'sum']})
 display(agg3)
 
 agg4 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], 
                                                fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'}, 
-                                               func={'inntekt':['mean', 'sum']})
+                                               func={'inntekt':['mean', 'sum']}, 
+                                               grand_total=True
+                                              )
 display(agg4)
 
 agg5 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], 
                                                fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'}, 
-                                               func={'inntekt':['mean', 'sum'], 'formue': ['sum', 'std']})
+                                               func={'inntekt':['mean', 'sum'], 'formue': ['sum', 'std']},
+                                               grand_total=True
+                                              )
 display(agg5)
 
 gt = pd.DataFrame(pers.agg({'inntekt':['mean', 'sum']}).reset_index())
@@ -45,5 +52,13 @@ gt = pd.DataFrame(pers['inntekt'].agg(['mean', 'sum'])).reset_index()
 gt['x','z'] = 1
 gt = gt.pivot(index=[('x','z')], columns='index', values= ['inntekt']).reset_index().drop(columns=[('x','z')])
 gt
+
+gt = pd.DataFrame(pers.agg({'inntekt':['mean', 'sum'], 'formue': ['sum', 'std']})).reset_index()
+display(gt)
+gt['x','z'] = 1
+gt2 = gt.pivot(index=[('x','z')], columns='index').reset_index().drop(columns=[('x','z')])
+gt2
+
+gt.columns.get_level_values(0).unique()
 
 

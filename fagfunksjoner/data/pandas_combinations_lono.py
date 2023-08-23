@@ -96,9 +96,10 @@ def all_combos_agg(df: pd.DataFrame,
 
     # Calculate the grand total
     if grand_total:
-        gt = pd.DataFrame(dataframe[aggcols].agg(*aggargs, **aggkwargs)).reset_index()
+        gt = pd.DataFrame(dataframe.agg(*aggargs, **aggkwargs)).reset_index()
         gt['x','z'] = 1
-        gt = gt.pivot(index=[('x','z')], columns='index', values= aggcols).reset_index().drop(columns=[('x','z')])
+        #aggcols=gt.columns.get_level_values(0).unique()
+        gt = gt.pivot(index=[('x','z')], columns='index').reset_index().drop(columns=[('x','z')])
 #        gt = pd.DataFrame(dataframe.agg(*aggargs, **aggkwargs)).reset_index()
 #        gt = (pd.DataFrame(gt
 #                           .agg(*aggargs, **aggkwargs)
@@ -106,6 +107,7 @@ def all_combos_agg(df: pd.DataFrame,
 #              .T)
         gt['level'] = 0
         gt['ways'] = 0
+        gt[groupcols] = 'Total'
 
         # Append the grand total row to the combined results and sort by levels and groupcols
         all_levels = pd.concat([all_levels, gt], ignore_index=True).sort_values(['level'] + groupcols)
@@ -114,7 +116,7 @@ def all_combos_agg(df: pd.DataFrame,
         
     # Fill missing group columns with value
     if fillna_dict:
-        all_levels = fill_na_dict(all_levels, fillna_dict)
+        all_levels = fill_na_dict(all_levels, fillna_dict).dropna(how='all', axis=1)
     #all_levels[groupcols] = all_levels[groupcols].fillna(fillna)
 
     # change columns with multi-index to normal index
