@@ -1,7 +1,7 @@
 import pathlib
 
 import pytest
-from fag_felles.api import valuta
+from fagfunksjoner.api import valuta
 
 
 @pytest.fixture
