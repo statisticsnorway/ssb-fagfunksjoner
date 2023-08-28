@@ -12,17 +12,26 @@ def all_combos_agg(df: pd.DataFrame,
                   aggargs: Dict[str, Callable],
                   fillna_dict: dict = None,
                   keep_empty: bool = False,
-                  grand_total: bool = False,
-                  grand_total_text: str = 'Total',) -> pd.DataFrame:
+                  grand_total: str = '',) -> pd.DataFrame:
     """ Generate all aggregation levels for a set of columns in a dataframe
 
         Parameters:
         -----------
-            df: dataframe to aggregate.
-            groupcols: List of columns to group by.
-            fillna_dict: Dict. 
-            *aggargs: aggregation arguments.
-            *kwargs: other arguments.
+            df: pandas.DataFrame
+                dataframe to aggregate.
+            groupcols: list[str]
+                List of columns to group by.
+            aggargs: Dict[str, Callable]
+                how to aggregate, is sent to the agg function in pandas, look at its documentation.
+            fillna_dict: Dict[str, str]
+                Fills "totals" in the groupcols, by filling their NA values. 
+                Send a dict with col names as keys, and string-values to put in cells as values.
+            keep_empty: bool
+                Keep groups without observations through the process.
+                Removing them is default behaviour of Pandas
+            grand_total: str
+                Fill this value, if you want a grand total in your aggregations.
+                This string will be input in the fields in the groupcol columns.
 
 
         Returns:
@@ -32,15 +41,12 @@ def all_combos_agg(df: pd.DataFrame,
             separates the different aggregation levels, and a column called aggregation_ways which
             counts the number of group columns used for the aggregation.
 
-        Advice:
-        -------
-            Make sure that you don't have any values in the group columns that are the same as your fillna value.
-
         Known problems:
         ---------------
             You should not use dataframes with multi-index columns as they cause trouble.
 
         Examples:
+        from fagfunksjoner.data.pandas_combinations import all_combos_agg
         data = {
                 'alder': [20, 60, 33, 33, 20],
                 'kommune': ['0301', '3001', '0301', '5401', '0301'],
@@ -50,42 +56,33 @@ def all_combos_agg(df: pd.DataFrame,
             }
         pers = pd.DataFrame(data)
 
-        agg1 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn'], keep_empty=True, func={'inntekt':['mean', 'sum']})
+        agg1 = all_combos_agg(pers, groupcols=['kjonn'], keep_empty=True, aggargs={'inntekt':['mean', 'sum']})
         display(agg1)
 
-        agg2 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], func={'inntekt':['mean', 'sum']})
+        agg2 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], aggargs={'inntekt':['mean', 'sum']})
         display(agg2)
 
-        agg3 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True,
+        agg3 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True,
                                                        grand_total_text='Grand total',
-                                                       func={'inntekt':['mean', 'sum']})
+                                                       aggargs={'inntekt':['mean', 'sum']})
         display(agg3)
-        agg4 = pandas_combinations_lono.all_combos_agg(pers, groupcols=['kjonn', 'alder'], 
-                                                       fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'}, 
-                                                       func={'inntekt':['mean', 'sum'], 'formue': ['count', 'min', 'max']}, 
-                                                       grand_total=True
-                                                      )
-        display(agg4)        
+        agg4 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], 
+                               fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'}, 
+                               aggargs={'inntekt':['mean', 'sum'], 'formue': ['count', 'min', 'max']}, 
+                               grand_total="Total"
+                              )
+        display(agg4)
         pers['antall'] = 1
         groupcols = pers.columns[0:3].tolist()
         func_dict = {'inntekt':['mean', 'sum'], 'formue': ['sum', 'std', 'count']}
         fillna_dict = {'kjonn': 'Total kjønn', 'alder': 'Total alder', 'kommune': 'Total kommune'}
-        agg5 = pandas_combinations_lono.all_combos_agg(pers, groupcols=groupcols, 
-                                                       func=func_dict,
-                                                       fillna_dict=fillna_dict, 
-                                                       grand_total=True,
-                                                       grand_total_text='All'
-                                                      )
+        agg5 = all_combos_agg(pers, groupcols=groupcols, 
+                               aggargs=func_dict,
+                               fillna_dict=fillna_dict, 
+                               grand_total="All"
+                              )
         display(agg5)    """
-    
-    
-    #print(f"{groupcols=}")
-    #print(f"{fillna_dict=}")
-    #print(f"{keep_empty=}")
-    #print(f"{grand_total=}")
-    #print(f"{grand_total_text=}")
-    #print(f"{aggargs=}")
-    
+        
     dataframe = df.copy()
     
     # Hack using categoricals to keep all unobserved groups
@@ -96,24 +93,18 @@ def all_combos_agg(df: pd.DataFrame,
     combos = []
     for r in range(len(groupcols) + 1, 0, -1):
         combos += list(combinations(groupcols, r))
-    #print(combos)
     # Create an empty DataFrame to store the results
     all_levels = pd.DataFrame()
 
     # Calculate aggregates for each combination
     for i, comb in enumerate(combos):
         # Calculate statistics using groupby
-        #print(list(comb))
         if keep_empty:
             # Hack using categoricals to keep all unobserved groups
             result = dataframe.groupby(list(comb), observed=False)
         else:
             result = dataframe.groupby(list(comb))
-        
-        
-        #print(vars(result))
-        #print(type(result))
-        
+
         result = result.agg(aggargs).reset_index(names=list(comb))
 
         # Add a column to differentiate the combinations
@@ -130,23 +121,21 @@ def all_combos_agg(df: pd.DataFrame,
         # Add category to categoricals
         cat_groupcols = df[groupcols].select_dtypes("category").columns
         for col in cat_groupcols:
-            all_levels[col] = all_levels[col].add_categories(grand_total_text)
-        
+            all_levels[col] = all_levels[col].add_categories(grand_total)
         
         gt = pd.DataFrame(dataframe.agg(aggargs)).T
         gt['level'] = 0
         gt['ways'] = 0
-        gt[groupcols] = grand_total_text
+        gt[groupcols] = grand_total
         gt = gt[all_levels.columns]
 
         # Append the grand total row to the combined results and sort by levels and groupcols
         all_levels = pd.concat([all_levels, gt], ignore_index=True)
-    
+
     all_levels = all_levels.sort_values(['level'] + groupcols)
 
     # Fill missing group columns with value
     if fillna_dict:
-        #print("filling na")
         all_levels = fill_na_dict(all_levels, fillna_dict)
 
     # Sett datatype tilbake til det den hadde i utgangpunktet

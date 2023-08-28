@@ -43,8 +43,7 @@ def test_grand_total():
            {"points": sum},
            fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
            keep_empty=True,
-           grand_total = True,
-           grand_total_text = "I alt"
+           grand_total = "I alt"
               )
     assert "I alt" in result["sex"].to_list() and "I alt" in result["age"].to_list()
     assert "Begge kjoenn" in result["sex"].to_list() and "Alle aldre" in result["age"].to_list()
