@@ -17,18 +17,15 @@ def check_env() -> str:
     ------
     OSError
         If no indications match, dapla/prod may have changed (please report)
-        Or you are using the function outside of dapla/prod?
+        Or you are using the function outside of dapla/prod on purpose?
     """
-    if "bruker" in os.listdir("/ssb"):
-        env = "PROD"
-    elif "DATA_MAINTENANCE_URL" in os.environ.keys():
-        if "dapla" in os.environ["DATA_MAINTENANCE_URL"]:
-            env = "DAPLA"
-        else:
-            raise ValueError("You are confusing me with your DATA_MAINTENANCE_URL")
+    jupyter_image_spec = os.environ.get("JUPYTER_IMAGE_SPEC")
+    if (jupyter_image_spec and "dapla-jupyterlab" in jupyter_image_spec):
+        return "DAPLA"
+    elif os.path.isdir("/ssb/bruker"):
+        return "PROD"
     else:
-        raise OSError("Ikke i prodsonen, eller på Dapla?")
-    return env
+        raise OSError("Ikke i prodsonen, eller på Dapla? Må funksjonen skrives om?")
 
 
 def linux_shortcuts(insert_environ: bool = False) -> dict:
