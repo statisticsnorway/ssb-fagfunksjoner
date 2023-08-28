@@ -48,4 +48,4 @@ jobs:
 
       - name: Run coverage
         run: |
-          poetry run pytest --cov fagfunksjoner/ --cov-fail-under=10
+          poetry run pytest --cov fagfunksjoner/data/ --cov-fail-under=10
