@@ -1,6 +1,7 @@
 """Automatically changes dtypes on pandas dataframes using logic.
 Tries to keep objects as strings if numeric, but with leading zeros.
-Downcasts ints to smalles size. Changes possible columns to categoricals."""
+Downcasts ints to smalles size. Changes possible columns to categoricals.
+The function you most likely want is "auto_dype"."""
 
 
 import pandas as pd

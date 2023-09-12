@@ -15,9 +15,9 @@ START_DIR = None
 class ProjectRoot:
     """Contextmanager to import locally "with". As in:
     with ProjectRoot:
-        from src.functions.local_funtions import local_function
+        from src.functions.local_functions import local_function
 
-    So this class navigates back and forth using a single "instruction"
+    So this class navigates back and forth using a single line/"instruction"
     """
 
     @staticmethod
