@@ -25,8 +25,11 @@ class ProjectRoot:
         navigate_root()
 
     @staticmethod
-    def __exit__():
+    def __exit__(exc_type, exc_value, tb):
         return_to_work_dir()
+        if exc_type is not None:
+            print(tb)
+            raise exc_type(exc_value)
 
 
 def navigate_root() -> Path:
