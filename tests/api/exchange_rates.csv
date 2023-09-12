@@ -1,0 +1,3 @@
+FREQ;Frekvens;BASE_CUR;Basisvaluta;QUOTE_CUR;Kvoteringsvaluta;TENOR;Løpetid;DECIMALS;CALCULATED;UNIT_MULT;Multiplikator;COLLECTION;Innsamlingstidspunkt;TIME_PERIOD;OBS_VALUE
+A;Årlig;SEK;Svenske kroner;NOK;Norske kroner;SP;Spot;2;false;2;Hundre;A;Gjennomsnitt av observasjoner gjennom perioden;2021;100,19
+A;Årlig;SEK;Svenske kroner;NOK;Norske kroner;SP;Spot;2;false;2;Hundre;A;Gjennomsnitt av observasjoner gjennom perioden;2022;95,03
