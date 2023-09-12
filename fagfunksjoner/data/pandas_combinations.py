@@ -46,6 +46,7 @@ def all_combos_agg(df: pd.DataFrame,
             You should not use dataframes with multi-index columns as they cause trouble.
 
         Examples:
+        import pandas as pd
         from fagfunksjoner.data.pandas_combinations import all_combos_agg
         data = {
                 'alder': [20, 60, 33, 33, 20],
@@ -63,7 +64,7 @@ def all_combos_agg(df: pd.DataFrame,
         display(agg2)
 
         agg3 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True,
-                                                       grand_total_text='Grand total',
+                                                       grand_total='Grand total',
                                                        aggargs={'inntekt':['mean', 'sum']})
         display(agg3)
         agg4 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], 
@@ -115,15 +116,18 @@ def all_combos_agg(df: pd.DataFrame,
 
         # Concatenate the current result with the combined results
         all_levels = pd.concat([all_levels, result], ignore_index=True)
-
+    
+    # Flatten the multindex columns if agg made some
+    all_levels = flatten_col_multiindex(all_levels)
+    
     # Calculate the grand total
     if grand_total:
         # Add category to categoricals
         cat_groupcols = df[groupcols].select_dtypes("category").columns
-        for col in cat_groupcols:
-            all_levels[col] = all_levels[col].add_categories(grand_total)
-        
-        gt = pd.DataFrame(dataframe.agg(aggargs)).T
+        if len(cat_groupcols):
+            for col in cat_groupcols:
+                all_levels[col] = all_levels[col].add_categories(grand_total)
+        gt = flatten_col_multiindex(pd.DataFrame(dataframe.agg(aggargs).unstack()).T)
         gt['level'] = 0
         gt['ways'] = 0
         gt[groupcols] = grand_total
@@ -131,7 +135,6 @@ def all_combos_agg(df: pd.DataFrame,
 
         # Append the grand total row to the combined results and sort by levels and groupcols
         all_levels = pd.concat([all_levels, gt], ignore_index=True)
-
     all_levels = all_levels.sort_values(['level'] + groupcols)
 
     # Fill missing group columns with value
@@ -151,4 +154,10 @@ def fill_na_dict(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
         if df[col].dtype == "category":
             df[col] = df[col].cat.add_categories(fill_val)
         df[col] = df[col].fillna(fill_val)
+    return df
+
+
+def flatten_col_multiindex(df: pd.DataFrame) -> pd.DataFrame:
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = ["_".join(col).strip().strip("_") for col in df.columns.values]
     return df
