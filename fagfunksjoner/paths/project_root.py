@@ -20,8 +20,11 @@ class ProjectRoot:
     So this class navigates back and forth using a single line/"instruction"
     """
 
-    @staticmethod
-    def __enter__():
+    def __init__(self):
+        self.path = find_root()
+        self.workdir = Path(os.getcwd())
+    
+    def __enter__(self):
         navigate_root()
 
     @staticmethod
@@ -30,6 +33,29 @@ class ProjectRoot:
         if exc_type is not None:
             print(tb)
             raise exc_type(exc_value)
+    
+    @staticmethod 
+    def load_toml(config_file: str) -> dict:
+        """Looks for a .toml file to load the contents from,
+        in the current folder, the specified path, the project root.
+
+        Parameters
+        ----------
+        config_file: str
+            The path or filename of the config-file to load.
+
+        Returns
+        -------
+        dict
+            The contents of the toml-file
+
+        Raises
+        ------
+        OSError
+            If the file specified is not found in the current folder,
+            the specified path, or the project root.
+        """
+        return load_toml(config_file)
 
 
 def navigate_root() -> Path:
