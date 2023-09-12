@@ -12,6 +12,16 @@ def dataset1():
     })
 
 
+def doc_data():
+    return pd.DataFrame({
+                'alder': [20, 60, 33, 33, 20],
+                'kommune': ['0301', '3001', '0301', '5401', '0301'],
+                'kjonn': ['1', '2', '1', '2', '2'],
+                'inntekt': [1000000, 120000, 220000, 550000, 50000],
+                'formue': [25000, 50000, 33000, 44000, 90000]
+    })
+
+
 def test_simple_sum_fillna():
     data_in = dataset1()
     result = all_combos_agg(data_in,
@@ -47,3 +57,52 @@ def test_grand_total():
               )
     assert "I alt" in result["sex"].to_list() and "I alt" in result["age"].to_list()
     assert "Begge kjoenn" in result["sex"].to_list() and "Alle aldre" in result["age"].to_list()
+    
+    
+def test_fromdoc_1():
+    result = all_combos_agg(doc_data(),
+                            groupcols=['kjonn'],
+                            keep_empty=True,
+                            aggargs={'inntekt':['mean', 'sum']})
+    assert len(result) == 2
+    assert len(result.columns) == 5
+
+
+def test_fromdoc_2():
+    result = all_combos_agg(doc_data(), 
+                            groupcols=['kjonn', 'alder'], 
+                            aggargs={'inntekt':['mean', 'sum']})
+    assert len(result) == 10
+    assert len(result.columns) == 6
+
+
+def test_fromdoc_3():
+    result = all_combos_agg(doc_data(), groupcols=['kjonn', 'alder'],
+                      grand_total='Grand total',
+                      aggargs={'inntekt':['mean', 'sum'], 'formue':['sum']})
+    assert len(result) == 11
+    assert len(result.columns) == 7
+
+
+def test_fromdoc_4():
+    result = all_combos_agg(doc_data(), groupcols=['kjonn', 'alder'], 
+                       fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'}, 
+                       aggargs={'inntekt':['mean', 'sum'], 'formue': ['count', 'min', 'max']}, 
+                       grand_total="Total"
+                      )
+    assert len(result) == 11
+    assert len(result.columns) == 9
+
+
+def test_fromdoc_5():
+    data_in = doc_data()
+    groupcols = data_in.columns[0:3].tolist()
+    func_dict = {'inntekt':['mean', 'sum'], 'formue': ['sum', 'std', 'count']}
+    fillna_dict = {'kjonn': 'Total kjønn', 'alder': 'Total alder', 'kommune': 'Total kommune'}
+    result = all_combos_agg(data_in, groupcols=groupcols, 
+                       aggargs=func_dict,
+                       fillna_dict=fillna_dict, 
+                       grand_total="All"
+                      )
+    assert len(result) == 27
+    assert len(result.columns) == 10

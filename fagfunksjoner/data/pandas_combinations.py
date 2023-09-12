@@ -155,6 +155,9 @@ def all_combos_agg(df: pd.DataFrame,
 
 
 def fill_na_dict(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
+    """Fills NAs in the passed dataframe with a dict.
+    Keys in dict should be column names, the values what should be inputed in the cells.
+    Also handles categorical columns if they exist in the dataframe."""
     df = df.copy()
     for col, fill_val in mapping.items():
         if df[col].dtype == "category":
@@ -163,7 +166,9 @@ def fill_na_dict(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
     return df
 
 
-def flatten_col_multiindex(df: pd.DataFrame) -> pd.DataFrame:
+def flatten_col_multiindex(df: pd.DataFrame, sep = "_") -> pd.DataFrame:
+    """If the dataframe has a multiindex as a column.
+    Flattens it by combining the names of the multiindex, using the seperator (sep)."""
     if isinstance(df.columns, pd.MultiIndex):
-        df.columns = ["_".join(col).strip().strip("_") for col in df.columns.values]
+        df.columns = [sep.join(col).strip().strip(sep) for col in df.columns.values]
     return df
