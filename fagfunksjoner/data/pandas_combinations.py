@@ -127,7 +127,13 @@ def all_combos_agg(df: pd.DataFrame,
         if len(cat_groupcols):
             for col in cat_groupcols:
                 all_levels[col] = all_levels[col].add_categories(grand_total)
-        gt = flatten_col_multiindex(pd.DataFrame(dataframe.agg(aggargs).unstack()).T)
+        gt = dataframe.agg(aggargs)
+        #return gt
+        if isinstance(gt, pd.DataFrame):
+            gt = gt.unstack()
+        gt = flatten_col_multiindex(pd.DataFrame(gt).T)
+        #display(gt)
+        #return gt
         gt['level'] = 0
         gt['ways'] = 0
         gt[groupcols] = grand_total
