@@ -1,17 +1,28 @@
 """This module works with filepaths, and is especially aimed at GCS and Dapla,
-but it works locally as well. The main purpose is fileversions according to
-Statistics Norway standards.
+but it works locally as well if standard for versionizing datafiles are implemented.
+The main purpose is fileversions according to Statistics Norway standards.
 """
 
 
 def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
     """Gets a list of filenames with multiple versions,
     and returns the latest versjons of the files.
+    Recommend using glob operation to create the input list.
+    See doc for glob operations:
+    - GCS: https://gcsfs.readthedocs.io/en/latest/api.html#gcsfs.core.GCSFileSystem.glob
+    - Locally: https://docs.python.org/3/library/glob.html
+
+    Example:
+    import dapla as dp
+    fs = dp.FileClient.get_gcs_file_system()
+    all_files = fs.glob("gs://dir/statdata_v*.parquet")
+    latest_files = get_latest_fileversions(all_files)
     
     Parameters
     ----------
     glob_list_path: list[str]
-        List of strings that represents a filepath
+        List of strings that represents a filepath.
+        Recommend that the list is created with glob operation.
 
     Returns
     -------
