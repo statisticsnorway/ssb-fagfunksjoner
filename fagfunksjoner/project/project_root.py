@@ -14,7 +14,7 @@ START_DIR = None
 
 class ProjectRoot:
     """Contextmanager to import locally "with". As in:
-    with ProjectRoot:
+    with ProjectRoot():
         from src.functions.local_functions import local_function
 
     So this class navigates back and forth using a single line/"instruction"
@@ -28,10 +28,10 @@ class ProjectRoot:
         navigate_root()
 
     @staticmethod
-    def __exit__(exc_type, exc_value, tb):
+    def __exit__(exc_type, exc_value, traceback):
         return_to_work_dir()
         if exc_type is not None:
-            print(tb)
+            print(traceback)
             raise exc_type(exc_value)
     
     @staticmethod 
