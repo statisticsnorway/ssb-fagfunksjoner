@@ -1,0 +1,1 @@
+def get_newest_from_list():
