@@ -5,8 +5,8 @@ The main purpose is fileversions according to Statistics Norway standards.
 
 
 def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
-    """Gets a list of filenames with multiple versions,
-    and returns the latest versjons of the files.
+    """Recieves a list of filenames with multiple versions,
+    and returns the latest versions of the files.
     Recommend using glob operation to create the input list.
     See doc for glob operations:
     - GCS: https://gcsfs.readthedocs.io/en/latest/api.html#gcsfs.core.GCSFileSystem.glob
