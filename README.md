@@ -22,21 +22,21 @@ poetry add ssb-fagfunksjoner
 ## Usage
 Check if you are on Dapla or in prodsone.
 ```python
-from fagfunksjoner.prodsone.check_env import check_env
+from fagfunksjoner import check_env
 check_env()
 ```
 
 Navigate to the root of your project and back again. Do stuff while in root, like importing local functions.
 ```python
-from fagfunksjoner.paths.project_root import ProjectRoot
-with ProjectRoot:
+from fagfunksjoner import ProjectRoot
+with ProjectRoot():
     ... # Do your local imports here...
 ```
 
 
 Querying internal oracle-database "DB1P"
 ```python
-from fagfunksjoner.prodsone.db1p import query_db1p
+from fagfunksjoner import query_db1p
 sporring = "SELECT SNR_NUDB FROM NUDB_ADM.TAB_UTD_PERSON"
 df = query_db1p(sporring)
 ```
@@ -46,12 +46,13 @@ Setting up password with saspy
 ```python
 from fagfunksjoner.prodsone import saspy_ssb
 saspy_ssb.set_password() # Follow the instructions to set the password
+saspy_ssb.saspy_df_from_path("path")
 ```
 
 
 Aggregate on all combinations of codes in certain columns (maybe before sending to statbank? Like proc means?)
 ```python
-from fagfunksjoner.data import pandas_combinations as combos
+from fagfunksjoner import all_combos_agg
 ialt_koder = {
 "skolefylk": "01-99",
 "almyrk": "00",
@@ -59,6 +60,8 @@ ialt_koder = {
 "sluttkomp": "00",
 }
 kolonner = list(ialt_koder.keys())
-tab = combos.all_combos(vgogjen, kolonner, {'antall': sum})
-tab = combos.fill_na_dict(tab, ialt_koder)
+tab = all_combos_agg(vgogjen, 
+                     groupcols=kolonner, 
+                     aggargs={'antall': sum}, 
+                     fillna_dict=ialt_koder)
 ```

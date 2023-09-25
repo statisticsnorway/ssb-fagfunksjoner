@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ssb-fagfunksjoner"
-version = "0.0.7"
+version = "0.0.8"
 description = "Fellesfunksjoner for ssb i Python"
 authors = ["SSB-pythonistas <ssb-pythonistas@ssb.no>"]
 license = "MIT"
@@ -16,7 +16,7 @@ requests = "^2.31.0"
 toml = "^0.10.2"
 beautifulsoup4 = "^4.12.2"
 python-dotenv = "^1.0.0"
-SQLAlchemy = "^2.0.16"
+SQLAlchemy = "^1.3.19"
 cx_Oracle = "^8.3.0"
 saspy = "^5.2.1"
 
