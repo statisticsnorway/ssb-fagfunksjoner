@@ -200,3 +200,6 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# PyCharm
+.idea/
