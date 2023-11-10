@@ -12,7 +12,7 @@ def all_combos_agg(df: pd.DataFrame,
                   aggargs: Dict[str, Callable],
                   fillna_dict: dict = None,
                   keep_empty: bool = False,
-                  grand_total: str = '',) -> pd.DataFrame:
+                  grand_total: dict | str = '',) -> pd.DataFrame:
     """ Generate all aggregation levels for a set of columns in a dataframe
 
         Parameters:
@@ -29,10 +29,11 @@ def all_combos_agg(df: pd.DataFrame,
             keep_empty: bool
                 Keep groups without observations through the process.
                 Removing them is default behaviour of Pandas
-            grand_total: str
+            grand_total: str | Dict[str|str]
                 Fill this value, if you want a grand total in your aggregations.
-                This string will be input in the fields in the groupcol columns.
-
+                If you use a string, this will be input in the fields in the groupcol columns.
+                If you send a dict, like to the fillna_dict parameter, the values in the cells
+                in the grand_total will reflect the values in the dict.
 
         Returns:
         --------
@@ -80,7 +81,7 @@ def all_combos_agg(df: pd.DataFrame,
         agg5 = all_combos_agg(pers, groupcols=groupcols, 
                                aggargs=func_dict,
                                fillna_dict=fillna_dict, 
-                               grand_total="All"
+                               grand_total=fillna_dict
                               )
         display(agg5)    """
         
@@ -136,7 +137,13 @@ def all_combos_agg(df: pd.DataFrame,
         #return gt
         gt['level'] = 0
         gt['ways'] = 0
-        gt[groupcols] = grand_total
+        if isinstance(grand_total, str):
+            gt[groupcols] = grand_total
+        elif isinstance(grand_total, dict):
+            for col, val in grand_total.items():
+                gt[col] = val
+        else:
+            raise ValueError("Dont know what to do with the grand_total arguement you sent")
         gt = gt[all_levels.columns]
 
         # Append the grand total row to the combined results and sort by levels and groupcols
