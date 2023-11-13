@@ -49,7 +49,7 @@ jobs:
       - name: Check for Tag
         id: check-for-tag
         run: |
-          if git show-ref --tags --verify --quiet "refs/tags/${env.REPO_VERSION}"; then
+          if git show-ref --tags --verify --quiet "refs/tags/${REPO_VERSION}"; then
             echo "TAG_EXISTS=true" >> $GITHUB_ENV
           else
             echo "TAG_EXISTS=false" >> $GITHUB_ENV
