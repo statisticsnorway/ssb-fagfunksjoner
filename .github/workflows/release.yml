@@ -42,7 +42,7 @@ jobs:
         uses: salsify/action-detect-and-tag-new-version@v2.0.3
         with:
           version-command: |
-            echo "REPO_VERSION=`bash -o pipefail -c "poetry version | awk '{ print \$2 }'"`" >> $GITHUB_ENV
+            echo "REPO_VERSION=`bash -o pipefail -c "poetry version | awk '{ print \\$2 }'"`" >> $GITHUB_ENV
           create-tag: false
       
       # See if detected tag is already on remote
