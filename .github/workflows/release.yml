@@ -50,15 +50,15 @@ jobs:
         id: check-for-tag
         run: |
           if git show-ref --tags --verify --quiet "refs/tags/${steps.check-version.outputs.tag}"; then
-            tag_exists = "true"
+            echo "TAG_EXISTS=true" >> $GITHUB_ENV
           else
-            tag_exists = "false"
+            echo "TAG_EXISTS=false" >> $GITHUB_ENV
           fi
       
       # Tag the remote with new version, if tag does not exist already
       - name: Tag new version on remote, if tag not exists
         id: set-tag-remote
-        if: steps.check-for-tag.outputs.tag_exists == "false"
+        if: ! ${{ env.TAG_EXISTS }}
         uses: salsify/action-detect-and-tag-new-version@v2.0.3
         with:
           version-command: |
