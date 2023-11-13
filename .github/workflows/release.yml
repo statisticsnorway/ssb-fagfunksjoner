@@ -58,7 +58,7 @@ jobs:
       # Tag the remote with new version, if tag does not exist already
       - name: Tag new version on remote, if tag not exists
         id: set-tag-remote
-        if: ! ${{ env.TAG_EXISTS }}
+        if: env.TAG_EXISTS == 'false'
         uses: salsify/action-detect-and-tag-new-version@v2.0.3
         with:
           version-command: |
