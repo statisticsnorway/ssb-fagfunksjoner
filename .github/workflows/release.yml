@@ -13,7 +13,7 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 3  # Required depth for checking for tags on remote
+          fetch-depth: 2  # Required depth for checking for tags on remote
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -35,30 +35,8 @@ jobs:
         run: |
           echo "::set-output name=sha::$(git rev-parse --verify --quiet HEAD^)"
       
-      # Just detect, create-tag = False, outputs variable "tag"
-      - name: Detect new version
-        id: check-version
-        if: steps.check-parent-commit.outputs.sha
-        uses: salsify/action-detect-and-tag-new-version@v2.0.3
-        with:
-          version-command: |
-            echo "REPO_VERSION=`bash -o pipefail -c "poetry version | awk '{ print \\$2 }'"`" >> $GITHUB_ENV
-          create-tag: false
-      
-      # See if detected tag is already on remote
-      - name: Check for Tag
-        id: check-for-tag
-        run: |
-          if git show-ref --tags --verify --quiet "refs/tags/v${REPO_VERSION}"; then
-            echo "TAG_EXISTS=true" >> $GITHUB_ENV
-          else
-            echo "TAG_EXISTS=false" >> $GITHUB_ENV
-          fi
-      
-      # Tag the remote with new version, if tag does not exist already
-      - name: Tag new version on remote, if tag not exists
+      - name: Tag new version on remote
         id: set-tag-remote
-        if: env.TAG_EXISTS == 'false'
         uses: salsify/action-detect-and-tag-new-version@v2.0.3
         with:
           version-command: |
