@@ -40,7 +40,7 @@ class PathSeries(pd.Series):
     A PathSeries should not be created directly, but by using methods of the
     Path class, chiefly the ls method. This will ensure that the values of the
     Series are Path objects, and that the index is a MultiIndex where
-    the 0th level holds the 'updated' timestamp of the files, and the
+    the 0th level holds the timestamp of the files, and the
     1st level holds the file sizes in megabytes.
 
     The class share some of the properties and methods of the Path class.
@@ -62,8 +62,8 @@ class PathSeries(pd.Series):
         The parent directories of the files.
     base: Path
         The common path amongst all paths in the Series.
-    updated: pd.Index
-        The 'updated' timestamp of the files.
+    timestamp: pd.Index
+        The timestamp of the files.
     mb: pd.Index
         The file size in megabytes.
     gb: pd.Index
@@ -90,11 +90,11 @@ class PathSeries(pd.Series):
     containing(pat, *args, **kwargs):
         Convenience method for selecting paths containing a string.
     within_minutes(minutes):
-        Select files with an 'updated' timestamp within the given number of minutes.
+        Select files with a timestamp within the given number of minutes.
     within_hours(hours):
-        Select files with an 'updated' timestamp within the given number of hours.
+        Select files with a timestamp within the given number of hours.
     within_days(days):
-        Select files with an 'updated' timestamp within the given number of days.
+        Select files with a timestamp within the given number of days.
     is_file():
         Check if each path in the series corresponds to a file.
     is_dir():
@@ -182,22 +182,22 @@ class PathSeries(pd.Series):
         return self.loc[lambda x: x.str.contains(pat, *args, **kwargs)]
 
     def within_minutes(self, minutes: int):
-        """Select files with an 'updated' timestamp within the given number of minutes."""
+        """Select files with a timestamp within the given number of minutes."""
         time_then = pd.Timestamp.now() - pd.Timedelta(minutes=minutes)
-        return self.loc[lambda x: x.updated > time_then]
+        return self.loc[lambda x: x.timestamp > time_then]
 
     def within_hours(self, hours: int):
-        """Select files with an 'updated' timestamp within the given number of hours."""
+        """Select files with a timestamp within the given number of hours."""
         time_then = pd.Timestamp.now() - pd.Timedelta(hours=hours)
-        return self.loc[lambda x: x.updated > time_then]
+        return self.loc[lambda x: x.timestamp > time_then]
 
     def within_days(self, days: int):
-        """Select files with an 'updated' timestamp within the given number of days."""
+        """Select files with a timestamp within the given number of days."""
         time_then = pd.Timestamp.now() - pd.Timedelta(days=days)
-        return self.loc[lambda x: x.updated > time_then]
+        return self.loc[lambda x: x.timestamp > time_then]
 
     @property
-    def updated(self) -> pd.Index:
+    def timestamp(self) -> pd.Index:
         return self.index.get_level_values(0)
 
     @property
@@ -286,7 +286,7 @@ class PathSeries(pd.Series):
         if len(s):
             s.index = pd.MultiIndex.from_arrays(
                 [s.index.get_level_values(0), s.index.get_level_values(1).astype(int)],
-                names=["updated", "mb (int)"],
+                names=["timestamp", "mb (int)"],
             )
 
         return s.to_string(**repr_params)
@@ -304,7 +304,7 @@ class PathSeries(pd.Series):
                 self.index.get_level_values(0),
                 self.index.get_level_values(1).astype(int),
             ],
-            names=["updated", "mb (int)"],
+            names=["timestamp", "mb (int)"],
         )
 
         if len(df) <= self._max_rows:
@@ -596,13 +596,13 @@ class Path(str):
         if not timeout:
             return highest_numbered.add_to_version_number(1)
 
-        updated: PathSeries = highest_numbered.ls().updated
-        assert len(updated) == 1
+        timestamp: PathSeries = highest_numbered.ls().timestamp
+        assert len(timestamp) == 1
 
         time_should_be_at_least = pd.Timestamp.now() - pd.Timedelta(minutes=timeout)
-        if updated[0] > time_should_be_at_least:
+        if timestamp[0] > time_should_be_at_least:
             raise ValueError(
-                f"Latest version of the file was updated {updated[0]}, which "
+                f"Latest version of the file was updated {timestamp[0]}, which "
                 f"is less than the timeout period of {timeout} minutes. "
                 "Change the timeout argument, but be sure to not save new "
                 "versions in a loop."
@@ -996,7 +996,7 @@ class Path(str):
         if not len(fileinfo):
             return pd.Series()
 
-        updated: pd.Index = (
+        timestamp: pd.Index = (
             pd.to_datetime(pd.Index(fileinfo[:, 0], name="updated"))
             .round("s")
             .tz_convert("Europe/Oslo")
@@ -1005,7 +1005,7 @@ class Path(str):
         )
         mb = pd.Index(fileinfo[:, 1], name="mb").astype(float) / 1_000_000
 
-        index = pd.MultiIndex.from_arrays([updated, mb])
+        index = pd.MultiIndex.from_arrays([timestamp, mb])
 
         return (
             pd.Series(fileinfo[:, 2], index=index, name="path")
