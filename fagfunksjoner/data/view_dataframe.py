@@ -1,9 +1,11 @@
-# +
 import pandas as pd
 import numpy as np
 import ipywidgets as widgets
 
-def choose_value(dataframe, column, value, operator: str):
+def choose_value(dataframe: pd.DataFrame,
+                 column: str,
+                 value: str|int|float,
+                 operator: str) -> None:
     operator_functions = {
         '>': lambda df: df.loc[df[column] > value],
         '>=': lambda df: df.loc[df[column] >= value],
@@ -29,7 +31,10 @@ def choose_value(dataframe, column, value, operator: str):
     else:  
         display(operator_functions[operator](dataframe))
 
-def view_dataframe(dataframe: pd.DataFrame, column: str, operator: str ='==' , unique_limit: int=100):
+def view_dataframe(dataframe: pd.DataFrame,
+                   column: str,
+                   operator: str = '==', 
+                   unique_limit: int = 100) -> widgets.HTML:
     """
     Display an interactive widget for filtering and viewing data in a DataFrame based on selection of values in one column
 
