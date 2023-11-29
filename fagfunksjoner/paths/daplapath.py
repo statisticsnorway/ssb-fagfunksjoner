@@ -412,7 +412,7 @@ def split_path_and_make_copyable_html(
 
     return (
         copy_to_clipboard_js
-        + f'<a href="{displayed_text}" onclick="copyToClipboard(\'{path}\')">{displayed_text}</a>'
+        + f'<a href="{displayed_text}" title="{path}" onclick="copyToClipboard(\'{path}\')">{displayed_text}</a>'
     )
 
 
