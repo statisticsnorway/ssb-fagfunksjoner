@@ -7,3 +7,4 @@ from .data.pandas_dtypes import auto_dtype
 from .prodsone.check_env import check_env, linux_shortcuts
 from .prodsone.db1p import query_db1p
 from .prodsone.saspy_ssb import saspy_session, saspy_df_from_path
+from .data.view_dataframe import view_dataframe

@@ -1,12 +1,12 @@
 {
   "template": "https://github.com/statisticsnorway/ssb-project-template-stat",
-  "commit": "cb5e93fbcb298920b3d76770352d823840c49a38",
-  "checkout": "1.0.0",
+  "commit": "15546f2c4f8e89eaec7afce10b7b674ff35a33bc",
+  "checkout": null,
   "context": {
     "cookiecutter": {
       "full_name": "Carl Corneil",
       "email": "cfc@ssb.no",
-      "project_name": "fag_fellesfunksjoner",
+      "project_name": "ssb-fagfunksjoner",
       "description": "Fellesfunksjoner lagd av ressursgruppen for Python",
       "license_year": "2022",
       "_template": "https://github.com/statisticsnorway/ssb-project-template-stat"
