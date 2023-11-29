@@ -1,3 +1,4 @@
+import functools
 from pathlib import PurePosixPath, PurePath
 import re
 import warnings
@@ -29,6 +30,8 @@ GS_URI_PREFIX = "gs://"
 def _pathseries_constructor_with_fallback(data=None, index=None, **kwargs):
     series = pd.Series(data, index, **kwargs)
     # TODO introduce coupling with Path for predictability?
+    if not len(series):
+        return PathSeries(series, index=pd.MultiIndex.from_arrays([[], []]))
     if pd.api.types.is_numeric_dtype(series):
         return series
     return PathSeries(series)
@@ -113,7 +116,7 @@ class PathSeries(pd.Series):
 
     def __init__(
         self,
-        data: list[str],
+        data: list[str] | None = None,
         index=None,
         max_rows: int | None = 10,
         max_colwidth: int = 75,
@@ -167,7 +170,7 @@ class PathSeries(pd.Series):
         """
 
         if recursive:
-            return get_files_in_subfolders(self.dirs())
+            return [path.glob("**") for path in self.dirs()]
 
         return [path.ls() for path in self.dirs()]
 
@@ -198,19 +201,35 @@ class PathSeries(pd.Series):
 
     @property
     def timestamp(self) -> pd.Index:
-        return self.index.get_level_values(0)
+        try:
+            return self.index.get_level_values(0)
+        except IndexError:
+            assert not len(self)
+            return self.index
 
     @property
     def mb(self) -> pd.Index:
-        return self.index.get_level_values(1)
+        try:
+            return self.index.get_level_values(1)
+        except IndexError:
+            assert not len(self)
+            return self.index
 
     @property
     def gb(self) -> pd.Index:
-        return self.index.get_level_values(1) / 1000
+        try:
+            return self.index.get_level_values(1) / 1000
+        except IndexError:
+            assert not len(self)
+            return self.index
 
     @property
     def kb(self) -> pd.Index:
-        return self.index.get_level_values(1) * 1000
+        try:
+            return self.index.get_level_values(1) * 1000
+        except IndexError:
+            assert not len(self)
+            return self.index
 
     @property
     def stem(self) -> pd.Series:
@@ -296,6 +315,7 @@ class PathSeries(pd.Series):
 
     def _repr_html_(self):
         df = pd.DataFrame({"path": self})
+
         if not len(df):
             return df._repr_html_()
 
@@ -316,15 +336,22 @@ class PathSeries(pd.Series):
         first_rows = df.head(self._max_rows // 2).style.format(
             {"path": split_path_and_make_copyable_html}
         )
-        last_rows = df.tail(self._max_rows // 2).style.format(
-            {"path": split_path_and_make_copyable_html}
+        last_rows = (
+            df.tail(self._max_rows // 2)
+            .style.format({"path": split_path_and_make_copyable_html})
+            .set_table_styles([{"selector": "thead", "props": "display: none;"}])
         )
+
+        elipsis_values = "..."
 
         elipsis_row = df.iloc[[0]]
         elipsis_row.index = pd.MultiIndex.from_arrays(
-            [["..."], ["..."]], names=elipsis_row.index.names
+            [[elipsis_values], [elipsis_values]], names=elipsis_row.index.names
         )
-        elipsis_row.iloc[[0]] = ["..."] * len(elipsis_row.columns)
+
+        elipsis_row.iloc[[0]] = [
+            f"[{len(df) - self._max_rows // 2 * 2} more rows]"
+        ] * len(elipsis_row.columns)
         elipsis_row = elipsis_row.style
 
         return first_rows.concat(elipsis_row).concat(last_rows).to_html()
@@ -596,7 +623,7 @@ class Path(str):
         if not timeout:
             return highest_numbered.add_to_version_number(1)
 
-        timestamp: PathSeries = highest_numbered.ls().timestamp
+        timestamp: pd.Index = highest_numbered.ls().timestamp
         assert len(timestamp) == 1
 
         time_should_be_at_least = pd.Timestamp.now() - pd.Timedelta(minutes=timeout)
@@ -772,29 +799,45 @@ class Path(str):
 
         return self.ls(recursive=recursive).files()
 
+    def glob(self, pattern, *args, **kwargs):
+        kwargs.pop("detail", None)
+        info: list[dict] | dict = dp.FileClient.get_gcs_file_system().glob(
+            self / pattern, detail=True, *args, **kwargs
+        )
+        if isinstance(info, dict):
+            info = [info]
+
+        formated_list = [
+            {key.lower(): val for key, val in inner_filedict.items()}
+            for filedict in info
+            for inner_filedict in filedict.values()
+        ]
+
+        return self._get_files_and_dirs(formated_list)
+
     def ls(self, recursive: bool = False) -> PathSeries:
         """Lists the contents of a GCS bucket path.
 
         Returns a PathSeries with paths as values and timestamps
         and file size as index.
         """
-        info: list[dict] = dp.FileClient.get_gcs_file_system().ls(self, detail=True)
+        if recursive:
+            return self.glob("**")
 
+        info: list[dict] = dp.FileClient.get_gcs_file_system().ls(self, detail=True)
+        return self._get_files_and_dirs(info)
+
+    def _get_files_and_dirs(self, info: list[dict]) -> PathSeries:
         files: pd.Series = self._get_file_series(info).apply(Path)
 
         dirs: pd.Series = self._get_directory_series(info).apply(Path)
 
-        out = PathSeries(pd.concat([x for x in [files, dirs] if len(x)]))
+        if not any(len(lst) for lst in [files, dirs]):
+            return PathSeries()
 
-        if not len(dirs) or not recursive:
-            return out.sort_index(level=0)
+        out = PathSeries(pd.concat([lst for lst in [files, dirs] if len(lst)]))
 
-        more_files: list[PathSeries] = get_files_in_subfolders(dirs)
-
-        if not len(more_files):
-            return out.sort_index(level=0)
-
-        return pd.concat([out] + more_files).sort_index(level=0)
+        return out.sort_index(level=0)
 
     def with_suffix(self, suffix: str):
         return Path(self._path.with_suffix(suffix))
@@ -971,7 +1014,7 @@ class Path(str):
 
         Index is a MultiIndex of all zeros (because directories have no timestamp and size).
         """
-        dirs = np.array([x["name"] for x in info if x["storageClass"] == "DIRECTORY"])
+        dirs = np.array([x["name"] for x in info if x["type"] == "directory"])
         return pd.Series(
             dirs,
             index=pd.MultiIndex.from_arrays(
@@ -989,7 +1032,7 @@ class Path(str):
             [
                 (x["updated"], x["size"], x["name"])
                 for x in info
-                if x["storageClass"] != "DIRECTORY"
+                if x["type"] != "directory"
             ]
         )
 
@@ -1003,7 +1046,7 @@ class Path(str):
             .tz_localize(None)
             .round("s")
         )
-        mb = pd.Index(fileinfo[:, 1], name="mb").astype(float) / 1_000_000
+        mb = pd.Index(fileinfo[:, 1], name="mb (int)").astype(float) / 1_000_000
 
         index = pd.MultiIndex.from_arrays([timestamp, mb])
 
@@ -1029,20 +1072,3 @@ class Path(str):
                 f"{self.__class__.__name__} and {other.__class__.__name__}"
             )
         return Path(f"{self}/{as_str(other)}")
-
-
-def get_files_in_subfolders(folderinfo: PathSeries) -> list[PathSeries]:
-    folderinfo: PathSeries = folderinfo.copy()
-
-    fileinfo: list[PathSeries] = []
-
-    while len(folderinfo):
-        new_folderinfo: list[PathSeries] = []
-        for path in folderinfo:
-            lst: PathSeries = path.ls(recursive=False)
-            fileinfo.append(lst.files())
-            new_folderinfo.append(lst.dirs())
-
-        folderinfo = pd.concat(new_folderinfo)
-
-    return fileinfo
