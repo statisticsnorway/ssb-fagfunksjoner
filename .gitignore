@@ -22,6 +22,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.poetry/cache/
 
 # C extensions
 *.so
@@ -201,5 +202,10 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+<<<<<<< ours
 # PyCharm
 .idea/
+=======
+# ignore poetry in .config
+.poetry/**
+>>>>>>> theirs
