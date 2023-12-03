@@ -2,39 +2,41 @@ import datetime as dt
 from pandas import Timestamp
 
 
-class TimeFormats:
+class StandardTimeFormats:
     """
-    Class for standard timeformats according to ISO 8601.
+    Class for standard timeformats according to ISO 8601 which Statistics Norway are following.
+    Docs: https://statistics-norway.atlassian.net/wiki/spaces/MPD/pages/2953084957/Standardformater#Dato--og-tidsformater-(ISO-8601)
     See: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
     """
 
     @staticmethod
     def date_time():
-        "Date and time format"
+        "Date and time format YYYY-MM-DDThh:mm:ss"
         return "%G-%m-%dT%H:%M:%S"
 
     @staticmethod
     def date():
-        "Date format"
+        "Date format YYYY-MM-DD"
         return "%G-%m-%d"
 
     @staticmethod
     def month():
-        "Gives year and month format"
+        "Gives year and month format YYYY-MM"
         return "%G-%m"
 
     @staticmethod
     def year():
-        "Gives only year format"
+        "Gives only year format YYYY"
         return "%G"
 
     @staticmethod
     def week():
-        "Gives year and week format"
+        "Gives year and week format YYYY-WW"
         return "%GW%V"
 
     @staticmethod
     def year_days():
+        "Gives year and day of year format YYYY-DDD"
         return "%Y-%j"
 
 
