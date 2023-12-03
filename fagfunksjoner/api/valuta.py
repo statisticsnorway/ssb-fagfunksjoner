@@ -1,5 +1,5 @@
-from datetime import date
 import pathlib
+from datetime import date
 
 import pandas as pd
 import requests
