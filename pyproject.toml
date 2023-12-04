@@ -44,11 +44,6 @@ pyproject-flake8 = ">=5.0.4.post1"
 
 
 
-[[tool.poetry.source]]
-name = "nexus"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-priority = "default"
-
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

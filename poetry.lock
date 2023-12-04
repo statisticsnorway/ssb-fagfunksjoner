@@ -96,11 +96,6 @@ yarl = ">=1.0,<2.0"
 [package.extras]
 speedups = ["Brotli", "aiodns", "brotlicffi"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "aiosignal"
 version = "1.3.1"
@@ -114,11 +109,6 @@ files = [
 
 [package.dependencies]
 frozenlist = ">=1.1.0"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "alembic"
@@ -139,11 +129,6 @@ typing-extensions = ">=4"
 [package.extras]
 tz = ["backports.zoneinfo"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "annotated-types"
 version = "0.6.0"
@@ -155,11 +140,6 @@ files = [
     {file = "annotated_types-0.6.0.tar.gz", hash = "sha256:563339e807e53ffd9c267e99fc6d9ea23eb8443c08f112651963e24e22f84a5d"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "appnope"
 version = "0.1.3"
@@ -170,11 +150,6 @@ files = [
     {file = "appnope-0.1.3-py2.py3-none-any.whl", hash = "sha256:265a455292d0bd8a72453494fa24df5a11eb18373a60c7c0430889f22548605e"},
     {file = "appnope-0.1.3.tar.gz", hash = "sha256:02bd91c4de869fbb1e1c50aafc4098827a7a54ab2f39d9dcba6c9547ed920e24"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "asttokens"
@@ -194,11 +169,6 @@ six = ">=1.12.0"
 astroid = ["astroid (>=1,<2)", "astroid (>=2,<4)"]
 test = ["astroid (>=1,<2)", "astroid (>=2,<4)", "pytest"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "async-generator"
 version = "1.10"
@@ -210,11 +180,6 @@ files = [
     {file = "async_generator-1.10.tar.gz", hash = "sha256:6ebb3d106c12920aaae42ccb6f787ef5eefdcdd166ea3d628fa8476abe712144"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "async-timeout"
 version = "4.0.3"
@@ -225,11 +190,6 @@ files = [
     {file = "async-timeout-4.0.3.tar.gz", hash = "sha256:4640d96be84d82d02ed59ea2b7105a0f7b33abe8703703cd0ab0bf87c427522f"},
     {file = "async_timeout-4.0.3-py3-none-any.whl", hash = "sha256:7405140ff1230c310e51dc27b3145b9092d659ce68ff733fb0cefe3ee42be028"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "attrs"
@@ -249,11 +209,6 @@ docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-
 tests = ["attrs[tests-no-zope]", "zope-interface"]
 tests-no-zope = ["cloudpickle", "hypothesis", "mypy (>=1.1.1)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-xdist[psutil]"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "autoflake"
 version = "2.2.1"
@@ -268,11 +223,6 @@ files = [
 [package.dependencies]
 pyflakes = ">=3.0.0"
 tomli = {version = ">=2.0.1", markers = "python_version < \"3.11\""}
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "beautifulsoup4"
@@ -292,11 +242,6 @@ soupsieve = ">1.2"
 html5lib = ["html5lib"]
 lxml = ["lxml"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "bump2version"
 version = "1.0.1"
@@ -307,11 +252,6 @@ files = [
     {file = "bump2version-1.0.1-py2.py3-none-any.whl", hash = "sha256:37f927ea17cde7ae2d7baf832f8e80ce3777624554a653006c9144f8017fe410"},
     {file = "bump2version-1.0.1.tar.gz", hash = "sha256:762cb2bfad61f4ec8e2bdf452c7c267416f8c70dd9ecb1653fd0bbb01fa936e6"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "cachetools"
@@ -324,11 +264,6 @@ files = [
     {file = "cachetools-5.3.2.tar.gz", hash = "sha256:086ee420196f7b2ab9ca2db2520aca326318b68fe5ba8bc4d49cca91add450f2"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "certifi"
 version = "2023.11.17"
@@ -339,11 +274,6 @@ files = [
     {file = "certifi-2023.11.17-py3-none-any.whl", hash = "sha256:e036ab49d5b79556f99cfc2d9320b34cfbe5be05c5871b51de9329f0603b0474"},
     {file = "certifi-2023.11.17.tar.gz", hash = "sha256:9b469f3a900bf28dc19b8cfbf8019bf47f7fdd1a65a1d4ffb98fc14166beb4d1"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "certipy"
@@ -362,11 +292,6 @@ pyopenssl = "*"
 [package.extras]
 dev = ["pytest"]
 test = ["pytest"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "cffi"
@@ -432,11 +357,6 @@ files = [
 [package.dependencies]
 pycparser = "*"
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "cfgv"
 version = "3.4.0"
@@ -447,11 +367,6 @@ files = [
     {file = "cfgv-3.4.0-py2.py3-none-any.whl", hash = "sha256:b7265b1f29fd3316bfcd2b330d63d024f2bfd8bcb8b0272f8e19a504856c48f9"},
     {file = "cfgv-3.4.0.tar.gz", hash = "sha256:e52591d4c5f5dead8e0f673fb16db7949d2cfb3f7da4582893288f0ded8fe560"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "charset-normalizer"
@@ -552,11 +467,6 @@ files = [
     {file = "charset_normalizer-3.3.2-py3-none-any.whl", hash = "sha256:3e4d1f6587322d2788836a99c69062fbb091331ec940e02d12d179c1d53e25fc"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "colorama"
 version = "0.4.6"
@@ -567,11 +477,6 @@ files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "comm"
@@ -589,11 +494,6 @@ traitlets = ">=4"
 
 [package.extras]
 test = ["pytest"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "coverage"
@@ -662,11 +562,6 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 [package.extras]
 toml = ["tomli"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "cryptography"
 version = "41.0.7"
@@ -712,11 +607,6 @@ ssh = ["bcrypt (>=3.1.5)"]
 test = ["pretend", "pytest (>=6.2.0)", "pytest-benchmark", "pytest-cov", "pytest-xdist"]
 test-randomorder = ["pytest-randomly"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "cx-oracle"
 version = "8.3.0"
@@ -742,11 +632,6 @@ files = [
     {file = "cx_Oracle-8.3.0.tar.gz", hash = "sha256:3b2d215af4441463c97ea469b9cc307460739f89fdfa8ea222ea3518f1a424d9"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "dapla-toolbelt"
 version = "1.8.4"
@@ -770,11 +655,6 @@ pyarrow = ">=8.0.0"
 pydantic = ">=1.9.1"
 pyjwt = ">=2.6.0"
 requests = ">=2.27.1"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "debugpy"
@@ -803,11 +683,6 @@ files = [
     {file = "debugpy-1.8.0.zip", hash = "sha256:12af2c55b419521e33d5fb21bd022df0b5eb267c3e178f1d374a63a2a6bdccd0"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "decorator"
 version = "5.1.1"
@@ -818,11 +693,6 @@ files = [
     {file = "decorator-5.1.1-py3-none-any.whl", hash = "sha256:b8c3f85900b9dc423225913c5aace94729fe1fa9763b38939a95226f02d37186"},
     {file = "decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "distlib"
@@ -835,11 +705,6 @@ files = [
     {file = "distlib-0.3.7.tar.gz", hash = "sha256:9dafe54b34a028eafd95039d5e5d4851a13734540f1331060d31c9916e7147a8"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "eradicate"
 version = "2.3.0"
@@ -850,11 +715,6 @@ files = [
     {file = "eradicate-2.3.0-py3-none-any.whl", hash = "sha256:2b29b3dd27171f209e4ddd8204b70c02f0682ae95eecb353f10e8d72b149c63e"},
     {file = "eradicate-2.3.0.tar.gz", hash = "sha256:06df115be3b87d0fc1c483db22a2ebb12bcf40585722810d809cc770f5031c37"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "exceptiongroup"
@@ -870,11 +730,6 @@ files = [
 [package.extras]
 test = ["pytest (>=6)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "executing"
 version = "2.0.1"
@@ -888,11 +743,6 @@ files = [
 
 [package.extras]
 tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipython", "littleutils", "pytest", "rich"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "filelock"
@@ -910,11 +760,6 @@ docs = ["furo (>=2023.9.10)", "sphinx (>=7.2.6)", "sphinx-autodoc-typehints (>=1
 testing = ["covdefaults (>=2.3)", "coverage (>=7.3.2)", "diff-cover (>=8)", "pytest (>=7.4.3)", "pytest-cov (>=4.1)", "pytest-mock (>=3.12)", "pytest-timeout (>=2.2)"]
 typing = ["typing-extensions (>=4.8)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "flake8"
 version = "6.1.0"
@@ -930,11 +775,6 @@ files = [
 mccabe = ">=0.7.0,<0.8.0"
 pycodestyle = ">=2.11.0,<2.12.0"
 pyflakes = ">=3.1.0,<3.2.0"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "flake8-bugbear"
@@ -954,11 +794,6 @@ flake8 = ">=6.0.0"
 [package.extras]
 dev = ["coverage", "hypothesis", "hypothesmith (>=0.2)", "pre-commit", "pytest", "tox"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "flake8-builtins"
 version = "2.2.0"
@@ -976,11 +811,6 @@ flake8 = "*"
 [package.extras]
 test = ["pytest"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "flake8-comprehensions"
 version = "3.14.0"
@@ -994,11 +824,6 @@ files = [
 
 [package.dependencies]
 flake8 = ">=3.0,<3.2.0 || >3.2.0"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "flake8-debugger"
@@ -1014,11 +839,6 @@ files = [
 [package.dependencies]
 flake8 = ">=3.0"
 pycodestyle = "*"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "flake8-eradicate"
@@ -1036,11 +856,6 @@ attrs = "*"
 eradicate = ">=2.0,<3.0"
 flake8 = ">5"
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "flake8-logging-format"
 version = "0.9.0"
@@ -1054,11 +869,6 @@ files = [
 [package.extras]
 lint = ["flake8"]
 test = ["PyHamcrest", "pytest", "pytest-cov"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "frozenlist"
@@ -1130,11 +940,6 @@ files = [
     {file = "frozenlist-1.4.0.tar.gz", hash = "sha256:09163bdf0b2907454042edb19f887c6d33806adc71fbd54afc14908bfdc22251"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "fsspec"
 version = "2023.12.0"
@@ -1170,11 +975,6 @@ smb = ["smbprotocol"]
 ssh = ["paramiko"]
 tqdm = ["tqdm"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "gcsfs"
 version = "2023.12.0"
@@ -1198,11 +998,6 @@ requests = "*"
 [package.extras]
 crc = ["crcmod"]
 gcsfuse = ["fusepy"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "google-api-core"
@@ -1234,11 +1029,6 @@ grpc = ["grpcio (>=1.33.2,<2.0dev)", "grpcio (>=1.49.1,<2.0dev)", "grpcio-status
 grpcgcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "google-auth"
 version = "2.24.0"
@@ -1262,11 +1052,6 @@ pyopenssl = ["cryptography (>=38.0.3)", "pyopenssl (>=20.0.0)"]
 reauth = ["pyu2f (>=0.1.5)"]
 requests = ["requests (>=2.20.0,<3.0.0.dev0)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "google-auth-oauthlib"
 version = "1.1.0"
@@ -1285,11 +1070,6 @@ requests-oauthlib = ">=0.7.0"
 [package.extras]
 tool = ["click (>=6.0.0)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "google-cloud-core"
 version = "2.3.3"
@@ -1307,11 +1087,6 @@ google-auth = ">=1.25.0,<3.0dev"
 
 [package.extras]
 grpc = ["grpcio (>=1.38.0,<2.0dev)"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "google-cloud-pubsub"
@@ -1338,11 +1113,6 @@ protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.0 || >4.21.0,<4
 [package.extras]
 libcst = ["libcst (>=0.3.10)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "google-cloud-storage"
 version = "2.13.0"
@@ -1364,11 +1134,6 @@ requests = ">=2.18.0,<3.0.0dev"
 
 [package.extras]
 protobuf = ["protobuf (<5.0.0dev)"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "google-crc32c"
@@ -1450,11 +1215,6 @@ files = [
 [package.extras]
 testing = ["pytest"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "google-resumable-media"
 version = "2.6.0"
@@ -1473,11 +1233,6 @@ google-crc32c = ">=1.0,<2.0dev"
 aiohttp = ["aiohttp (>=3.6.2,<4.0.0dev)", "google-auth (>=1.22.0,<2.0dev)"]
 requests = ["requests (>=2.18.0,<3.0.0dev)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "googleapis-common-protos"
 version = "1.61.0"
@@ -1495,11 +1250,6 @@ protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.1 || >4.21.1,<4
 
 [package.extras]
 grpc = ["grpcio (>=1.44.0,<2.0.0.dev0)"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "greenlet"
@@ -1571,11 +1321,6 @@ files = [
 docs = ["Sphinx"]
 test = ["objgraph", "psutil"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "grpc-google-iam-v1"
 version = "0.12.7"
@@ -1591,11 +1336,6 @@ files = [
 googleapis-common-protos = {version = ">=1.56.0,<2.0.0dev", extras = ["grpc"]}
 grpcio = ">=1.44.0,<2.0.0dev"
 protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4.21.4 || >4.21.4,<4.21.5 || >4.21.5,<5.0.0dev"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "grpcio"
@@ -1663,11 +1403,6 @@ files = [
 [package.extras]
 protobuf = ["grpcio-tools (>=1.59.3)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "grpcio-status"
 version = "1.59.3"
@@ -1684,11 +1419,6 @@ googleapis-common-protos = ">=1.5.5"
 grpcio = ">=1.59.3"
 protobuf = ">=4.21.6"
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "identify"
 version = "2.5.32"
@@ -1703,11 +1433,6 @@ files = [
 [package.extras]
 license = ["ukkonen"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "idna"
 version = "3.6"
@@ -1719,11 +1444,6 @@ files = [
     {file = "idna-3.6.tar.gz", hash = "sha256:9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "iniconfig"
 version = "2.0.0"
@@ -1734,11 +1454,6 @@ files = [
     {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
     {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "ipykernel"
@@ -1772,11 +1487,6 @@ docs = ["myst-parser", "pydata-sphinx-theme", "sphinx", "sphinx-autodoc-typehint
 pyqt5 = ["pyqt5"]
 pyside6 = ["pyside6"]
 test = ["flaky", "ipyparallel", "pre-commit", "pytest (>=7.0)", "pytest-asyncio", "pytest-cov", "pytest-timeout"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "ipython"
@@ -1814,11 +1524,6 @@ qtconsole = ["qtconsole"]
 test = ["pickleshare", "pytest (<7.1)", "pytest-asyncio (<0.22)", "testpath"]
 test-extra = ["curio", "matplotlib (!=3.2.0)", "nbformat", "numpy (>=1.22)", "pandas", "pickleshare", "pytest (<7.1)", "pytest-asyncio (<0.22)", "testpath", "trio"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "ipywidgets"
 version = "8.1.1"
@@ -1840,11 +1545,6 @@ widgetsnbextension = ">=4.0.9,<4.1.0"
 [package.extras]
 test = ["ipykernel", "jsonschema", "pytest (>=3.6.0)", "pytest-cov", "pytz"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "isort"
 version = "5.12.0"
@@ -1861,11 +1561,6 @@ colors = ["colorama (>=0.4.3)"]
 pipfile-deprecated-finder = ["pip-shims (>=0.5.2)", "pipreqs", "requirementslib"]
 plugins = ["setuptools"]
 requirements-deprecated-finder = ["pip-api", "pipreqs"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "jedi"
@@ -1886,11 +1581,6 @@ docs = ["Jinja2 (==2.11.3)", "MarkupSafe (==1.1.1)", "Pygments (==2.8.1)", "alab
 qa = ["flake8 (==5.0.4)", "mypy (==0.971)", "types-setuptools (==67.2.0.1)"]
 testing = ["Django", "attrs", "colorama", "docopt", "pytest (<7.0.0)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "jinja2"
 version = "3.1.2"
@@ -1907,11 +1597,6 @@ MarkupSafe = ">=2.0"
 
 [package.extras]
 i18n = ["Babel (>=2.7)"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "jsonschema"
@@ -1934,11 +1619,6 @@ rpds-py = ">=0.7.1"
 format = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3987", "uri-template", "webcolors (>=1.11)"]
 format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3986-validator (>0.1.0)", "uri-template", "webcolors (>=1.11)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "jsonschema-specifications"
 version = "2023.11.2"
@@ -1952,11 +1632,6 @@ files = [
 
 [package.dependencies]
 referencing = ">=0.31.0"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "jupyter-client"
@@ -1980,11 +1655,6 @@ traitlets = ">=5.3"
 docs = ["ipykernel", "myst-parser", "pydata-sphinx-theme", "sphinx (>=4)", "sphinx-autodoc-typehints", "sphinxcontrib-github-alt", "sphinxcontrib-spelling"]
 test = ["coverage", "ipykernel (>=6.14)", "mypy", "paramiko", "pre-commit", "pytest", "pytest-cov", "pytest-jupyter[client] (>=0.4.1)", "pytest-timeout"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "jupyter-core"
 version = "5.5.0"
@@ -2005,11 +1675,6 @@ traitlets = ">=5.3"
 docs = ["myst-parser", "pydata-sphinx-theme", "sphinx-autodoc-typehints", "sphinxcontrib-github-alt", "sphinxcontrib-spelling", "traitlets"]
 test = ["ipykernel", "pre-commit", "pytest", "pytest-cov", "pytest-timeout"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "jupyter-telemetry"
 version = "0.1.0"
@@ -2026,11 +1691,6 @@ jsonschema = "*"
 python-json-logger = "*"
 "ruamel.yaml" = "*"
 traitlets = "*"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "jupyterhub"
@@ -2063,11 +1723,6 @@ traitlets = ">=4.3.2"
 [package.extras]
 test = ["beautifulsoup4[html5lib]", "coverage", "cryptography", "jsonschema", "jupyterlab (>=3)", "mock", "nbclassic", "playwright", "pytest (>=3.3)", "pytest-asyncio (>=0.17)", "pytest-cov", "requests-mock", "virtualenv"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "jupyterlab-widgets"
 version = "3.0.9"
@@ -2078,11 +1733,6 @@ files = [
     {file = "jupyterlab_widgets-3.0.9-py3-none-any.whl", hash = "sha256:3cf5bdf5b897bf3bccf1c11873aa4afd776d7430200f765e0686bd352487b58d"},
     {file = "jupyterlab_widgets-3.0.9.tar.gz", hash = "sha256:6005a4e974c7beee84060fdfba341a3218495046de8ae3ec64888e5fe19fdb4c"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "lxml"
@@ -2191,11 +1841,6 @@ html5 = ["html5lib"]
 htmlsoup = ["BeautifulSoup4"]
 source = ["Cython (>=0.29.35)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "mako"
 version = "1.3.0"
@@ -2214,11 +1859,6 @@ MarkupSafe = ">=0.9.2"
 babel = ["Babel"]
 lingua = ["lingua"]
 testing = ["pytest"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "markupsafe"
@@ -2289,11 +1929,6 @@ files = [
     {file = "MarkupSafe-2.1.3.tar.gz", hash = "sha256:af598ed32d6ae86f1b747b82783958b1a4ab8f617b06fe68795c7f026abbdcad"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "matplotlib-inline"
 version = "0.1.6"
@@ -2308,11 +1943,6 @@ files = [
 [package.dependencies]
 traitlets = "*"
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "mccabe"
 version = "0.7.0"
@@ -2323,11 +1953,6 @@ files = [
     {file = "mccabe-0.7.0-py2.py3-none-any.whl", hash = "sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e"},
     {file = "mccabe-0.7.0.tar.gz", hash = "sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "multidict"
@@ -2412,11 +2037,6 @@ files = [
     {file = "multidict-6.0.4.tar.gz", hash = "sha256:3666906492efb76453c0e7b97f2cf459b0682e7402c0489a95484965dbc1da49"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "mypy"
 version = "1.7.1"
@@ -2464,11 +2084,6 @@ install-types = ["pip"]
 mypyc = ["setuptools (>=50)"]
 reports = ["lxml"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "mypy-extensions"
 version = "1.0.0"
@@ -2480,11 +2095,6 @@ files = [
     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "nest-asyncio"
 version = "1.5.8"
@@ -2495,11 +2105,6 @@ files = [
     {file = "nest_asyncio-1.5.8-py3-none-any.whl", hash = "sha256:accda7a339a70599cb08f9dd09a67e0c2ef8d8d6f4c07f96ab203f2ae254e48d"},
     {file = "nest_asyncio-1.5.8.tar.gz", hash = "sha256:25aa2ca0d2a5b5531956b9e273b45cf664cae2b145101d73b86b199978d48fdb"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "nodeenv"
@@ -2514,11 +2119,6 @@ files = [
 
 [package.dependencies]
 setuptools = "*"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "numpy"
@@ -2565,11 +2165,6 @@ files = [
     {file = "numpy-1.26.2.tar.gz", hash = "sha256:f65738447676ab5777f11e6bbbdb8ce11b785e105f690bc45966574816b6d3ea"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "oauthlib"
 version = "3.2.2"
@@ -2586,11 +2181,6 @@ rsa = ["cryptography (>=3.0.0)"]
 signals = ["blinker (>=1.4.0)"]
 signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "packaging"
 version = "23.2"
@@ -2602,11 +2192,6 @@ files = [
     {file = "packaging-23.2.tar.gz", hash = "sha256:048fb0e9405036518eaaf48a55953c750c11e1a1b68e0dd1a9d62ed0c092cfc5"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "pamela"
 version = "1.1.0"
@@ -2617,11 +2202,6 @@ files = [
     {file = "pamela-1.1.0-py2.py3-none-any.whl", hash = "sha256:f4534bba9645665b01adfce0134772b0147faea72c278f67a1a732e7ebd46ec6"},
     {file = "pamela-1.1.0.tar.gz", hash = "sha256:d4b139fe600e192e176a2a368059207a6bffa0e7879879b13f4fcba0163481be"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pandas"
@@ -2691,11 +2271,6 @@ sql-other = ["SQLAlchemy (>=1.4.36)"]
 test = ["hypothesis (>=6.46.1)", "pytest (>=7.3.2)", "pytest-xdist (>=2.2.0)"]
 xml = ["lxml (>=4.8.0)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "parso"
 version = "0.8.3"
@@ -2711,11 +2286,6 @@ files = [
 qa = ["flake8 (==3.8.3)", "mypy (==0.782)"]
 testing = ["docopt", "pytest (<6.0.0)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "pep8-naming"
 version = "0.13.3"
@@ -2730,11 +2300,6 @@ files = [
 [package.dependencies]
 flake8 = ">=5.0.0"
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "pexpect"
 version = "4.9.0"
@@ -2748,11 +2313,6 @@ files = [
 
 [package.dependencies]
 ptyprocess = ">=0.5"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "platformdirs"
@@ -2769,11 +2329,6 @@ files = [
 docs = ["furo (>=2023.7.26)", "proselint (>=0.13)", "sphinx (>=7.1.1)", "sphinx-autodoc-typehints (>=1.24)"]
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4)", "pytest-cov (>=4.1)", "pytest-mock (>=3.11.1)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "pluggy"
 version = "1.3.0"
@@ -2788,11 +2343,6 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pre-commit"
@@ -2812,11 +2362,6 @@ nodeenv = ">=0.11.1"
 pyyaml = ">=5.1"
 virtualenv = ">=20.10.0"
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "prometheus-client"
 version = "0.19.0"
@@ -2831,11 +2376,6 @@ files = [
 [package.extras]
 twisted = ["twisted"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "prompt-toolkit"
 version = "3.0.41"
@@ -2849,11 +2389,6 @@ files = [
 
 [package.dependencies]
 wcwidth = "*"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "proto-plus"
@@ -2871,11 +2406,6 @@ protobuf = ">=3.19.0,<5.0.0dev"
 
 [package.extras]
 testing = ["google-api-core[grpc] (>=1.31.5)"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "protobuf"
@@ -2896,11 +2426,6 @@ files = [
     {file = "protobuf-4.25.1-py3-none-any.whl", hash = "sha256:a19731d5e83ae4737bb2a089605e636077ac001d18781b3cf489b9546c7c80d6"},
     {file = "protobuf-4.25.1.tar.gz", hash = "sha256:57d65074b4f5baa4ab5da1605c02be90ac20c8b40fb137d6a8df9f416b0d0ce2"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "psutil"
@@ -2930,11 +2455,6 @@ files = [
 [package.extras]
 test = ["enum34", "ipaddress", "mock", "pywin32", "wmi"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "ptyprocess"
 version = "0.7.0"
@@ -2945,11 +2465,6 @@ files = [
     {file = "ptyprocess-0.7.0-py2.py3-none-any.whl", hash = "sha256:4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35"},
     {file = "ptyprocess-0.7.0.tar.gz", hash = "sha256:5c5d0a3b48ceee0b48485e0c26037c0acd7d29765ca3fbb5cb3831d347423220"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pure-eval"
@@ -2964,11 +2479,6 @@ files = [
 
 [package.extras]
 tests = ["pytest"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pyarrow"
@@ -3018,11 +2528,6 @@ files = [
 [package.dependencies]
 numpy = ">=1.16.6"
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "pyasn1"
 version = "0.5.1"
@@ -3033,11 +2538,6 @@ files = [
     {file = "pyasn1-0.5.1-py2.py3-none-any.whl", hash = "sha256:4439847c58d40b1d0a573d07e3856e95333f1976294494c325775aeca506eb58"},
     {file = "pyasn1-0.5.1.tar.gz", hash = "sha256:6d391a96e59b23130a5cfa74d6fd7f388dbbe26cc8f1edf39fdddf08d9d6676c"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pyasn1-modules"
@@ -3053,11 +2553,6 @@ files = [
 [package.dependencies]
 pyasn1 = ">=0.4.6,<0.6.0"
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "pycodestyle"
 version = "2.11.1"
@@ -3069,11 +2564,6 @@ files = [
     {file = "pycodestyle-2.11.1.tar.gz", hash = "sha256:41ba0e7afc9752dfb53ced5489e89f8186be00e599e712660695b7a75ff2663f"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "pycparser"
 version = "2.21"
@@ -3084,11 +2574,6 @@ files = [
     {file = "pycparser-2.21-py2.py3-none-any.whl", hash = "sha256:8ee45429555515e1f6b185e78100aea234072576aa43ab53aefcae078162fca9"},
     {file = "pycparser-2.21.tar.gz", hash = "sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pydantic"
@@ -3108,11 +2593,6 @@ typing-extensions = ">=4.6.1"
 
 [package.extras]
 email = ["email-validator (>=2.0.0)"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pydantic-core"
@@ -3231,11 +2711,6 @@ files = [
 [package.dependencies]
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "pyflakes"
 version = "3.1.0"
@@ -3246,11 +2721,6 @@ files = [
     {file = "pyflakes-3.1.0-py2.py3-none-any.whl", hash = "sha256:4132f6d49cb4dae6819e5379898f2b8cce3c5f23994194c24b77d5da2e36f774"},
     {file = "pyflakes-3.1.0.tar.gz", hash = "sha256:a0aae034c444db0071aa077972ba4768d40c830d9539fd45bf4cd3f8f6992efc"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pygments"
@@ -3266,11 +2736,6 @@ files = [
 [package.extras]
 plugins = ["importlib-metadata"]
 windows-terminal = ["colorama (>=0.4.6)"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pyjwt"
@@ -3288,11 +2753,6 @@ crypto = ["cryptography (>=3.4.0)"]
 dev = ["coverage[toml] (==5.0.4)", "cryptography (>=3.4.0)", "pre-commit", "pytest (>=6.0.0,<7.0.0)", "sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
 docs = ["sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
 tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pyopenssl"
@@ -3312,11 +2772,6 @@ cryptography = ">=41.0.5,<42"
 docs = ["sphinx (!=5.2.0,!=5.2.0.post0,!=7.2.5)", "sphinx-rtd-theme"]
 test = ["flaky", "pretend", "pytest (>=3.0.1)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "pyproject-flake8"
 version = "6.1.0"
@@ -3331,11 +2786,6 @@ files = [
 [package.dependencies]
 flake8 = "6.1.0"
 tomli = {version = "*", markers = "python_version < \"3.11\""}
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pytest"
@@ -3359,11 +2809,6 @@ tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 [package.extras]
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "pytest-cov"
 version = "4.1.0"
@@ -3382,11 +2827,6 @@ pytest = ">=4.6"
 [package.extras]
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "python-dateutil"
 version = "2.8.2"
@@ -3400,11 +2840,6 @@ files = [
 
 [package.dependencies]
 six = ">=1.5"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "python-dotenv"
@@ -3420,11 +2855,6 @@ files = [
 [package.extras]
 cli = ["click (>=5.0)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "python-json-logger"
 version = "2.0.7"
@@ -3436,11 +2866,6 @@ files = [
     {file = "python_json_logger-2.0.7-py3-none-any.whl", hash = "sha256:f380b826a991ebbe3de4d897aeec42760035ac760345e57b812938dc8b35e2bd"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "pytz"
 version = "2023.3.post1"
@@ -3451,11 +2876,6 @@ files = [
     {file = "pytz-2023.3.post1-py2.py3-none-any.whl", hash = "sha256:ce42d816b81b68506614c11e8937d3aa9e41007ceb50bfdcb0749b921bf646c7"},
     {file = "pytz-2023.3.post1.tar.gz", hash = "sha256:7b4fddbeb94a1eba4b557da24f19fdf9db575192544270a9101d8509f9f43d7b"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pyupgrade"
@@ -3470,11 +2890,6 @@ files = [
 
 [package.dependencies]
 tokenize-rt = ">=5.2.0"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pywin32"
@@ -3498,11 +2913,6 @@ files = [
     {file = "pywin32-306-cp39-cp39-win32.whl", hash = "sha256:e25fd5b485b55ac9c057f67d94bc203f3f6595078d1fb3b458c9c28b7153a802"},
     {file = "pywin32-306-cp39-cp39-win_amd64.whl", hash = "sha256:39b61c15272833b5c329a2989999dcae836b1eed650252ab1b7bfbe1d59f30f4"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pyyaml"
@@ -3562,11 +2972,6 @@ files = [
     {file = "PyYAML-6.0.1-cp39-cp39-win_amd64.whl", hash = "sha256:510c9deebc5c0225e8c96813043e62b680ba2f9c50a08d3724c7f28a747d1486"},
     {file = "PyYAML-6.0.1.tar.gz", hash = "sha256:bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "pyzmq"
@@ -3673,11 +3078,6 @@ files = [
 [package.dependencies]
 cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "referencing"
 version = "0.31.1"
@@ -3692,11 +3092,6 @@ files = [
 [package.dependencies]
 attrs = ">=22.2.0"
 rpds-py = ">=0.7.0"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "requests"
@@ -3719,11 +3114,6 @@ urllib3 = ">=1.21.1,<3"
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "requests-oauthlib"
 version = "1.3.1"
@@ -3741,11 +3131,6 @@ requests = ">=2.0.0"
 
 [package.extras]
 rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "rpds-py"
@@ -3855,11 +3240,6 @@ files = [
     {file = "rpds_py-0.13.2.tar.gz", hash = "sha256:f8eae66a1304de7368932b42d801c67969fd090ddb1a7a24f27b435ed4bed68f"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "rsa"
 version = "4.9"
@@ -3873,11 +3253,6 @@ files = [
 
 [package.dependencies]
 pyasn1 = ">=0.1.3"
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "ruamel-yaml"
@@ -3896,11 +3271,6 @@ files = [
 [package.extras]
 docs = ["mercurial (>5.7)", "ryd"]
 jinja2 = ["ruamel.yaml.jinja2 (>=0.2)"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "ruamel-yaml-clib"
@@ -3961,11 +3331,6 @@ files = [
     {file = "ruamel.yaml.clib-0.2.8.tar.gz", hash = "sha256:beb2e0404003de9a4cab9753a8805a8fe9320ee6673136ed7f04255fe60bb512"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "saspy"
 version = "5.4.4"
@@ -3980,11 +3345,6 @@ files = [
 [package.extras]
 colorlog = ["pygments"]
 iomcom = ["pypiwin32"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "setuptools"
@@ -4002,11 +3362,6 @@ docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments
 testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8-2020", "ini2toml[lite] (>=0.9)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pip (>=19.1)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy (>=0.9.1)", "pytest-perf", "pytest-ruff", "pytest-timeout", "pytest-xdist", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
 testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "packaging (>=23.1)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "six"
 version = "1.16.0"
@@ -4018,11 +3373,6 @@ files = [
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "soupsieve"
 version = "2.5"
@@ -4033,11 +3383,6 @@ files = [
     {file = "soupsieve-2.5-py3-none-any.whl", hash = "sha256:eaa337ff55a1579b6549dc679565eac1e3d000563bcb1c8ab0d0fefbc0c2cdc7"},
     {file = "soupsieve-2.5.tar.gz", hash = "sha256:5663d5a7b3bfaeee0bc4372e7fc48f9cff4940b3eec54a6451cc5299f1097690"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "sqlalchemy"
@@ -4126,11 +3471,6 @@ postgresql-psycopgbinary = ["psycopg[binary] (>=3.0.7)"]
 pymysql = ["pymysql"]
 sqlcipher = ["sqlcipher3-binary"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "stack-data"
 version = "0.6.3"
@@ -4150,11 +3490,6 @@ pure-eval = "*"
 [package.extras]
 tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "tokenize-rt"
 version = "5.2.0"
@@ -4165,11 +3500,6 @@ files = [
     {file = "tokenize_rt-5.2.0-py2.py3-none-any.whl", hash = "sha256:b79d41a65cfec71285433511b50271b05da3584a1da144a0752e9c621a285289"},
     {file = "tokenize_rt-5.2.0.tar.gz", hash = "sha256:9fe80f8a5c1edad2d3ede0f37481cc0cc1538a2f442c9c2f9e4feacd2792d054"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "toml"
@@ -4182,11 +3512,6 @@ files = [
     {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "tomli"
 version = "2.0.1"
@@ -4197,11 +3522,6 @@ files = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "tornado"
@@ -4223,11 +3543,6 @@ files = [
     {file = "tornado-6.4.tar.gz", hash = "sha256:72291fa6e6bc84e626589f1c29d90a5a6d593ef5ae68052ee2ef000dfd273dee"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "traitlets"
 version = "5.14.0"
@@ -4243,11 +3558,6 @@ files = [
 docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
 test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,<7.5)", "pytest-mock", "pytest-mypy-testing"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "typing-extensions"
 version = "4.8.0"
@@ -4259,11 +3569,6 @@ files = [
     {file = "typing_extensions-4.8.0.tar.gz", hash = "sha256:df8e4339e9cb77357558cbdbceca33c303714cf861d1eef15e1070055ae8b7ef"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "tzdata"
 version = "2023.3"
@@ -4274,11 +3579,6 @@ files = [
     {file = "tzdata-2023.3-py2.py3-none-any.whl", hash = "sha256:7e65763eef3120314099b6939b5546db7adce1e7d6f2e179e3df563c70511eda"},
     {file = "tzdata-2023.3.tar.gz", hash = "sha256:11ef1e08e54acb0d4f95bdb1be05da659673de4acbd21bf9c69e94cc5e907a3a"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "urllib3"
@@ -4295,11 +3595,6 @@ files = [
 brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
 socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "virtualenv"
@@ -4321,11 +3616,6 @@ platformdirs = ">=3.9.1,<5"
 docs = ["furo (>=2023.7.26)", "proselint (>=0.13)", "sphinx (>=7.1.2)", "sphinx-argparse (>=0.4)", "sphinxcontrib-towncrier (>=0.2.1a0)", "towncrier (>=23.6)"]
 test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=23.1)", "pytest (>=7.4)", "pytest-env (>=0.8.2)", "pytest-freezer (>=0.4.8)", "pytest-mock (>=3.11.1)", "pytest-randomly (>=3.12)", "pytest-timeout (>=2.1)", "setuptools (>=68)", "time-machine (>=2.10)"]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "wcwidth"
 version = "0.2.12"
@@ -4337,11 +3627,6 @@ files = [
     {file = "wcwidth-0.2.12.tar.gz", hash = "sha256:f01c104efdf57971bcb756f054dd58ddec5204dd15fa31d6503ea57947d97c02"},
 ]
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [[package]]
 name = "widgetsnbextension"
 version = "4.0.9"
@@ -4352,11 +3637,6 @@ files = [
     {file = "widgetsnbextension-4.0.9-py3-none-any.whl", hash = "sha256:91452ca8445beb805792f206e560c1769284267a30ceb1cec9f5bcc887d15175"},
     {file = "widgetsnbextension-4.0.9.tar.gz", hash = "sha256:3c1f5e46dc1166dfd40a42d685e6a51396fd34ff878742a3e47c6f0cc4a2a385"},
 ]
-
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
 
 [[package]]
 name = "yarl"
@@ -4461,12 +3741,7 @@ files = [
 idna = ">=2.0"
 multidict = ">=4.0"
 
-[package.source]
-type = "legacy"
-url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
-reference = "nexus"
-
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "02502511ec08c8a8a676967ffae7ff96fe09153150c180772009b6fc1a3735a8"
+content-hash = "9b0ad5f12481291711f103ebbab497450451e8daf8bcdf92d54d8e9b8438d7f0"
