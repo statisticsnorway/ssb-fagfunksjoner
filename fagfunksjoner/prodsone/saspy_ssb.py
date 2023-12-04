@@ -6,8 +6,10 @@ or convert it."""
 
 import getpass
 import os
+import shutil
 import typing
 from pathlib import Path
+import re
 
 import pandas as pd
 import saspy
@@ -37,8 +39,14 @@ def saspy_session() -> saspy.SASsession:
                 return
     felles = os.environ["FELLES"]
     cfgtype = "iomlinux"
+    cfgfile_user = f"/ssb/bruker/{brukernavn}/sascfg.py"
+    cfgfile_general = f"{felles}/sascfg.py"
+    if os.path.exists(cfgfile_user):
+        cfgfile = cfgfile_user
+    else:
+        cfgfile = cfgfile_general
     return saspy.SASsession(
-        cfgname=cfgtype, cfgfile=f"{felles}/sascfg.py", encoding="latin1"
+        cfgname=cfgtype, cfgfile=cfgfile, encoding="latin1"
     )
 
 
@@ -87,6 +95,29 @@ def set_password(password: str):
             f.write("IOM_Prod_Grid1 user " + brukernavn + " password " + password)
     os.chmod(authpath, 0o600)
 
+    
+def swap_server(new_server: int) -> None:
+    felles = os.environ["FELLES"]
+    brukernavn = getpass.getuser()
+    cfgfile_user = f"/ssb/bruker/{brukernavn}/sascfg.py"
+    cfgfile_general = f"{felles}/sascfg.py"
+    if not os.path.exists(cfgfile_user):
+        print(f"Making a new copy of sascfg.py in your folder /ssb/bruker/{brukernavn}")
+        shutil.copy(cfgfile_general, cfgfile_user)
+    else:
+        print(f"Found an existing copy of sascfg.py in your folder /ssb/bruker/{brukernavn}")
+    with open(cfgfile_user, "r") as f:
+        content = f.read()
+    new_content = []
+    for line in content.split("\n"):
+        line.find("sl-sas-work-")
+        if "sl-sas-work-" in line:
+            line = re.sub(r'sl-sas-work-.*\.ssb\.no', f"sl-sas-work-{new_server}.ssb.no", line)
+            print(f"Setting server to {new_server} with resulting line: {line}")
+        new_content += [line]
+    with open(cfgfile_user, "w") as f:
+        f.write("\n".join(new_content))
+    
 
 def split_path_for_sas(path: Path) -> typing.Tuple[str, str, str]:
     """Splits a path in three parts, mainly for having a name for the libname
