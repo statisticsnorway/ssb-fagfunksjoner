@@ -8,10 +8,10 @@ from pandas import Timestamp
 
 
 FORMATS: dict = {
-    "date_time": "%G-%m-%dT%H:%M:%S",
-    "date": "%G-%m-%d",
-    "month": "%G-%m",
-    "year": "%G",
+    "date_time": "%Y-%m-%dT%H:%M:%S",
+    "date": "%Y-%m-%d",
+    "month": "%Y-%m",
+    "year": "%Y",
     "week": "%GW%V",
     "year_days": "%Y-%j"
 }
