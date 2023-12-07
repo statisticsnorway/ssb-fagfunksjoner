@@ -156,7 +156,7 @@ def quarterly(date: dt.date = None) -> str:
     """
     if date is None:
         date = dt.date.today()
-    return f"{year(dates)}-Q{Timestamp(date).quarter}"
+    return f"{year(date)}-Q{Timestamp(date).quarter}"
 
 
 def bimester(date: dt.date = None) -> str:
