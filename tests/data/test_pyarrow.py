@@ -85,5 +85,5 @@ def test_restructur_pyarrow_schema():
     schema_want = mock_wanted_schema_after_reorder()
     schema_should = mock_wanted_schema_settings()
     schema_start = mock_starting_schema_to_reorder()
-    schema = reorder_pyarrow_schema_settings(schema_start, schema_should)
+    schema = restructur_pyarrow_schema(schema_start, schema_should)
     assert schema_want.equals(schema) == True
