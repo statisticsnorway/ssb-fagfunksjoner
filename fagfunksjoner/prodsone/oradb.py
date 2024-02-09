@@ -82,8 +82,13 @@ class Oracle:
     def __enter__(self):
         self.conn = ora.connect(self.user+"/"+self.pw+"@"+self.db)
         self.conn.__enter__()
-        return self.conn
+        self.cur = self.conn.cursor()
+        self.cur.__enter__()
+        return self.cur
     
     def __exit__(self, exc_type, exc_value, traceback):
-        self.conn.__exit__()
+        self.cur.__exit__(exc_type, exc_value, traceback)
+        self.conn.__exit__(exc_type, exc_value, traceback)
         self.close()
+        del self.cur
+        del self.conn
