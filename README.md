@@ -183,7 +183,7 @@ with pq.ParquetWriter(parquet_write_path) as pqwriter:
         concur.execute(select_query)
         cols = [c[0].lower() for c in cur.description]
         while True:
-            rows = cur.fetchmany(10000)
+            rows = cur.fetchmany(10_000) # 10.000 rows per batch
             if not rows:
                 break
             else:
