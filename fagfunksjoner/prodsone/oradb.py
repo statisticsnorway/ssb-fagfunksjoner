@@ -1,5 +1,6 @@
 import cx_Oracle as ora
 from getpass import getpass, getuser
+from typing import Any
 
 
 class Oracle:
@@ -14,7 +15,7 @@ class Oracle:
         if self.pw is None:
             self.pw = getpass(f'Password for user {self.user}: ')
 
-    def select(self, sql: str) -> list[dict]:
+    def select(self, sql: str) -> list[dict[str, Any]]:
         """Gets data from Oracle database with fetchall method"""
         try:
             # create connection to database
@@ -50,7 +51,7 @@ class Oracle:
         except ora.Error as error:
             raise error
     
-    def select_many(self, sql: str, batchsize: int) -> list[dict]:
+    def select_many(self, sql: str, batchsize: int) -> list[dict[str, Any]]:
         """Gets data from Oracle database in batches with fetchmany method"""
         try:
             # create connection to database
@@ -74,7 +75,7 @@ class Oracle:
             raise error
         return data
 
-    def close(self):
+    def close(self) -> None:
         del self.user
         del self.pw
         del self.db
