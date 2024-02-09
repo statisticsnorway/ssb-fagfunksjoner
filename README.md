@@ -170,25 +170,28 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from doteng import load_dotenv
-from fagfunksjoner.prodsone import Oracle
+from fagfunksjoner.prodsone import Oracle, OraError
 load_dotenv()
 
 select_query = "select vare, pris from my_db_table"
 parquet_write_path = "write/to/path/datafile.parquet"
 
 with pq.ParquetWriter(parquet_write_path) as pqwriter:
-    # will go straight to cursor
-    with Oracle(pw=os.getenv("my-secret-password"),
-            db=os.getenv("database-name")) as concur:
-        concur.execute(select_query)
-        cols = [c[0].lower() for c in cur.description]
-        while True:
-            rows = cur.fetchmany(10_000) # 10.000 rows per batch
-            if not rows:
-                break
-            else:
-                data = [dict(zip(cols, row)) for row in rows]
-                tab = pa.Table.from_pylist(data)
-                # this will write data to one row group per batch
-                pqwriter.write_table(tab)
+    try:
+        # will go straight to cursor
+        with Oracle(pw=os.getenv("my-secret-password"),
+                db=os.getenv("database-name")) as concur:
+            concur.execute(select_query)
+            cols = [c[0].lower() for c in cur.description]
+            while True:
+                rows = cur.fetchmany(10_000) # 10.000 rows per batch
+                if not rows:
+                    break
+                else:
+                    data = [dict(zip(cols, row)) for row in rows]
+                    tab = pa.Table.from_pylist(data)
+                    # this will write data to one row group per batch
+                    pqwriter.write_table(tab)
+    except OraError as error:
+        raise error
 ```
