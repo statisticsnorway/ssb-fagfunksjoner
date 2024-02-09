@@ -92,3 +92,7 @@ class Oracle:
         self.close()
         del self.cur
         del self.conn
+
+
+class OraError(ora.Error):
+    pass
