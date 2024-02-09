@@ -12,51 +12,78 @@ class Oracle:
 
     def _passw(self):
         if self.pw is None:
-            self.pw = getpass(f'Oracle passord for bruker {self.user}: ')
+            self.pw = getpass(f'Password for user {self.user}: ')
 
-    def select(self, sql: str) -> pd.DataFrame:
-        """Henter data fra Oracle database"""
+    def select(self, sql: str) -> list[dict]:
+        """Gets data from Oracle database with fetchall method"""
         try:
-            # Oppretter connection til databasen
+            # create connection to database
             with ora.connect(self.user+"/"+self.pw+"@"+self.db) as conn:
-                # Oppretter cursoren i databasen
+                # create cursor
                 with conn.cursor() as cur:
-                    # Foreta spørringen
+                    # execute the select sql query
                     cur.execute(sql)
-                    # Henter kolonne navnene
-                    cols = []
-                    for c in cur.description:
-                        cols.append(c[0].lower())
-                    # Henter ut dataene fra spørringen
-                    data = cur.fetchall()
-                    print('Data fetched successfully!')
+                    # gets the column names
+                    cols = [c[0].lower() for c in cur.description]
+                    # gets the data as a list of tuples
+                    rows = cur.fetchall()
+                    # convert data from list of tuples to list of dictionaries
+                    data = [dict(zip(cols, row)) for row in rows]
         except ora.Error as error:
-            print(error)
-        return pd.DataFrame(data, columns=cols)
+            raise error
+        return data
 
-    def update(self, sql: str, update: list):
-        """Oppdaterer data i Oracle database"""
-        # Oppretter kobling med Oracle database
+    def update_or_insert(self, sql: str, update: list[tuple]) -> None:
+        """Updates data or insert new data to Oracle database"""
         try:
+            # create connection to database
             with ora.connect(self.user+"/"+self.pw+"@"+self.db) as conn:
+                # create cursor
                 with conn.cursor() as cur:
+                    # execute the update or insert statement to the database
                     if len(update) == 1:
                         cur.execute(sql, update[0])
                     else:
                         cur.executemany(sql, update)
+                    # commit the changes in the database
                     conn.commit()
-                    print('Update successful!')
         except ora.Error as error:
-            print(error)
-
-    @staticmethod
-    def converter(df: pd.DataFrame, cols: list = None) -> list:
-        if cols is None:
-            return list(df.itertuples(index=False, name=None))
-        else:
-            return list(df[cols].itertuples(index=False, name=None))
+            raise error
+    
+    def select_many(self, sql: str, batchsize: int) -> list[dict]:
+        """Gets data from Oracle database in batches with fetchmany method"""
+        try:
+            # create connection to database
+            with ora.connect(self.user+"/"+self.pw+"@"+self.db) as conn:
+                # create cursor
+                with conn.cursor() as cur:
+                    # execute the select sql query
+                    cur.execute(sql)
+                    # gets the column names
+                    cols = [c[0].lower() for c in cur.description]
+                    # gets all the data in batches
+                    data = []
+                    while True:
+                        rows = cur.fetchmany(batchsize)
+                        if not rows:
+                            break
+                        else:
+                            rows = [dict(zip(cols, row)) for row in rows]
+                            data = data + rows
+        except ora.Error as error:
+            raise error
+        return data
 
     def close(self):
         del self.user
         del self.pw
         del self.db
+    
+    def __enter__(self):
+        self.conn = ora.connect(self.user+"/"+self.pw+"@"+self.db)
+        self.conn.__enter__()
+        return self.conn
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.conn.__exit__()
+        self.close()
