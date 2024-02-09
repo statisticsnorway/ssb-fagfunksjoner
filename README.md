@@ -176,7 +176,7 @@ load_dotenv()
 select_query = "select vare, pris from my_db_table"
 parquet_write_path = "write/to/path/datafile.parquet"
 
-with pq.ParquetWriter(parquet_write_path) as pqwriter:
+with pq.ParquetWriter(parquet_write_path) as pqwriter: # pyarrow schema might be needed
     try:
         # will go straight to cursor
         with Oracle(pw=os.getenv("my-secret-password"),
