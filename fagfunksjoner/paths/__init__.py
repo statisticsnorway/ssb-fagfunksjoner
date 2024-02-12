@@ -1,1 +1,2 @@
-from .versions import get_latest_fileversions
+from fagfunksjoner.paths.versions import get_latest_fileversions
+from fagfunksjoner.paths.project_root import ProjectRoot
