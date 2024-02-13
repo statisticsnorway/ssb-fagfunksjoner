@@ -61,6 +61,12 @@ def find_latest_publishing(shortname: str = "trosamf"):
     return max_publ
 
 
+def time_until_publishing(kortkode: str) -> datetime.timedelta:
+    tid = find_latest_publishing(kortkode)["specifics"]["publisering"]['@tidspunkt']
+    tid = datetime.strptime(tid[:-2], "%Y-%m-%d %H:%M:%S")
+    return datetime.now() - tid
+
+
 @lru_cache(maxsize=128)
 def specific_publishing(publish_id: str = "162143"):
     url = f"https://i.ssb.no/statistikkregisteret/publisering/xml/{publish_id}"
