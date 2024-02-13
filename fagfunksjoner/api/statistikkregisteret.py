@@ -4,6 +4,7 @@ from functools import lru_cache
 from collections import defaultdict
 from xml.etree import cElementTree as ET
 import dateutil
+import datetime
 
 
 @lru_cache(maxsize=1)  # Will be slow first time, but then caches result
@@ -63,8 +64,8 @@ def find_latest_publishing(shortname: str = "trosamf"):
 
 def time_until_publishing(kortkode: str) -> datetime.timedelta:
     tid = find_latest_publishing(kortkode)["specifics"]["publisering"]['@tidspunkt']
-    tid = datetime.strptime(tid[:-2], "%Y-%m-%d %H:%M:%S")
-    return datetime.now() - tid
+    tid = datetime.datetime.strptime(tid[:-2], "%Y-%m-%d %H:%M:%S")
+    return tid - datetime.datetime.now()
 
 
 @lru_cache(maxsize=128)
