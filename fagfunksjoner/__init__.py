@@ -7,6 +7,7 @@ from .data.view_dataframe import view_dataframe
 
 
 import importlib
+import importlib.metadata
 import toml
 
 # Split into function for testing
