@@ -1,22 +1,6 @@
-# ---
-# jupyter:
-#   jupytext:
-#     text_representation:
-#       extension: .py
-#       format_name: light
-#       format_version: '1.5'
-#       jupytext_version: 1.13.2
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
-
-import getpass
-import warnings
+from fagfunksjoner.prodsone.oradb import Oracle
 
 # Laster inn nødvendige bibliotek
-import cx_Oracle
 import pandas as pd
 
 
@@ -35,9 +19,7 @@ def dynarev_uttrekk(
         A dataframe or list of dataframes.
     """
     # Setter opp oppkobling mot DB1P i Oracle
-    conn = cx_Oracle.connect(
-        getpass.getuser() + "/" + getpass.getpass(prompt="Oracle-passord: ") + "@DB1P"
-    )
+    conn = Oracle("DB1P")
 
     # SQL for metadata
     query_meta = f"""
@@ -53,21 +35,21 @@ def dynarev_uttrekk(
             AND a.aktiv       = 1
      """
     # Henter ut metdataene
-    metadata_dynarev = pd.read_sql_query(query_meta, conn)
+    metadata_dynarev = pd.DataFrame(conn.select(sql=query_meta))
 
     # Skiller ut numeriske variabler
-    filter_numeric = (metadata_dynarev["FELT_TYPE"] == "DESIMAL") | (
-        metadata_dynarev["FELT_TYPE"] == "NUMBER"
+    filter_numeric = (metadata_dynarev["felt_type"] == "DESIMAL") | (
+        metadata_dynarev["felt_type"] == "NUMBER"
     )
-    filter_numeric2 = metadata_dynarev.loc[filter_numeric, "FELT_ID"]
+    filter_numeric2 = metadata_dynarev.loc[filter_numeric, "felt_id"]
     filter_numeric3 = pd.Series.tolist(filter_numeric2)
     filter_numeric4 = ",".join(map("'{}'".format, filter_numeric3))
 
     # Skiller ut alle ikke-numeriske variabler
-    filter_char = (metadata_dynarev["FELT_TYPE"] != "DESIMAL") & (
-        metadata_dynarev["FELT_TYPE"] != "NUMBER"
+    filter_char = (metadata_dynarev["felt_type"] != "DESIMAL") & (
+        metadata_dynarev["felt_type"] != "NUMBER"
     )
-    filter_char2 = metadata_dynarev.loc[filter_char, "FELT_ID"]
+    filter_char2 = metadata_dynarev.loc[filter_char, "felt_id"]
     filter_char3 = pd.Series.tolist(filter_char2)
     filter_char4 = ",".join(map("'{}'".format, filter_char3))
 
@@ -129,10 +111,10 @@ def dynarev_uttrekk(
                  )
             """
     # Henter ut en data.frame for char og en for num og gjør en inner join på de to
-    df1 = pd.read_sql_query(query_numeric, conn)
-    df2 = pd.read_sql_query(query_char, conn)
+    df1 = pd.DataFrame(conn.select(sql=query_numeric))
+    df2 = pd.DataFrame(conn.select(sql=query_char))
     skjema_data = pd.merge(
-        df1, df2, on=["ENHETS_ID", "ENHETS_TYPE", "DELREG_NR", "LOPENR", "RAD_NR"]
+        df1, df2, on=["enhets_id", "enhets_type", "delreg_nr", "lopenr", "rad_nr"]
     )
 
     # Fjerner fnutter fra noen kolonnenavn
@@ -161,7 +143,7 @@ def dynarev_uttrekk(
         GROUP BY enhets_id
         HAVING COUNT(*) > 1
         """
-        dublett = pd.read_sql_query(query_dublett, conn)
+        dublett = pd.DataFrame(conn.select(sql=query_dublett)
 
         # Sørger for at de som ikke har dubletter ikke får et tomt datasett tilbake.
         if not len(dublett):
@@ -186,7 +168,7 @@ def dynarev_uttrekk(
             AND a.delreg_nr={delreg_nr}
             AND a.skjema_type='{skjema}'
             """
-        sfu = pd.read_sql_query(query_sfu, conn)
+        sfu = pd.DataFrame(conn.select(sql=query_sfu)
 
         if sfu_cols == True:
             result += [sfu]
