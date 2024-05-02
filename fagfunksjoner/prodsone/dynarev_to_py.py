@@ -18,8 +18,8 @@ def dynarev_uttrekk(
     Returns:
         A dataframe or list of dataframes.
     """
-    # Setter opp oppkobling mot DB1P i Oracle
-    conn = Oracle("DB1P")
+    # Setter opp oppkobling mot i Oracle
+    conn = Oracle(input("Name of Oracle Database: "))
 
     # SQL for metadata
     query_meta = f"""
