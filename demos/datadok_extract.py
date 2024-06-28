@@ -18,10 +18,6 @@ from fagfunksjoner import open_path_datadok, open_path_metapath_datadok
 tiar = "$UTD/gjfor_vgo/arkiv/tiar/g2013g2023"
 arkivfil = open_path_datadok(tiar)
 
-path = "/ssb/stamme01/utd/nudb/arkiv/videregaendekarakterer/g2022g2023.dat"
-
-vgskarak = open_path_datadok("$UTD/nudb/arkiv/videregaendekarakterer/g2022g2023")
-
 # Without file ending
 open_with_datadok("/ssb/stamme01/utd/nudb/arkiv/videregaendekarakterer/g2022g2023").df.head(2)
 
