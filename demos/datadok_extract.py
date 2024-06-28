@@ -15,11 +15,12 @@
 
 from fagfunksjoner.data.datadok_extract import open_path_datadok
 
-path = "/ssb/stamme01/utd/nudb/arkiv/videregaendekarakterer/g2022g2023"
+tiar = "$UTD/gjfor_vgo/arkiv/tiar/g2013g2023"
+arkivfil = open_path_datadok(tiar)
 
-vgskarak = open_path_datadok("/ssb/stamme01/utd/nudb/arkiv/videregaendekarakterer/g2022g2023.dat")
+path = "/ssb/stamme01/utd/nudb/arkiv/videregaendekarakterer/g2022g2023.dat"
 
-vgskarak.df
+vgskarak = open_path_datadok("$UTD/nudb/arkiv/videregaendekarakterer/g2022g2023")
 
 # Without file ending
 open_with_datadok("/ssb/stamme01/utd/nudb/arkiv/videregaendekarakterer/g2022g2023").df.head(2)
