@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ssb-fagfunksjoner"
-version = "0.1.6"
+version = "0.1.7"
 description = "Fellesfunksjoner for ssb i Python"
 authors = ["SSB-pythonistas <ssb-pythonistas@ssb.no>"]
 license = "MIT"
@@ -43,6 +43,11 @@ pyproject-flake8 = ">=5.0.4.post1"
 
 
 
+
+[[tool.poetry.source]]
+name = "nexus"
+url = "http://pl-nexuspro-p.ssb.no:8081/repository/pypi-proxy/simple"
+priority = "primary"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

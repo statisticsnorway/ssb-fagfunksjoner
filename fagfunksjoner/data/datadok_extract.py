@@ -17,7 +17,7 @@
 # We use the path in Datadok and the name of the archive file as arguments to the function
 
 # %%
-import os
+import os, gc
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -225,9 +225,9 @@ def metadata_to_df(context_variables) -> pd.DataFrame:
         df["datatype"]
         .str.replace("Tekst", "string[pyarrow]", regex=False)
         .str.replace("Heltall", "Int64", regex=False)
-        .str.replace("Desimaltall", "Float64", regex=False)
-        .str.replace("Desim. (K)", "Float64", regex=False)
-        .str.replace("Desim. (P)", "Float64", regex=False)
+        .str.replace("Desimaltall", "string[pyarrow]", regex=False)
+        .str.replace("Desim. (K)", "string[pyarrow]", regex=False)
+        .str.replace("Desim. (P)", "string[pyarrow]", regex=False)
         .str.replace("Dato1", "string[pyarrow]", regex=False)
         .str.replace("Dato2", "string[pyarrow]", regex=False)
     )
@@ -366,33 +366,37 @@ def downcast_ints(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def move_decimal(archive_df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
+def handle_decimals(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     """
-    Adjusts the decimal values in the archive DataFrame based on the metadata.
+    Adjusts the decimal values in the archive DataFrame based on the metadata or contained decimal sign.
 
     Args:
-        archive_df (pd.DataFrame): The DataFrame containing archive data.
+        df (pd.DataFrame): The DataFrame containing archive data.
         metadata_df (pd.DataFrame): The DataFrame containing metadata.
 
     Returns:
         pd.DataFrame: The modified archive DataFrame with adjusted decimal values.
     """
-    desi_col = (
-        metadata_df["title"].loc[metadata_df["datatype"] == "Desimaltall"].tolist()
+    desi_cols = (
+        metadata_df["title"].loc[metadata_df["datatype"].str.lower().str.contains("desim")].tolist()
     )
-    num_desi_col = (
-        metadata_df["precision"]
-        .loc[metadata_df["datatype"] == "Desimaltall"]
-        .astype(int)
-        .tolist()
-    )
-    if len(desi_col) > 0:
-        col_no = 0
-        for col in desi_col:
-            divisor = 10 ** (num_desi_col[col_no])
-            archive_df[col] = archive_df[col].div(divisor)
-            col_no += 1
-    return archive_df
+    
+    for col in desi_cols:
+        # Look for comma as delimiter 
+        if df[col].str.contains(",").any():
+            df[col] = df[col].str.replace(",", ".").astype("Float64")
+        # Look for punktum as delimiter
+        elif df[col].str.contains(".").any():
+            df[col] = df[col].str.replace(",", ".").astype("Float64")
+        # If no delimiter is found, use number of decimals from metadata
+        else:
+            num_desi = int(metadata_df.loc[metadata_df["title"] == col, "precision"].iloc[0])
+            divisor = 10 ** num_desi
+            df[col] = df[col].astype("Float64").div(divisor)
+        
+    return df
+
+
 
 
 def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData:
@@ -425,14 +429,28 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     codelist_dict = codelist_to_dict(codelist_df)
     names, widths, datatypes, decimal = import_parameters(metadata_df)
     df = pd.read_fwf(
-        archive_file, dtype=datatypes, widths=widths, names=names, decimal=","
+        archive_file, dtype=datatypes, widths=widths, names=names, na_values = "."
     )
     df = convert_dates(df, metadata_df)
-    # df = move_decimal(df, metadata_df)  # During testing this was not necessary to, gives wrong result
+    df = handle_decimals(df, metadata_df)
     df = downcast_ints(df, metadata_df)
+    gc.collect()
     return ArchiveData(
         df, metadata_df, codelist_df, codelist_dict, names, widths, datatypes
     )
+
+def open_path_metapath_datadok(path: str, metapath: str) -> ArchiveData:
+    """If open_path_datadok doesnt work, specify the path on linux AND the path in Datadok.
+    
+     Args:
+        path (str): Path to the archive file on linux.
+        metapath (str): Path described in datadok.
+
+    Returns:
+        ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.   
+    """
+    return import_archive_data(archive_desc_xml=f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={metapath}", 
+                               archive_file=path)
 
 
 def open_path_datadok(path: str) -> pd.DataFrame:
@@ -448,14 +466,15 @@ def open_path_datadok(path: str) -> pd.DataFrame:
     """
     # Correcting path for API
     dokpath = path
-    if not path.startswith("$"):
-        for name, stamm in os.environ.items():
-            if not name.startswith("JUPYTERHUB") and path.startswith(stamm):
-                dokpath = f"${name}{path.replace(stamm,'')}"
     if dokpath.endswith(".dat") or dokpath.endswith(".txt"):
         dokpath = ".".join(dokpath.split(".")[:-1])
     url_address = f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={dokpath}"
-
+    if 200 != requests.get(url_address).status_code and not path.startswith("$"):
+        for name, stamm in os.environ.items():
+            if not name.startswith("JUPYTERHUB") and path.startswith(stamm):
+                dokpath = f"${name}{path.replace(stamm,'')}"
+    url_address = f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={dokpath}"
+        
     # Correcting path in
     filepath = path
     # Flip Stamm
@@ -472,6 +491,7 @@ def open_path_datadok(path: str) -> pd.DataFrame:
         if os.path.isfile(f"{filepath}.txt"):
             filepath += ".txt"
         elif os.path.isfile(f"{filepath}.dat"):
+            print(filepath)
             filepath += ".dat"
 
     return import_archive_data(url_address, filepath)
