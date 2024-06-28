@@ -17,11 +17,17 @@
 # We use the path in Datadok and the name of the archive file as arguments to the function
 
 # %%
+from dataclasses import dataclass, field
+from typing import List, Dict
+
 import pandas as pd
 import numpy as np
 from io import StringIO
 from datetime import datetime
 import xml.etree.ElementTree as ET
+from urllib.parse import urlparse
+import requests
+
 
 # %% [markdown]
 # ## Hente fra api til Datadok
@@ -33,12 +39,6 @@ import xml.etree.ElementTree as ET
 # Den interne metadataportalen http://www.byranettet.ssb.no/metadata/ har også alle filbeskrivelsene og filvariablene. 
 
 # %%
-import xml.etree.ElementTree as ET
-import pandas as pd
-from urllib.parse import urlparse
-import requests
-from datetime import datetime
-
 def is_valid_url(url):
     """
     Check if the provided URL is valid.
@@ -55,103 +55,56 @@ def is_valid_url(url):
     except ValueError:
         return False
 
+
+# %%
+@dataclass
 class ContextVariable:
     """
     Class representing a context variable.
     """
-    def __init__(self, context_id, title, description, datatype, length, start_position, precision, division):
-        """
-        Initialize a ContextVariable object.
+    context_id: str
+    title: str
+    description: str
+    datatype: str
+    length: int
+    start_position: int
+    precision: int
+    division: str
 
-        Args:
-            context_id (str): The ID of the context variable.
-            title (str): The title of the context variable.
-            description (str): The description of the context variable.
-            datatype (str): The datatype of the context variable.
-            length (int): The length of the context variable.
-            start_position (int): The start position of the context variable.
-            precision (int): The precision of the context variable (if applicable).
-            division (str): The division associated with the context variable.
-        """
-        self.context_id = context_id
-        self.title = title
-        self.description = description
-        self.datatype = datatype
-        self.length = length
-        self.start_position = start_position
-        self.precision = precision
-        self.division = division
-
-    def __repr__(self):
-        return (f"ContextVariable(context_id={self.context_id}, title={self.title}, description={self.description}, "
-                f"datatype={self.datatype}, length={self.length}, start_position={self.start_position}, "
-                f"precision={self.precision}, division={self.division})")
-    
+@dataclass
 class CodeList:
     """
     Class representing a code list.
     """
-    def __init__(self, context_id, codelist_title, codelist_description, code_value, code_text):
-        """
-        Initialize a CodeList object.
+    context_id: str
+    codelist_title: str
+    codelist_description: str
+    code_value: str
+    code_text: str
 
-        Args:
-            context_id (str): The ID of the context variable.
-            codelist_title (str): The title of the code list.
-            codelist_description (str): The description of the code list.
-            code_value (str): The value of the code.
-            code_text (str): The text of the code.
-        """
-        self.context_id = context_id
-        self.codelist_title = codelist_title
-        self.codelist_description = codelist_description
-        self.code_value = code_value
-        self.code_text = code_text
-
-    def __repr__(self):
-        return (f"CodeList({self.context_id}, {self.codelist_title}, {self.codelist_description}", 
-                f"{self.code_value}, {self.code_text})")
-
+@dataclass
 class Metadata:
     """
     Class representing metadata which includes context variables and code lists.
     """
-    def __init__(self, context_variables, codelists):
-        """
-        Initialize a Metadata object.
+    context_variables: List[ContextVariable]
+    codelists: List[CodeList]
 
-        Args:
-            context_variables (list): A list of ContextVariable objects.
-            codelists (list): A list of CodeList objects.
-        """
-        self.context_variables = context_variables
-        self.codelists = codelists
-
+@dataclass
 class ArchiveData:
     """
     Class representing the archive data along with its metadata and code lists.
     """
-    def __init__(self, df, metadata_df, codelist_df, codelist_dict, names, widths, datatypes):
-        """
-        Initialize an ArchiveData object.
+    df: pd.DataFrame
+    metadata_df: pd.DataFrame
+    codelist_df: pd.DataFrame
+    codelist_dict: Dict[str, CodeList]
+    names: List[str]
+    widths: List[int]
+    datatypes: Dict[str, str]
 
-        Args:
-            df (pd.DataFrame): DataFrame containing the archive data.
-            metadata_df (pd.DataFrame): DataFrame containing metadata.
-            codelist_df (pd.DataFrame): DataFrame containing code lists.
-            codelist_dict (dict): Dictionary of code lists.
-            names (list): List of column names.
-            widths (list): List of column widths.
-            datatypes (dict): Dictionary of datatypes for each column.
-        """
-        self.df = df
-        self.metadata_df = metadata_df
-        self.codelist_df = codelist_df
-        self.codelist_dict = codelist_dict
-        self.names = names
-        self.widths = widths
-        self.datatypes = datatypes
 
+# %%
 def extract_context_variables(root) -> list:
     """
     Extracts context variables from the XML root element and returns a list of ContextVariable objects.
@@ -228,13 +181,13 @@ def metadata_to_df(context_variables) -> pd.DataFrame:
     df = pd.DataFrame([vars(cv) for cv in context_variables])
     df['type'] = (
         df['datatype']
-        .str.replace('Tekst', 'str', regex=False)
-        .str.replace('Heltall', 'int', regex=False)
-        .str.replace('Desimaltall', 'float', regex=False)
-        .str.replace('Desim. (K)', 'float', regex=False)
-        .str.replace('Desim. (P)', 'float', regex=False)
-        .str.replace('Dato1', 'str', regex=False)
-        .str.replace('Dato2', 'str', regex=False)
+        .str.replace('Tekst', 'string[pyarrow]', regex=False)
+        .str.replace('Heltall', 'Int64', regex=False)
+        .str.replace('Desimaltall', 'Float64', regex=False)
+        .str.replace('Desim. (K)', 'Float64', regex=False)
+        .str.replace('Desim. (P)', 'Float64', regex=False)
+        .str.replace('Dato1', 'string[pyarrow]', regex=False)
+        .str.replace('Dato2', 'string[pyarrow]', regex=False)
     )
     return df
 
@@ -343,6 +296,13 @@ def move_decimal(archive_df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.Data
             col_no += 1
     return archive_df
 
+def downcast_ints(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
+    """Store ints as the lowest possible datatype that can contain the values."""
+    int_cols = metadata_df.loc[metadata_df["type"] == "Int64", "title"]
+    df.down
+    
+    
+
 def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData:
     """
     Imports archive data based on the given XML description and archive file.
@@ -381,4 +341,5 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
                      decimal=','
                     )
     df = move_decimal(df, metadata_df)
+    df = downcast_ints(df, metadata_df)
     return ArchiveData(df, metadata_df, codelist_df, codelist_dict, names, widths, datatypes)
