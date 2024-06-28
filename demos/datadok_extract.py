@@ -54,7 +54,7 @@ def open_with_datadok(path: str) -> pd.DataFrame:
 
 vgskarak = open_with_datadok("/ssb/stamme01/utd/nudb/arkiv/videregaendekarakterer/g2022g2023.dat")
 
-vgskarak.df
+
 
 vgskarak.__dict__.keys()
 

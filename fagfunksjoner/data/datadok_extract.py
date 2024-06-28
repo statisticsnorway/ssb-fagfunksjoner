@@ -228,7 +228,7 @@ def date_parser(date_str, format):
     except ValueError:
         return pd.NaT
 
-def dates_to_convert(metadata_df: pd.DataFrame) -> dict:
+def date_formats(metadata_df: pd.DataFrame) -> dict:
     """
     Creates a dictionary of date conversion functions based on the metadata DataFrame.
 
@@ -236,7 +236,7 @@ def dates_to_convert(metadata_df: pd.DataFrame) -> dict:
         metadata_df (pd.DataFrame): DataFrame containing metadata.
 
     Returns:
-        dict: A dictionary mapping column titles to date conversion functions.
+        dict: A dictionary mapping column titles to date conversion formats.
     """
     date_formats = {
         ('Dato1', 8): "%Y%m%d",
@@ -244,20 +244,48 @@ def dates_to_convert(metadata_df: pd.DataFrame) -> dict:
         ('Dato2', 8): "%d%m%Y",
         ('Dato2', 6): "%d%m%y"
     }
-
-    metadata_df['length'] = metadata_df['length'].astype(int)
-    dates = metadata_df[metadata_df['datatype'].isin(['Dato1', 'Dato2'])]
-    if dates.empty:
+    
+    date_metas_mask = ((metadata_df["length"].astype("Int64").isin([6, 8])) &
+                      (metadata_df["datatype"].isin(['Dato1', 'Dato2'])))
+    
+    # If there are dateformats we dont know about, we want an error on that
+    not_catched = metadata_df[~date_metas_mask]
+    missing_date_formats = []
+    for _, row in not_catched.iterrows():
+        if "dato" in row["datatype"].lower() or "date" in row["datatype"].lower():
+            raise ValueError(f"Dataformatting for metadatarow not catched: {row}")
+    
+    date_metas = metadata_df[date_metas_mask]
+    
+    # If there are no date columns to convert, exit function
+    if not len(date_metas):
         print('NOTE: Ingen datofelt funnet')
         return {}
+    
+    # Pick the formattings that are known
+    formattings = {}
+    for _, row in date_metas.iterrows():
+        formatting = date_formats.get((row['datatype'], row['length']), None)
+        if formatting:
+            formattings[row['title']] = formatting
+    return formattings
 
-    converters = {}
-    for _, row in dates.iterrows():
-        key = (row['datatype'], row['length'])
-        if key in date_formats:
-            format = date_formats[key]
-            converters[row['title']] = lambda x, fmt=format: date_parser(x, fmt)
-    return converters
+
+def convert_dates(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
+    """Faster to convert columns vectorized after importing as string, instead of running every row through a lambda.
+    
+    Args:
+        df (pd.DataFrame): The DataFrame containing archive data.
+        metadata_df (pd.DataFrame): The DataFrame containing metadata.
+
+    Returns:
+        pd.DataFrame: The modified archive DataFrame with converted datetimecolumns.
+    """
+    formats = date_formats(metadata_df)
+    for col, formatting in formats.items():
+        df[col] = pd.to_datetime(df[col], format=formatting)
+    return df
+
 
 def import_parameters(df: pd.DataFrame) -> list:
     """
@@ -274,6 +302,21 @@ def import_parameters(df: pd.DataFrame) -> list:
     datatype = dict(zip(df['title'], df['type']))
     decimal = ',' if 'Desim. (K)' in df['datatype'].values else '.'
     return col_names, col_lengths, datatype, decimal
+
+def downcast_ints(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
+    """Store ints as the lowest possible datatype that can contain the values.
+    
+    Args:
+        df (pd.DataFrame): The DataFrame containing archive data.
+        metadata_df (pd.DataFrame): The DataFrame containing metadata.
+
+    Returns:
+        pd.DataFrame: The modified archive DataFrame with downcast ints.
+    """
+    int_cols = metadata_df.loc[metadata_df["type"] == "Int64", "title"]
+    for col in int_cols:
+        df[col] = pd.to_numeric(df[col], downcast='integer')
+    return df
 
 def move_decimal(archive_df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -295,13 +338,6 @@ def move_decimal(archive_df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.Data
             archive_df[col] = archive_df[col].div(divisor)
             col_no += 1
     return archive_df
-
-def downcast_ints(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
-    """Store ints as the lowest possible datatype that can contain the values."""
-    int_cols = metadata_df.loc[metadata_df["type"] == "Int64", "title"]
-    df.down
-    
-    
 
 def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData:
     """
@@ -332,14 +368,13 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     codelist_df = codelist_to_df(metadata.codelists)
     codelist_dict = codelist_to_dict(codelist_df)
     names, widths, datatypes, decimal = import_parameters(metadata_df)
-    converters = dates_to_convert(metadata_df)
     df = pd.read_fwf(archive_file,
                      dtype=datatypes,
                      widths=widths,
                      names=names,
-                     converters=converters,
                      decimal=','
                     )
-    df = move_decimal(df, metadata_df)
+    df = convert_dates(df, metadata_df)
+    #df = move_decimal(df, metadata_df)  # During testing this was not necessary to, gives wrong result
     df = downcast_ints(df, metadata_df)
     return ArchiveData(df, metadata_df, codelist_df, codelist_dict, names, widths, datatypes)
