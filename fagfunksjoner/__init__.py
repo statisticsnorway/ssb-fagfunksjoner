@@ -1,9 +1,10 @@
-from .paths.project_root import ProjectRoot
-from .data.pandas_combinations import all_combos_agg
-from .data.pandas_dtypes import auto_dtype
-from .prodsone.check_env import check_env, linux_shortcuts
-from .prodsone.saspy_ssb import saspy_session, saspy_df_from_path
-from .data.view_dataframe import view_dataframe
+from fagfunksjoner.paths.project_root import ProjectRoot
+from fagfunksjoner.data.pandas_combinations import all_combos_agg
+from fagfunksjoner.data.pandas_dtypes import auto_dtype
+from fagfunksjoner.prodsone.check_env import check_env, linux_shortcuts
+from fagfunksjoner.prodsone.saspy_ssb import saspy_session, saspy_df_from_path
+from fagfunksjoner.data.view_dataframe import view_dataframe
+from fagfunksjoner.data.datadok_extract import open_path_datadok, open_path_metapath_datadok
 
 
 import importlib

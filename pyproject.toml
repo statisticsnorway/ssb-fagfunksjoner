@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ssb-fagfunksjoner"
-version = "0.1.6"
+version = "0.1.7"
 description = "Fellesfunksjoner for ssb i Python"
 authors = ["SSB-pythonistas <ssb-pythonistas@ssb.no>"]
 license = "MIT"
@@ -40,8 +40,6 @@ flake8 = ">=5.0.4"
 pytest-cov = ">=4.0.0"
 mypy = ">=0.982"
 pyproject-flake8 = ">=5.0.4.post1"
-
-
 
 
 [build-system]
