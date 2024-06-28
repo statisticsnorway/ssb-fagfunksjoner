@@ -13,7 +13,7 @@
 #     name: ssb-fagfunksjoner
 # ---
 
-from fagfunksjoner.data.datadok_extract import open_path_datadok
+from fagfunksjoner import open_path_datadok, open_path_metapath_datadok
 
 tiar = "$UTD/gjfor_vgo/arkiv/tiar/g2013g2023"
 arkivfil = open_path_datadok(tiar)

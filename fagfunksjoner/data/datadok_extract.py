@@ -397,6 +397,8 @@ def handle_decimals(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame
     return df
 
 
+
+
 def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData:
     """
     Imports archive data based on the given XML description and archive file.
@@ -436,6 +438,19 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     return ArchiveData(
         df, metadata_df, codelist_df, codelist_dict, names, widths, datatypes
     )
+
+def open_path_metapath_datadok(path: str, metapath: str) -> ArchiveData:
+    """If open_path_datadok doesnt work, specify the path on linux AND the path in Datadok.
+    
+     Args:
+        path (str): Path to the archive file on linux.
+        metapath (str): Path described in datadok.
+
+    Returns:
+        ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.   
+    """
+    return import_archive_data(archive_desc_xml=f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={metapath}", 
+                               archive_file=path)
 
 
 def open_path_datadok(path: str) -> pd.DataFrame:
