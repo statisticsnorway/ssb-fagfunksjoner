@@ -18,6 +18,12 @@ from fagfunksjoner import open_path_datadok, open_path_metapath_datadok
 tiar = "$UTD/gjfor_vgo/arkiv/tiar/g2013g2023"
 arkivfil = open_path_datadok(tiar)
 
+arkivfil.datatypes
+
+import pandas as pd
+df = pd.DataFrame()
+df["test"] = [1, 2]
+
 path = "/ssb/stamme01/utd/nudb/arkiv/videregaendekarakterer/g2022g2023.dat"
 
 vgskarak = open_path_datadok("$UTD/nudb/arkiv/videregaendekarakterer/g2022g2023")

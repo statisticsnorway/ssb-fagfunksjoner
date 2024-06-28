@@ -58,6 +58,24 @@ tab = all_combos_agg(vgogjen,
                      fillna_dict=ialt_koder)
 ```
 
+### Opening archive-files based on Datadok-api in prodsone
+We have "flat files", which are not comma seperated. These need metadata to correctly open. In SAS we do this with "lastescript". But there is an API to old Datadok in prodsone, so these functions let you just specify a path, and attempt to open the flat files directly into pandas, with the metadata also available.
+
+```python
+from fagfunksjoner import open_path_datadok
+archive_object = open_path_datadok("$TBF/project/arkiv/filename/g2022g2023")
+# The object now has several important attributes
+archive_object.df  # The Dataframe of the archived data
+archive_object.metadata_df  # Dataframe representing metadata
+archive_object.codelist_df  # Dataframe representing codelists
+archive_object.codelist_dict  # Dict of codelists
+archive_object.names  # Column names in the archived data
+archive_object.datatypes  # The datatypes the archivdata ended up having?
+archive_object.widths  # Width of each column in the flat file
+
+``
+
+
 
 ### Operation to Oracle database
 

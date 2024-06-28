@@ -317,20 +317,7 @@ def date_formats(metadata_df: pd.DataFrame) -> dict:
     return formattings
 
 
-def convert_dates(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
-    """Faster to convert columns vectorized after importing as string, instead of running every row through a lambda.
 
-    Args:
-        df (pd.DataFrame): The DataFrame containing archive data.
-        metadata_df (pd.DataFrame): The DataFrame containing metadata.
-
-    Returns:
-        pd.DataFrame: The modified archive DataFrame with converted datetimecolumns.
-    """
-    formats = date_formats(metadata_df)
-    for col, formatting in formats.items():
-        df[col] = pd.to_datetime(df[col], format=formatting)
-    return df
 
 
 def import_parameters(df: pd.DataFrame) -> list:
@@ -349,7 +336,6 @@ def import_parameters(df: pd.DataFrame) -> list:
     decimal = "," if "Desim. (K)" in df["datatype"].values else "."
     return col_names, col_lengths, datatype, decimal
 
-
 def downcast_ints(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     """Store ints as the lowest possible datatype that can contain the values.
 
@@ -363,8 +349,27 @@ def downcast_ints(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     int_cols = metadata_df.loc[metadata_df["type"] == "Int64", "title"]
     for col in int_cols:
         df[col] = pd.to_numeric(df[col], downcast="integer")
-    return df
+        # Correct metadata
+        metadata_df.loc[metadata_df["title"]==col, "type"] = df[col].dtype.name
+    return df, metadata_df
 
+def convert_dates(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
+    """Faster to convert columns vectorized after importing as string, instead of running every row through a lambda.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing archive data.
+        metadata_df (pd.DataFrame): The DataFrame containing metadata.
+
+    Returns:
+        pd.DataFrame: The modified archive DataFrame with converted datetimecolumns.
+    """
+    formats = date_formats(metadata_df)
+    for col, formatting in formats.items():
+        df[col] = pd.to_datetime(df[col], format=formatting)
+        # Correct datatypes in metadata
+        metadata_df.loc[metadata_df["title"]==col, "type"] = "datetime64"
+        
+    return df, metadata_df
 
 def handle_decimals(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -393,8 +398,10 @@ def handle_decimals(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame
             num_desi = int(metadata_df.loc[metadata_df["title"] == col, "precision"].iloc[0])
             divisor = 10 ** num_desi
             df[col] = df[col].astype("Float64").div(divisor)
+        # Correct metadata
+        metadata_df.loc[metadata_df["title"]==col, "type"] = "Float64"
         
-    return df
+    return df, metadata_df
 
 
 
@@ -431,9 +438,11 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     df = pd.read_fwf(
         archive_file, dtype=datatypes, widths=widths, names=names, na_values = "."
     )
-    df = convert_dates(df, metadata_df)
-    df = handle_decimals(df, metadata_df)
-    df = downcast_ints(df, metadata_df)
+    df, metadata_df = convert_dates(df, metadata_df)
+    df, metadata_df = handle_decimals(df, metadata_df)
+    df, metadata_df = downcast_ints(df, metadata_df)
+    # Corrected datatype
+    datatypes = dict(zip(metadata_df["title"], metadata_df["type"]))
     gc.collect()
     return ArchiveData(
         df, metadata_df, codelist_df, codelist_dict, names, widths, datatypes
