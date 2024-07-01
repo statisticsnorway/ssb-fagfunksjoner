@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from dapla import FileClient
-from fagfunksjoner.paths import get_next_version_number
+from fagfunksjoner.paths.versions import get_next_version_number
 
 @pytest.fixture
 def mock_file_system():
