@@ -49,6 +49,8 @@ def get_next_version_number(filepath: str) -> int:
     next_version_number: int
         The next version number for the file.
     """
+    if filepath.startswith("gs://"):
+        filepath = filepath[5:]
     fs = FileClient.get_gcs_file_system()
     folder_path = filepath.rsplit("/", 1)[0] + "/"
     file_name = filepath.rsplit("/", 1)[1].split(".")[0]
