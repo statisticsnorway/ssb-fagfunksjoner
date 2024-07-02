@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ssb-fagfunksjoner"
-version = "0.1.9"
+version = "0.1.10"
 description = "Fellesfunksjoner for ssb i Python"
 authors = ["SSB-pythonistas <ssb-pythonistas@ssb.no>"]
 license = "MIT"
