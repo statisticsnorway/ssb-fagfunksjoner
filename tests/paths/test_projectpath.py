@@ -15,8 +15,6 @@ def test_ProjectRoot_context_manager():
         os.chdir("../")
     finally:
         os.rmdir(os.path.join(first_path))
-    
+
     assert first_path == third_path
     assert first_path != second_path
-
-        

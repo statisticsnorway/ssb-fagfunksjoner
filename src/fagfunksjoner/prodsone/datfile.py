@@ -5,16 +5,18 @@ def read_datfile(path: str, input_setn: str, dtype_backend="pyarrow") -> pd.Data
     """Takes a "innlast-script" / infile-command from sas, parses out column data.
     Tries to open the dat-file and read its content.
     Delets any columns containing data, which should not be read...
-    
+
     Currently only supports reading in everything as strings, but dtypes could in theory
     be read from the sas-script, so that would be nice to develop if this sees use."""
     spots = {}
     for row in input_setn.split("\n"):
         if row.strip():
-            row = row.replace("@","")
+            row = row.replace("@", "")
             name = row.strip().split(" ")[1]
             start = row.strip().split(" ")[0]
-            width = "".join([c for c in row.strip().split(" ")[-1].split(".")[0] if c.isdigit()])
+            width = "".join(
+                [c for c in row.strip().split(" ")[-1].split(".")[0] if c.isdigit()]
+            )
             spots[name] = (start, width)
     widths = []
     names = []
@@ -24,10 +26,10 @@ def read_datfile(path: str, input_setn: str, dtype_backend="pyarrow") -> pd.Data
         k = int(v[0])
         v = int(v[1])
         if i == 1 and k != 1:
-            widths.append(k-1)
+            widths.append(k - 1)
             names.append(f"delete_{i}")
-        elif int(k) > i+1:
-            widths.append(k-i-1)
+        elif int(k) > i + 1:
+            widths.append(k - i - 1)
             names.append(f"delete_{i}")
         widths.append(int(v))
         names.append(name)

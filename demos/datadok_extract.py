@@ -19,12 +19,12 @@ tiar = "$UTD/gjfor_vgo/arkiv/tiar/g2013g2023"
 arkivfil = open_path_datadok(tiar)
 
 # Without file ending
-open_with_datadok("/ssb/stamme01/utd/nudb/arkiv/videregaendekarakterer/g2022g2023").df.head(2)
+open_with_datadok(
+    "/ssb/stamme01/utd/nudb/arkiv/videregaendekarakterer/g2022g2023"
+).df.head(2)
 
 # With dollar-path
 open_with_datadok("$UTD/nudb/arkiv/videregaendekarakterer/g2022g2023.dat").df.head(2)
 
 # With dollar-path and no file ending
 open_with_datadok("$UTD/nudb/arkiv/videregaendekarakterer/g2022g2023").df.head(2)
-
-

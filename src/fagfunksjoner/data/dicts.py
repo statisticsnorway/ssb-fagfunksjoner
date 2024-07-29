@@ -16,7 +16,7 @@ def get_key_by_value(data: dict, value: str) -> str | list:
     -------
     str | list
         Returns a str if a single match, otherwise returns a list of keys with the same value
-        
+
     Raises
     ------
     ValueError

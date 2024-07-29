@@ -2,7 +2,10 @@ from fagfunksjoner.prodsone.oradb import Oracle
 import pandas as pd
 import warnings
 
-def dynarev_uttrekk(delreg_nr: str, skjema: str, dublettsjekk: bool = False, sfu_cols: list = []):
+
+def dynarev_uttrekk(
+    delreg_nr: str, skjema: str, dublettsjekk: bool = False, sfu_cols: list = []
+):
     """
     Fetches and processes data from the Oracle database using the Oracle class for connection management.
 
@@ -25,7 +28,7 @@ def dynarev_uttrekk(delreg_nr: str, skjema: str, dublettsjekk: bool = False, sfu
             FROM DYNAREV.VW_SKJEMA_DATA
             WHERE delreg_nr = {delreg_nr}
               AND skjema = '{skjema}'
-              AND enhets_type = 'BEDR'  
+              AND enhets_type = 'BEDR'
               AND rad_nr = 0
               AND aktiv = 1
         """
@@ -33,9 +36,13 @@ def dynarev_uttrekk(delreg_nr: str, skjema: str, dublettsjekk: bool = False, sfu
         print(f"Data fetched successfully. Number of rows: {len(df_all_data)}")
 
         # Pivot the data
-        pivot_cols = ['enhets_id', 'enhets_type', 'delreg_nr', 'lopenr', 'rad_nr']
-        df_all_data_pivot = df_all_data.pivot_table(index=pivot_cols, columns='felt_id', values='felt_verdi', aggfunc='first').reset_index()
-        result = [df_all_data_pivot]  # Store the original pivoted dataframe in the result list
+        pivot_cols = ["enhets_id", "enhets_type", "delreg_nr", "lopenr", "rad_nr"]
+        df_all_data_pivot = df_all_data.pivot_table(
+            index=pivot_cols, columns="felt_id", values="felt_verdi", aggfunc="first"
+        ).reset_index()
+        result = [
+            df_all_data_pivot
+        ]  # Store the original pivoted dataframe in the result list
 
         # Check for duplicates if required
         if dublettsjekk:
@@ -53,7 +60,9 @@ def dynarev_uttrekk(delreg_nr: str, skjema: str, dublettsjekk: bool = False, sfu
             dublett = pd.DataFrame(oracle_conn.select(sql=query_dublett))
 
             if not len(dublett):
-                warnings.warn("Så etter dubletter, men fant ingen, dublettdataframen er derfor tom")
+                warnings.warn(
+                    "Så etter dubletter, men fant ingen, dublettdataframen er derfor tom"
+                )
             else:
                 print("Dublett-data fetched")
             result.append(dublett)

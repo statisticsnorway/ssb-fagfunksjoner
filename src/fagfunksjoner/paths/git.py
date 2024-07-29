@@ -8,11 +8,13 @@ def name_from_gitconfig() -> str:
             break
         os.chdir("../")
     else:
-        raise ImportError("Couldn't find .gitconfig, have you run ssb-gitconfig.py from the terminal?")
+        raise ImportError(
+            "Couldn't find .gitconfig, have you run ssb-gitconfig.py from the terminal?"
+        )
     with open(".gitconfig") as gitconfig:
         gitconf = gitconfig.readlines()
     for line in gitconf:
-        line = line.replace("\t","").replace("\n","").strip()
+        line = line.replace("\t", "").replace("\n", "").strip()
         if line.startswith("name ="):
             name = " ".join(line.split(" ")[2:])
     os.chdir(curr_dir)

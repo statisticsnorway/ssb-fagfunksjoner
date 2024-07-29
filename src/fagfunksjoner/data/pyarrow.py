@@ -5,7 +5,7 @@ def cast_pyarrow_table_schema(data: pa.Table, schema: pa.schema) -> pa.Table:
     """
     Function that set correct schema on Pyarrow Table, especially when
     dictionary datatype is wanted.
-    
+
     Parameters:
     -----------
     data: pyarrow Table
@@ -14,7 +14,7 @@ def cast_pyarrow_table_schema(data: pa.Table, schema: pa.schema) -> pa.Table:
         The wanted schema to cast to the table data.
         All columns in pyarrow table must be present in the schema.
         The order of the columns in the schema will be used.
-    
+
     Return:
     -------
     A new pyarrow table with correct schema.
@@ -31,7 +31,9 @@ def cast_pyarrow_table_schema(data: pa.Table, schema: pa.schema) -> pa.Table:
     return pa.table(newdata, names=newnames)
 
 
-def restructur_pyarrow_schema(inuse_schema: pa.Schema, wanted_schema: pa.Schema) -> pa.Schema:
+def restructur_pyarrow_schema(
+    inuse_schema: pa.Schema, wanted_schema: pa.Schema
+) -> pa.Schema:
     """
     Will reorder and set the schema you want to fit the in-use schema.
     The column names in the in use schema must be present in the wanted schema.
@@ -40,7 +42,7 @@ def restructur_pyarrow_schema(inuse_schema: pa.Schema, wanted_schema: pa.Schema)
     If datatypes are different, the wanted schema is used. And if DictionaryType
     is present in that case, you must then change your datatypes before casting
     this new schema.
-    
+
     Parameters:
     -----------
     inuse_schema:
@@ -48,7 +50,7 @@ def restructur_pyarrow_schema(inuse_schema: pa.Schema, wanted_schema: pa.Schema)
     wanted_schema:
         The schema that you want, but it is not in the same order of
         the schema that is in use.
-    
+
     Returns:
     A new pyarrow schema that has the same order as the in use schema,
     but with the correct datatypes from the schema that we want.
@@ -58,7 +60,9 @@ def restructur_pyarrow_schema(inuse_schema: pa.Schema, wanted_schema: pa.Schema)
     newfields = []
     for name in inuse_schema.names:
         if type(inuse_schema.field(name).type) == type(wanted_schema.field(name).type):
-            newfields.append(inuse_schema.field(name).with_type(wanted_schema.field(name).type))
+            newfields.append(
+                inuse_schema.field(name).with_type(wanted_schema.field(name).type)
+            )
         else:
             newfields.append(wanted_schema.field(name))
     return pa.schema(newfields)

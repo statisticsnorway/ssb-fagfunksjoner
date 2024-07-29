@@ -23,7 +23,7 @@ class ProjectRoot:
     def __init__(self):
         self.path = find_root()
         self.workdir = Path(os.getcwd())
-    
+
     def __enter__(self):
         navigate_root()
 
@@ -33,8 +33,8 @@ class ProjectRoot:
         if exc_type is not None:
             print(traceback)
             raise exc_type(exc_value)
-    
-    @staticmethod 
+
+    @staticmethod
     def load_toml(config_file: str) -> dict:
         """Looks for a .toml file to load the contents from,
         in the current folder, the specified path, the project root.
@@ -59,7 +59,7 @@ class ProjectRoot:
 
 
 def navigate_root() -> Path:
-    """Changes the current working directory to the project root. 
+    """Changes the current working directory to the project root.
     Saves the folder it start from in the global variable (in this module) START_DIR
 
     Returns
@@ -76,9 +76,9 @@ def navigate_root() -> Path:
 
 
 def find_root() -> Path:
-    """Finds the root of the project, based on the hidden folder ".git", 
+    """Finds the root of the project, based on the hidden folder ".git",
     which you usually should have only in your project root.
-    Changes the current working directory back and forth, 
+    Changes the current working directory back and forth,
     but should end up in the original starting directory.
 
     Returns
@@ -141,5 +141,3 @@ def load_toml(config_file: str) -> dict:
     else:
         raise OSError(f"Cant find that config-file: {config_file}")
     return toml.load(config_file)
-
-

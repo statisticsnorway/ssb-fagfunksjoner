@@ -1,8 +1,7 @@
-"""Simplifications of saspy package for SSB use. 
+"""Simplifications of saspy package for SSB use.
 Helps you store password in prodsone.
-Sets libnames automatically for you when just wanting to open a file, 
+Sets libnames automatically for you when just wanting to open a file,
 or convert it."""
-
 
 import getpass
 import os
@@ -18,7 +17,7 @@ import saspy
 def saspy_session() -> saspy.SASsession:
     """Gives you an initialized saspy.SASsession object,
     using the default config, getting your password if youve set one.
-    
+
     Returns
     -------
     saspy.SASsession
@@ -45,9 +44,7 @@ def saspy_session() -> saspy.SASsession:
         cfgfile = cfgfile_user
     else:
         cfgfile = cfgfile_general
-    return saspy.SASsession(
-        cfgname=cfgtype, cfgfile=cfgfile, encoding="latin1"
-    )
+    return saspy.SASsession(cfgname=cfgtype, cfgfile=cfgfile, encoding="latin1")
 
 
 def set_password(password: str):
@@ -95,7 +92,7 @@ def set_password(password: str):
             f.write("IOM_Prod_Grid1 user " + brukernavn + " password " + password)
     os.chmod(authpath, 0o600)
 
-    
+
 def swap_server(new_server: int) -> None:
     felles = os.environ["FELLES"]
     brukernavn = getpass.getuser()
@@ -105,19 +102,23 @@ def swap_server(new_server: int) -> None:
         print(f"Making a new copy of sascfg.py in your folder /ssb/bruker/{brukernavn}")
         shutil.copy(cfgfile_general, cfgfile_user)
     else:
-        print(f"Found an existing copy of sascfg.py in your folder /ssb/bruker/{brukernavn}")
+        print(
+            f"Found an existing copy of sascfg.py in your folder /ssb/bruker/{brukernavn}"
+        )
     with open(cfgfile_user, "r") as f:
         content = f.read()
     new_content = []
     for line in content.split("\n"):
         line.find("sl-sas-work-")
         if "sl-sas-work-" in line:
-            line = re.sub(r'sl-sas-work-.*\.ssb\.no', f"sl-sas-work-{new_server}.ssb.no", line)
+            line = re.sub(
+                r"sl-sas-work-.*\.ssb\.no", f"sl-sas-work-{new_server}.ssb.no", line
+            )
             print(f"Setting server to {new_server} with resulting line: {line}")
         new_content += [line]
     with open(cfgfile_user, "w") as f:
         f.write("\n".join(new_content))
-    
+
 
 def split_path_for_sas(path: Path) -> typing.Tuple[str, str, str]:
     """Splits a path in three parts, mainly for having a name for the libname
@@ -147,7 +148,7 @@ def saspy_df_from_path(path: str) -> pd.DataFrame:
     ----------
     path: str
         The full path to the sasfile you want to open with sas.
-    
+
     Returns
     -------
     pandas.DataFrame

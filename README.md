@@ -77,9 +77,9 @@ ialt_koder = {
 "sluttkomp": "00",
 }
 kolonner = list(ialt_koder.keys())
-tab = all_combos_agg(vgogjen, 
-                     groupcols=kolonner, 
-                     aggargs={'antall': sum}, 
+tab = all_combos_agg(vgogjen,
+                     groupcols=kolonner,
+                     aggargs={'antall': sum},
                      fillna_dict=ialt_koder)
 ```
 
@@ -202,7 +202,7 @@ ora.insert_or_update(sql=query, update=data)
 ora.close()
 ```
 
-It also support context manager. This is handy when working with big data, 
+It also support context manager. This is handy when working with big data,
 and you then have to work more lazy. Or you want to do multiple operations
 to several tables without closing the connections. Or any other reasons...
 An easy case; reading large data from database and write it to a parquet

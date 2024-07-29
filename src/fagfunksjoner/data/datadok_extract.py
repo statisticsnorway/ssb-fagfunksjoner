@@ -37,7 +37,8 @@ import requests
 # `curl -i 'ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path=$ENERGI/er_eb/arkiv/grunnlag/g1990'
 # `
 #
-# Den interne metadataportalen http://www.byranettet.ssb.no/metadata/ har også alle filbeskrivelsene og filvariablene. 
+# Den interne metadataportalen http://www.byranettet.ssb.no/metadata/ har også alle filbeskrivelsene og filvariablene.
+
 
 # %%
 def is_valid_url(url):
@@ -317,9 +318,6 @@ def date_formats(metadata_df: pd.DataFrame) -> dict:
     return formattings
 
 
-
-
-
 def import_parameters(df: pd.DataFrame) -> list:
     """
     Extracts parameters from the metadata DataFrame for importing archive data.
@@ -336,6 +334,7 @@ def import_parameters(df: pd.DataFrame) -> list:
     decimal = "," if "Desim. (K)" in df["datatype"].values else "."
     return col_names, col_lengths, datatype, decimal
 
+
 def downcast_ints(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     """Store ints as the lowest possible datatype that can contain the values.
 
@@ -350,8 +349,9 @@ def downcast_ints(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     for col in int_cols:
         df[col] = pd.to_numeric(df[col], downcast="integer")
         # Correct metadata
-        metadata_df.loc[metadata_df["title"]==col, "type"] = df[col].dtype.name
+        metadata_df.loc[metadata_df["title"] == col, "type"] = df[col].dtype.name
     return df, metadata_df
+
 
 def convert_dates(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     """Faster to convert columns vectorized after importing as string, instead of running every row through a lambda.
@@ -367,9 +367,10 @@ def convert_dates(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     for col, formatting in formats.items():
         df[col] = pd.to_datetime(df[col], format=formatting)
         # Correct datatypes in metadata
-        metadata_df.loc[metadata_df["title"]==col, "type"] = "datetime64"
-        
+        metadata_df.loc[metadata_df["title"] == col, "type"] = "datetime64"
+
     return df, metadata_df
+
 
 def handle_decimals(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -383,11 +384,13 @@ def handle_decimals(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame
         pd.DataFrame: The modified archive DataFrame with adjusted decimal values.
     """
     desi_cols = (
-        metadata_df["title"].loc[metadata_df["datatype"].str.lower().str.contains("desim")].tolist()
+        metadata_df["title"]
+        .loc[metadata_df["datatype"].str.lower().str.contains("desim")]
+        .tolist()
     )
-    
+
     for col in desi_cols:
-        # Look for comma as delimiter 
+        # Look for comma as delimiter
         if df[col].str.contains(",").any():
             df[col] = df[col].str.replace(",", ".").astype("Float64")
         # Look for punktum as delimiter
@@ -395,15 +398,15 @@ def handle_decimals(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame
             df[col] = df[col].str.replace(",", ".").astype("Float64")
         # If no delimiter is found, use number of decimals from metadata
         else:
-            num_desi = int(metadata_df.loc[metadata_df["title"] == col, "precision"].iloc[0])
-            divisor = 10 ** num_desi
+            num_desi = int(
+                metadata_df.loc[metadata_df["title"] == col, "precision"].iloc[0]
+            )
+            divisor = 10**num_desi
             df[col] = df[col].astype("Float64").div(divisor)
         # Correct metadata
-        metadata_df.loc[metadata_df["title"]==col, "type"] = "Float64"
-        
+        metadata_df.loc[metadata_df["title"] == col, "type"] = "Float64"
+
     return df, metadata_df
-
-
 
 
 def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData:
@@ -436,7 +439,7 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     codelist_dict = codelist_to_dict(codelist_df)
     names, widths, datatypes, decimal = import_parameters(metadata_df)
     df = pd.read_fwf(
-        archive_file, dtype=datatypes, widths=widths, names=names, na_values = "."
+        archive_file, dtype=datatypes, widths=widths, names=names, na_values="."
     )
     df, metadata_df = convert_dates(df, metadata_df)
     df, metadata_df = handle_decimals(df, metadata_df)
@@ -448,18 +451,21 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
         df, metadata_df, codelist_df, codelist_dict, names, widths, datatypes
     )
 
+
 def open_path_metapath_datadok(path: str, metapath: str) -> ArchiveData:
     """If open_path_datadok doesnt work, specify the path on linux AND the path in Datadok.
-    
+
      Args:
         path (str): Path to the archive file on linux.
         metapath (str): Path described in datadok.
 
     Returns:
-        ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.   
+        ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
     """
-    return import_archive_data(archive_desc_xml=f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={metapath}", 
-                               archive_file=path)
+    return import_archive_data(
+        archive_desc_xml=f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={metapath}",
+        archive_file=path,
+    )
 
 
 def open_path_datadok(path: str) -> pd.DataFrame:
@@ -483,7 +489,7 @@ def open_path_datadok(path: str) -> pd.DataFrame:
             if not name.startswith("JUPYTERHUB") and path.startswith(stamm):
                 dokpath = f"${name}{path.replace(stamm,'')}"
     url_address = f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={dokpath}"
-        
+
     # Correcting path in
     filepath = path
     # Flip Stamm
