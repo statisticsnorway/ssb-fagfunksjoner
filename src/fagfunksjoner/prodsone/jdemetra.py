@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 
 from bs4 import BeautifulSoup
 
+from fagfunksjoner.fagfunksjoner_logger import logger
 
 def df2xml(data, out: str, outpath: str, pstart: str, ystart: str, freq: str):
     """
@@ -52,8 +53,7 @@ def df2xml(data, out: str, outpath: str, pstart: str, ystart: str, freq: str):
     with open(f"{outpath}/{out}.xml", "w") as f:
         f.write(xml_data2)
 
-    # return print(xml_data2)
-    return print(
+    logger.info(
         f"""Pandas DataFrame has been converted to an XML and has
     been saved at {outpath}/{out}.xml"""
     )

@@ -13,10 +13,12 @@ from pathlib import Path
 import pandas as pd
 import saspy
 
+from fagfunksjoner.fagfunksjoner_logger import logger
 
 def saspy_session() -> saspy.SASsession:
-    """Gives you an initialized saspy.SASsession object,
-    using the default config, getting your password if youve set one.
+    """Get an initialized saspy.SASsession object.
+
+    Use the default config, getting your password if you've set one.
 
     Returns
     -------
@@ -26,13 +28,13 @@ def saspy_session() -> saspy.SASsession:
     brukernavn = getpass.getuser()
     authpath = "/ssb/bruker/" + brukernavn + "/.authinfo"
     if not os.path.exists(authpath):
-        print("Cant find the auth-file, consider running saspy_session.set_password()")
-        print(help(set_password))
+        logger.warn("Cant find the auth-file, consider running saspy_session.set_password()")
+        logger.info(help(set_password))
     else:
         with open(authpath) as f:
             file = f.read()
             if "IOM_Prod_Grid1" not in file:
-                print(
+                logger.warn(
                     "IOM_Prod_Grid1 is missing from .authinfo, try running saspy_session.set_password() again."
                 )
                 return
@@ -99,10 +101,10 @@ def swap_server(new_server: int) -> None:
     cfgfile_user = f"/ssb/bruker/{brukernavn}/sascfg.py"
     cfgfile_general = f"{felles}/sascfg.py"
     if not os.path.exists(cfgfile_user):
-        print(f"Making a new copy of sascfg.py in your folder /ssb/bruker/{brukernavn}")
+        logger.info(f"Making a new copy of sascfg.py in your folder /ssb/bruker/{brukernavn}")
         shutil.copy(cfgfile_general, cfgfile_user)
     else:
-        print(
+        logger.info(
             f"Found an existing copy of sascfg.py in your folder /ssb/bruker/{brukernavn}"
         )
     with open(cfgfile_user) as f:
@@ -114,7 +116,7 @@ def swap_server(new_server: int) -> None:
             line = re.sub(
                 r"sl-sas-work-.*\.ssb\.no", f"sl-sas-work-{new_server}.ssb.no", line
             )
-            print(f"Setting server to {new_server} with resulting line: {line}")
+            logger.info(f"Setting server to {new_server} with resulting line: {line}")
         new_content += [line]
     with open(cfgfile_user, "w") as f:
         f.write("\n".join(new_content))
@@ -158,10 +160,10 @@ def saspy_df_from_path(path: str) -> pd.DataFrame:
     librefname = "sasdata"  # Simplify... blergh
     sas = saspy_session()
     try:
-        libref = sas.saslib(librefname, path=librefpath)
+        _ = sas.saslib(librefname, path=librefpath)
         df = sas.sasdata2dataframe(filename, libref=librefname)
     except Exception as e:
-        print(e)
+        logger.error(e)
     finally:
         # sas.disconnect()
         sas._endsas()
@@ -200,13 +202,13 @@ def sasfile_to_parquet(
 
     if gzip:
         out_path = out_path.with_suffix(".parquet.gzip")
-        print(path, out_path)
+        logger.info(path, out_path)
         df.to_parquet(out_path, compression="gzip")
     else:
         out_path = out_path.with_suffix(".parquet")
-        print(path, out_path)
+        logger.info(path, out_path)
         df.to_parquet(out_path)
-    print(f"Outputted to {out_path}")
+    logger.info(f"Outputted to {out_path}")
     return df
 
 

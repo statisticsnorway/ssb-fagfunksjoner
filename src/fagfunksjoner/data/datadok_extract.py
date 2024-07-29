@@ -29,6 +29,8 @@ from urllib.parse import urlparse
 import pandas as pd
 import requests
 
+from fagfunksjoner.fagfunksjoner_logger import logger
+
 # %% [markdown]
 # ## Hente fra api til Datadok
 # Vi har et api til datadok og det returnerer filbeskrivelse som en html-fil. Det kan f.eks. kalles slik
@@ -245,7 +247,7 @@ def codelist_to_dict(codelist_df) -> dict:
         dict: A dictionary mapping code list titles to dictionaries of code values and texts.
     """
     if codelist_df.empty:
-        print("NOTE: Filbeskrivelsen har ingen kodelister")
+        logger.info("NOTE: Filbeskrivelsen har ingen kodelister")
         return {}
 
     col_dict = {
@@ -304,7 +306,7 @@ def date_formats(metadata_df: pd.DataFrame) -> dict:
 
     # If there are no date columns to convert, exit function
     if not len(date_metas):
-        print("NOTE: Ingen datofelt funnet")
+        logger.warn("NOTE: Ingen datofelt funnet")
         return {}
 
     # Pick the formattings that are known
@@ -504,7 +506,7 @@ def open_path_datadok(path: str) -> pd.DataFrame:
         if os.path.isfile(f"{filepath}.txt"):
             filepath += ".txt"
         elif os.path.isfile(f"{filepath}.dat"):
-            print(filepath)
+            logger.info(filepath)
             filepath += ".dat"
 
     return import_archive_data(url_address, filepath)

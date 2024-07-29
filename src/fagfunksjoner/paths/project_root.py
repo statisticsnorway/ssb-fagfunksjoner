@@ -9,6 +9,8 @@ from pathlib import Path
 
 import toml
 
+from fagfunksjoner.fagfunksjoner_logger import logger
+
 START_DIR = None
 
 
@@ -31,7 +33,7 @@ class ProjectRoot:
     def __exit__(exc_type, exc_value, traceback):
         return_to_work_dir()
         if exc_type is not None:
-            print(traceback)
+            logger.warn(traceback)
             raise exc_type(exc_value)
 
     @staticmethod
@@ -106,7 +108,7 @@ def return_to_work_dir():
     if START_DIR:
         os.chdir(START_DIR)
     else:
-        print("START_DIR not set, assuming you never left the working dir")
+        logger.info("START_DIR not set, assuming you never left the working dir")
 
 
 def load_toml(config_file: str) -> dict:

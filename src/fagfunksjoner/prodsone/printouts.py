@@ -1,13 +1,14 @@
 import pandas as pd
 
+from fagfunksjoner.fagfunksjoner_logger import logger
 
 def prosent_av_kolonne_na(df: pd.DataFrame, col: str) -> None:
-    print(len(df[df[col].isna()]), "av", len(df), "har tomme verdier i kolonnen", col)
-    print("Det er", round(len(df[df[col].isna()]) / len(df) * 100, 2), "%")
+    logger.info(len(df[df[col].isna()]), "av", len(df), "har tomme verdier i kolonnen", col)
+    logger.info("Det er", round(len(df[df[col].isna()]) / len(df) * 100, 2), "%")
 
 
 def antall_rader_kobler(df1: pd.DataFrame, col1: str, col2: pd.Series) -> None:
-    print(
+    logger.info(
         "Av",
         len(df1),
         "rader i hoveddataframen, kobler\n  ",
@@ -21,7 +22,7 @@ def antall_rader_kobler(df1: pd.DataFrame, col1: str, col2: pd.Series) -> None:
 def sammenlign_kobling(
     df1: pd.DataFrame, col1: str, col2: str, df2: pd.DataFrame, col3: str, col4: str
 ) -> None:
-    print(
+    logger.info(
         "Av",
         len(df1),
         f"rader i den første dataframen, kobler \n{col1} på",

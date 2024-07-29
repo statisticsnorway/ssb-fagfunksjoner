@@ -5,6 +5,7 @@ The main purpose is fileversions according to Statistics Norway standards.
 
 from dapla import FileClient
 
+from fagfunksjoner.fagfunksjoner_logger import logger
 
 def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
     """Recieves a list of filenames with multiple versions,
@@ -34,9 +35,7 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
     return [
         sorted([file for file in glob_list_path if file.startswith(unique)])[-1]
         for unique in sorted(
-            list(
-                {file[0] for file in [file.split("_v") for file in glob_list_path]}
-            )
+            list({file[0] for file in [file.split("_v") for file in glob_list_path]})
         )
     ]
 
@@ -67,7 +66,7 @@ def get_next_version_number(filepath: str) -> int:
         files = fs.ls(folder_path)
     except Exception as e:
         # Log the exception if needed
-        print(f"Error accessing file system: {e}")
+        logger.warn(f"Error accessing file system: {e}")
         return 1
 
     version_numbers = []

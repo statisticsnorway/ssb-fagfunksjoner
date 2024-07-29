@@ -1,6 +1,7 @@
 import ipywidgets as widgets
 import numpy as np
 import pandas as pd
+from IPython.display import display
 
 
 def choose_value(

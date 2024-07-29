@@ -3,6 +3,7 @@ import warnings
 import pandas as pd
 
 from fagfunksjoner.prodsone.oradb import Oracle
+from fagfunksjoner.fagfunksjoner_logger import logger
 
 
 def dynarev_uttrekk(
@@ -35,7 +36,7 @@ def dynarev_uttrekk(
               AND aktiv = 1
         """
         df_all_data = pd.DataFrame(oracle_conn.select(sql=query_all_data))
-        print(f"Data fetched successfully. Number of rows: {len(df_all_data)}")
+        logger.info(f"Data fetched successfully. Number of rows: {len(df_all_data)}")
 
         # Pivot the data
         pivot_cols = ["enhets_id", "enhets_type", "delreg_nr", "lopenr", "rad_nr"]
@@ -66,7 +67,7 @@ def dynarev_uttrekk(
                     "Så etter dubletter, men fant ingen, dublettdataframen er derfor tom"
                 )
             else:
-                print("Dublett-data fetched")
+                logger.info("Dublett-data fetched")
             result.append(dublett)
 
         # Fetch SFU data if required
@@ -84,10 +85,10 @@ def dynarev_uttrekk(
             sfu = pd.DataFrame(oracle_conn.select(sql=query_sfu))
 
             if sfu_cols == True:
-                print("Taking out SFU data with all columns.")
+                logger.info("Taking out SFU data with all columns.")
             else:
                 sfu = sfu[sfu_cols]
-                print("Taking out SFU data with specific columns: ", *sfu_cols)
+                logger.info("Taking out SFU data with specific columns: ", *sfu_cols)
             result.append(sfu)
 
         if len(result) == 1:
@@ -95,7 +96,7 @@ def dynarev_uttrekk(
         else:
             return tuple(result)
     except Exception as e:
-        print(f"Failed to execute queries: {e}")
+        logger.warn(f"Failed to execute queries: {e}")
         return pd.DataFrame()  # Return an empty DataFrame on failure
     finally:
         oracle_conn.close()  # Ensure the connection is closed after operations

@@ -8,9 +8,9 @@ def name_from_gitconfig() -> str:
             break
         os.chdir("../")
     else:
-        raise ImportError(
-            "Couldn't find .gitconfig, have you run ssb-gitconfig.py from the terminal?"
-        )
+        err = """Couldn't find .gitconfig, 
+        have you run ssb-gitconfig.py from the terminal?"""
+        raise ImportError(err)
     with open(".gitconfig") as gitconfig:
         gitconf = gitconfig.readlines()
     for line in gitconf:

@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 
+from fagfunksjoner.fagfunksjoner_logger import logger
 
 def change_input_to_xml(
     spec_path, spec_filename, input_path, input_filename, output_path
@@ -20,7 +21,7 @@ def change_input_to_xml(
     tree = ET.parse(path + "/" + spec_filename)
     root = tree.getroot()
     namespace = {"ns": "ec/tss.core"}
-    print(tree)
+    logger.info(tree)
 
     # Number of series to adjust
     a = []
