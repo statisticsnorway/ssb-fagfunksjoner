@@ -4,9 +4,20 @@ import pandas as pd
 from IPython.display import display
 
 
-def choose_value(
-    dataframe: pd.DataFrame, column: str, value: str | int | float, operator: str
+def filter_display(
+    dataframe: pd.DataFrame,
+    column: str,
+    value: str | int | float,
+    operator: str
 ) -> None:
+    """Filter data based on args, and display the result.
+
+    Args:
+        dataframe (pd.DataFrame): The DataFrame to filter.
+        column (str): Column to base filter on.
+        value (str | int | float): Value to compare filter against.
+        operator (str): How to compare column against value.
+    """
     operator_functions = {
         ">": lambda df: df.loc[df[column] > value],
         ">=": lambda df: df.loc[df[column] >= value],
@@ -46,39 +57,42 @@ def choose_value(
 
 
 def view_dataframe(
-    dataframe: pd.DataFrame, column: str, operator: str = "==", unique_limit: int = 100
+    dataframe: pd.DataFrame,
+    column: str,
+    operator: str = "==",
+    unique_limit: int = 100
 ) -> widgets.HTML:
     """Display an interactive widget for filtering and viewing data in a DataFrame based on selection of values in one column
 
-    Parameters:
-    - dataframe (pd.DataFrame): The DataFrame containing the data to be filtered.
-    - column (str): The column in the DataFrame to be filtered.
-    - operator (str, optional): The comparison operator for filtering  (may be altered during the display).
-                               Options: '==', '!=', '>=', '>', '<', '<='.
-                               Default: '=='.
-    - unique_limit (int, optional): The maximum number of unique values in the column
-                                   for using '==' or '!=' operators.
-                                   Default: 100.
+    Args:
+        dataframe (pd.DataFrame): The DataFrame containing the data to be filtered.
+        column (str): The column in the DataFrame to be filtered.
+        operator (str, optional): The comparison operator for filtering  (may be altered during the display).
+            Options: '==', '!=', '>=', '>', '<', '<='.
+            Default: '=='.
+        unique_limit (int, optional): The maximum number of unique values in the column
+            for using '==' or '!=' operators.
+            Default: 100.
 
     Returns:
-    - widgets.interactive: An interactive widget for filtering and viewing data based on the specified criteria.
-      The '==' and '!=' operators use a dropdown list for multiple selection
-      The other (interval) parameters us a slider
+        widgets.interactive: An interactive widget for filtering and viewing data based on the specified criteria.
+            The '==' and '!=' operators use a dropdown list for multiple selection
+            The other (interval) parameters us a slider
 
-    Usage Example:
-    ```python
-    num_rows = 10
-    data = {
-        'hs': np.random.choice(['03010000', '30019000', '54022711'], size=num_rows),
-        'value': np.random.randint(100000, 1000000, size=num_rows),
-        'weight': np.random.randint(1, 10000, size=num_rows),
-        'import': np.random.choice([True, False], size=num_rows),
-    }
+    Usage:
+        ```python
+        num_rows = 10
+        data = {
+            'hs': np.random.choice(['03010000', '30019000', '54022711'], size=num_rows),
+            'value': np.random.randint(100000, 1000000, size=num_rows),
+            'weight': np.random.randint(1, 10000, size=num_rows),
+            'import': np.random.choice([True, False], size=num_rows),
+        }
 
-    df = pd.DataFrame(data)
-    view_dataframe(dataframe=df, column='value', operator='>=')
-    view_dataframe(dataframe=df, column='hs', operator='==')
-    ```
+        df = pd.DataFrame(data)
+        view_dataframe(dataframe=df, column='value', operator='>=')
+        view_dataframe(dataframe=df, column='hs', operator='==')
+        ```
     """
     operator_comparison = [">=", ">", "<", "<="]
     operator_equality = ["==", "!="]
@@ -101,7 +115,7 @@ def view_dataframe(
                 description="Value",
             )
             return widgets.interactive(
-                choose_value,
+                filter_display,
                 dataframe=widgets.fixed(dataframe),
                 column=widgets.fixed(column),
                 operator=filter_type_select,
@@ -137,7 +151,7 @@ def view_dataframe(
             options=values_widget, description="Value(s)", value=[values_widget[0]]
         )
         return widgets.interactive(
-            choose_value,
+            filter_display,
             dataframe=widgets.fixed(dataframe),
             column=widgets.fixed(column),
             operator=filter_type_select,

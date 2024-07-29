@@ -2,8 +2,7 @@ import pyarrow as pa
 
 
 def cast_pyarrow_table_schema(data: pa.Table, schema: pa.schema) -> pa.Table:
-    """Set correct schema on Pyarrow Table, especially when
-    dictionary datatype is wanted.
+    """Set correct schema on Pyarrow Table, especially when dictionary datatype is wanted.
 
     Args:
         data (pa.Table): The pyarrow table data

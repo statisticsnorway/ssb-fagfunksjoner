@@ -1,4 +1,5 @@
 """Automatically changes dtypes on pandas dataframes using logic.
+
 Tries to keep objects as strings if numeric, but with leading zeros.
 Downcasts ints to smalles size. Changes possible columns to categoricals.
 The function you most likely want is "auto_dype".
@@ -13,6 +14,7 @@ from fagfunksjoner.fagfunksjoner_logger import logger
 
 
 def dtype_set_from_json(df: pd.DataFrame, json_path: str) -> pd.DataFrame:
+    
     with open(json_path) as json_file:
         json_dtypes = json.load(json_file)
     for col, dtypes in json_dtypes.items():
