@@ -43,7 +43,7 @@ def restructur_pyarrow_schema(
     Args:
         inuse_schema (pa.Schema): The schema that is in use of your pyarrow dataset or table.
         wanted_schema (pa.Schema): The schema that you want, but it is not in the same order of
-        the schema that is in use.
+            the schema that is in use.
 
     Returns:
         pa.Schema: A new pyarrow schema that has the same order as the in use schema,
