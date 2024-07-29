@@ -1,1 +1,1 @@
-# This file is required by pytest
+"""Test Dapla-functionality in the fagfunksjoner package."""

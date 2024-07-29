@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 
 import toml
+from typing import Any
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
@@ -38,39 +39,32 @@ class ProjectRoot:
             raise exc_type(exc_value)
 
     @staticmethod
-    def load_toml(config_file: str) -> dict:
+    def load_toml(config_file: str) -> dict[Any]:
         """Looks for a .toml file to load the contents from,
         in the current folder, the specified path, the project root.
 
-        Parameters
-        ----------
-        config_file: str
-            The path or filename of the config-file to load.
+        Args:
+        config_file (str): The path or filename of the config-file to load.
 
         Returns:
-        -------
-        dict
-            The contents of the toml-file
+            dict[Any]: The contents of the toml-file.
 
         Raises:
-        ------
-        OSError
-            If the file specified is not found in the current folder,
-            the specified path, or the project root.
+            OSError: If the file specified is not found in the current folder,
+                the specified path, or the project root.
         """
         return load_toml(config_file)
 
 
 def navigate_root() -> Path:
     """Changes the current working directory to the project root.
+
     Saves the folder it start from in the global variable (in this module) START_DIR
 
     Returns:
-    -------
-    pathlib.Path
-        The starting directory, where you are currently, as a pathlib Path.
-        Changing the current working directory to root (different than returned)
-        as a side-effect.
+        pathlib.Path: The starting directory, where you are currently, as a pathlib Path.
+            Changing the current working directory to root (different than returned)
+            as a side-effect.
     """
     global START_DIR
     START_DIR = os.getcwd()
@@ -79,15 +73,14 @@ def navigate_root() -> Path:
 
 
 def find_root() -> Path:
-    """Finds the root of the project, based on the hidden folder ".git",
-    which you usually should have only in your project root.
+    """Finds the root of the project, based on the hidden folder ".git".
+
+    Which you usually should have only in your project root.
     Changes the current working directory back and forth,
     but should end up in the original starting directory.
 
     Returns:
-    -------
-    pathlib.Path
-        The project root folder.
+        pathlib.Path: The project root folder.
     """
     global START_DIR
     START_DIR = os.getcwd()
@@ -104,7 +97,7 @@ def find_root() -> Path:
 
 
 def return_to_work_dir():
-    """Navigates back to the last recorded START_DIR"""
+    """Navigate back to the last recorded START_DIR."""
     global START_DIR
     if START_DIR:
         os.chdir(START_DIR)
@@ -112,25 +105,19 @@ def return_to_work_dir():
         logger.info("START_DIR not set, assuming you never left the working dir")
 
 
-def load_toml(config_file: str) -> dict:
+def load_toml(config_file: str) -> dict[Any]:
     """Looks for a .toml file to load the contents from,
     in the current folder, the specified path, the project root.
 
-    Parameters
-    ----------
-    config_file: str
-        The path or filename of the config-file to load.
+    Args:
+        config_file (str): The path or filename of the config-file to load.
 
     Returns:
-    -------
-    dict
-        The contents of the toml-file
+        dict[Any]: The contents of the toml-file
 
     Raises:
-    ------
-    OSError
-        If the file specified is not found in the current folder,
-        the specified path, or the project root.
+        OSError: If the file specified is not found in the current folder,
+            the specified path, or the project root.
     """
     # Toml is in current folder
     if config_file in os.listdir():

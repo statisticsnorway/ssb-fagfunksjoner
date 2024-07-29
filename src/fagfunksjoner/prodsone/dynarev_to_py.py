@@ -1,5 +1,3 @@
-import warnings
-
 import pandas as pd
 
 from fagfunksjoner.fagfunksjoner_logger import logger
@@ -67,7 +65,7 @@ def dynarev_uttrekk(
             dublett = pd.DataFrame(oracle_conn.select(sql=query_dublett))
 
             if not len(dublett):
-                warnings.warn(
+                logger.warn(
                     "Så etter dubletter, men fant ingen, dublettdataframen er derfor tom"
                 )
             else:

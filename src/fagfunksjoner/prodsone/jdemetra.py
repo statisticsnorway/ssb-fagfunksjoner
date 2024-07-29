@@ -75,7 +75,7 @@ def replace_input_paths(
     """
     find = find.replace("/", "%2F")
     replace = replace.replace("/", "%2F")
-    for path, dirs, files in os.walk(os.path.abspath(directory)):
+    for path, _dirs, files in os.walk(os.path.abspath(directory)):
         for filending in filePattern:
             for filename in fnmatch.filter(files, filending):
                 filepath = os.path.join(path, filename)

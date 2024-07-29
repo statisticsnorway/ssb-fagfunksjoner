@@ -1,3 +1,5 @@
+"""Code that uses things from git-files."""
+
 import os
 
 

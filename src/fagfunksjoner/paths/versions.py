@@ -1,5 +1,6 @@
-"""This module works with filepaths, and is especially aimed at GCS and Dapla,
-but it works locally as well if standard for versionizing datafiles are implemented.
+"""This module works with filepaths, and is especially aimed at GCS and Dapla.
+
+But it works locally as well if standard for versionizing datafiles are implemented.
 The main purpose is fileversions according to Statistics Norway standards.
 """
 
@@ -8,8 +9,8 @@ from fagfunksjoner.fagfunksjoner_logger import logger
 
 
 def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
-    """Recieves a list of filenames with multiple versions,
-    and returns the latest versions of the files.
+    """Recieves a list of filenames with multiple versions, and returns the latest versions of the files.
+
     Recommend using glob operation to create the input list.
     See doc for glob operations:
     - GCS: https://gcsfs.readthedocs.io/en/latest/api.html#gcsfs.core.GCSFileSystem.glob
@@ -21,16 +22,12 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
     all_files = fs.glob("gs://dir/statdata_v*.parquet")
     latest_files = get_latest_fileversions(all_files)
 
-    Parameters
-    ----------
-    glob_list_path: list[str]
-        List of strings that represents a filepath.
-        Recommend that the list is created with glob operation.
+    Args:
+        glob_list_path (list[str]): List of strings that represents a filepath.
+            Recommend that the list is created with glob operation.
 
     Returns:
-    -------
-    list[str]
-        List of strings with unique filepaths and its latest versions
+        list[str]: List of strings with unique filepaths and its latest versions
     """
     return [
         sorted([file for file in glob_list_path if file.startswith(unique)])[-1]
@@ -43,16 +40,12 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
 def get_next_version_number(filepath: str) -> int:
     """Function for finding next version for a new file.
 
-    Parameters
-    ----------
-    filepath: str
-        GCS filepath. Must not include version suffix.
-        eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01.parquet
+    Args:
+        filepath (str): GCS filepath. Must not include version suffix.
+            eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01.parquet
 
     Returns:
-    -------
-    next_version_number: int
-        The next version number for the file.
+        next_version_number (int): The next version number for the file.
     """
     if filepath.startswith("gs://"):
         filepath = filepath[5:]

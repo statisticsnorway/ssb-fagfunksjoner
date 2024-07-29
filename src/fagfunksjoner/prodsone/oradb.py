@@ -25,7 +25,7 @@ class Oracle:
         cur (ora.Cursor): database cursor if using context manager
     """
 
-    def __init__(self, db: str, pw: str = None):
+    def __init__(self, db: str, pw: str|None = None) -> None:
         """The instanciation of the class.
 
         Note:
@@ -40,7 +40,7 @@ class Oracle:
         self.pw = pw
         self._passw()
 
-    def _passw(self):
+    def _passw(self) -> None:
         """Method for checking if user password exists.
 
         If password is not given when instantiated,
@@ -149,7 +149,7 @@ class Oracle:
         return data
 
     def close(self) -> None:
-        """Close connection and delete the class attribute values"""
+        """Close connection and delete the class attribute values."""
         del self.user
         del self.pw
         del self.db

@@ -1,4 +1,5 @@
 """To write "environment-aware code", we need to know where we are.
+
 This module extracts information from the current environment,
 and can help differentiate between the different places we develop code.
 """
@@ -10,15 +11,11 @@ def check_env() -> str:
     """Check if you are on Dapla or in prodsone.
 
     Returns:
-    -------
-    str
-        "DAPLA" if on dapla, "PROD" if you are in prodsone.
+        str: "DAPLA" if on dapla, "PROD" if you are in prodsone.
 
     Raises:
-    ------
-    OSError
-        If no indications match, dapla/prod may have changed (please report)
-        Or you are using the function outside of dapla/prod on purpose?
+        OSError: If no indications match, dapla/prod may have changed (please report)
+            Or you are using the function outside of dapla/prod on purpose?
     """
     jupyter_image_spec = os.environ.get("JUPYTER_IMAGE_SPEC")
     if jupyter_image_spec and "jupyterlab-dapla" in jupyter_image_spec:

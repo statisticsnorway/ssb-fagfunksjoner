@@ -131,10 +131,6 @@ def precommit(session: Session) -> None:
         "darglint",
         "ruff",
         "black",
-        #"autoflake",
-        #"isort",
-        #"pyupgrade",
-        #"pyproject-flake8",
     )
     session.run("pre-commit", *args)
     if args and args[0] == "install":

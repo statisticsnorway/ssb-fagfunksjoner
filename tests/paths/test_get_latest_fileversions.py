@@ -2,7 +2,7 @@ from fagfunksjoner.paths import get_latest_fileversions
 
 
 def test_get_latest_fileversions():
-    """Tests the get_latest_fileversions function"""
+    """Test the get_latest_fileversions function."""
     testfiles = [
         "gs://dir/data1_v1.parquet",
         "gs://dir/data1_v2.parquet",

@@ -22,9 +22,7 @@ def saspy_session() -> saspy.SASsession:
     Use the default config, getting your password if you've set one.
 
     Returns:
-    -------
-    saspy.SASsession
-        An initialized saspy-session
+        saspy.SASsession: An initialized saspy-session
     """
     brukernavn = getpass.getuser()
     authpath = "/ssb/bruker/" + brukernavn + "/.authinfo"
@@ -63,10 +61,8 @@ def set_password(password: str):
     that looks something like this {SAS004}C598BA0A77F74607464634566CCD0D7BB8EBDEEA4B73C440
     Send this as the parameter into this function.
 
-    Parameters
-    ----------
-    password: str
-        Your password encrypted using SAS EG
+    Args:
+        password (str): Your password encrypted using SAS EG
     """
     brukernavn = getpass.getuser()
     authpath = "/ssb/bruker/" + brukernavn + "/.authinfo"
@@ -99,6 +95,11 @@ def set_password(password: str):
 
 
 def swap_server(new_server: int) -> None:
+    """Swap between the sas-servers you connect to with saspy.
+
+    Args:
+        new_server (int): The server number to switch to.
+    """
     felles = os.environ["FELLES"]
     brukernavn = getpass.getuser()
     cfgfile_user = f"/ssb/bruker/{brukernavn}/sascfg.py"
@@ -116,10 +117,14 @@ def swap_server(new_server: int) -> None:
         content = f.read()
     new_content = []
     for line in content.split("\n"):
-        line.find("sl-sas-work-")
         if "sl-sas-work-" in line:
             line = re.sub(
-                r"sl-sas-work-.*\.ssb\.no", f"sl-sas-work-{new_server}.ssb.no", line
+                r"sl-sas-work-p.*\.ssb\.no", f"sl-sas-comp-p{new_server}.ssb.no", line
+            )
+            logger.info(f"Setting server to {new_server} with resulting line: {line}")
+        if "sl-sas-comp-p" in line:
+            line = re.sub(
+                r"sl-sas-comp-p.*\.ssb\.no", f"sl-sas-comp-p{new_server}.ssb.no", line
             )
             logger.info(f"Setting server to {new_server} with resulting line: {line}")
         new_content += [line]
@@ -128,17 +133,13 @@ def swap_server(new_server: int) -> None:
 
 
 def split_path_for_sas(path: Path) -> tuple[str, str, str]:
-    """Splits a path in three parts, mainly for having a name for the libname
+    """Split a path in three parts, mainly for having a name for the libname
 
-    Parameters
-    ----------
-    path: pathlib.Path
-        The full path to be split
+    Args:
+        path (pathlib.Path): The full path to be split
 
     Returns:
-    -------
-    tuple[str]
-        The three parts the path has been split into.
+        tuple[str]: The three parts the path has been split into.
     """
     librefpath = str(path.parents[0])
     librefname = path.parts[-2]
@@ -147,19 +148,16 @@ def split_path_for_sas(path: Path) -> tuple[str, str, str]:
 
 
 def saspy_df_from_path(path: str) -> pd.DataFrame:
-    """Gives you a pandas dataframe from the path to a sasfile, using saspy.
+    """Return a pandas dataframe from the path to a sasfile, using saspy.
+
     Creates saspy-session, create a libref, gets the dataframe,
     terminates the connection to saspy cleanly, and returns the dataframe.
 
-    Parameters
-    ----------
-    path: str
-        The full path to the sasfile you want to open with sas.
+    Args:
+        path (str): The full path to the sasfile you want to open with sas.
 
     Returns:
-    -------
-    pandas.DataFrame
-        The raw content of the sasfile straight from saspy
+        pandas.DataFrame: The raw content of the sasfile straight from saspy
     """
     librefpath, librefname, filename = split_path_for_sas(Path(path))
     librefname = "sasdata"  # Simplify... blergh
@@ -178,22 +176,16 @@ def saspy_df_from_path(path: str) -> pd.DataFrame:
 def sasfile_to_parquet(
     path: str, out_path: str = "", gzip: bool = False
 ) -> pd.DataFrame:
-    """Converts a sasfile directly to a parquetfile, using saspy and pandas.
+    """Convert a sasfile directly to a parquetfile, using saspy and pandas.
 
-    Parameters
-    ----------
-    path: str
-        The path to the in-sas-file.
-    out_path: str
-        The path to place the parquet-file on
-    gzip: bool
-        If you want the parquetfile gzipped or not.
+    Args
+        path (str): The path to the in-sas-file.
+        out_path (str): The path to place the parquet-file on
+        gzip (bool): If you want the parquetfile gzipped or not.
 
     Returns:
-    -------
-    pandas.DataFrame
-        In case you want to use the content for something else.
-        I mean, we already read it into memory...
+        pandas.DataFrame: In case you want to use the content for something else.
+            I mean, we already read it into memory...
     """
     path = Path(path)
     df = saspy_df_from_path(path)
@@ -218,18 +210,13 @@ def sasfile_to_parquet(
 
 
 def cp(from_path: str, to_path: str) -> dict:
-    """Uses saspy and sas-server to copy files
+    """Use saspy and sas-server to copy files.
 
-    Parameters
-    ----------
-    from_path: str
-        The path for the source file to copy
-    to_path: str
-        The path to place the copy on
+    Args:
+    from_path (str): The path for the source file to copy
+    to_path (str): The path to place the copy on
 
     Returns:
-    -------
-    dict
-        A key for if it succeded, and a key for holding the log as string.
+        dict: A key for if it succeded, and a key for holding the log as string.
     """
     return saspy_session().file_copy(from_path, to_path)
