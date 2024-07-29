@@ -1,6 +1,7 @@
 """To write "environment-aware code", we need to know where we are.
 This module extracts information from the current environment,
-and can help differentiate between the different places we develop code."""
+and can help differentiate between the different places we develop code.
+"""
 
 import os
 
@@ -8,12 +9,12 @@ import os
 def check_env() -> str:
     """Check if you are on Dapla or in prodsone.
 
-    Returns
+    Returns:
     -------
     str
         "DAPLA" if on dapla, "PROD" if you are in prodsone.
 
-    Raises
+    Raises:
     ------
     OSError
         If no indications match, dapla/prod may have changed (please report)
@@ -38,7 +39,7 @@ def linux_shortcuts(insert_environ: bool = False) -> dict:
         Set to True if you want the dict to be inserted into the
         environment variables (os.environ).
 
-    Returns
+    Returns:
     -------
     dict
         The "linux-forkortelser" as a dict

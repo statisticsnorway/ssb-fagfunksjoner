@@ -12,8 +12,7 @@ def dynarev_uttrekk(
     dublettsjekk: bool = False,
     sfu_cols: list[str] | None = None,
 ) -> pd.DataFrame:
-    """
-    Fetches and processes data from the Oracle database using the Oracle class for connection management.
+    """Fetches and processes data from the Oracle database using the Oracle class for connection management.
 
     Args:
         delreg_nr (str): Delregisternummer.

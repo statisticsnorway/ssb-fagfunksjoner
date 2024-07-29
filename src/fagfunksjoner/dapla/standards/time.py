@@ -1,10 +1,8 @@
-"""
-Functions that helps Statistics Norway following their specified standards.
+"""Functions that helps Statistics Norway following their specified standards.
 Docs: https://statistics-norway.atlassian.net/wiki/spaces/MPD/pages/2953084957/Standardformater
 """
 
 import datetime as dt
-from typing import Dict, List
 
 from pandas import Timestamp
 
@@ -19,8 +17,7 @@ FORMATS: dict = {
 
 
 def date_time(date: dt.datetime = None) -> str:
-    """
-    Gives date and time with standard format.
+    """Gives date and time with standard format.
     See: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
 
     Parameters:
@@ -39,15 +36,12 @@ def date_time(date: dt.datetime = None) -> str:
 
 
 def timestamp() -> str:
-    """
-    Gives date and time right now with standard format.
-    """
+    """Gives date and time right now with standard format."""
     return date_time()
 
 
 def date(date: dt.date = None) -> str:
-    """
-    Gives date with standard format.
+    """Gives date with standard format.
 
     Parameters:
     -----------
@@ -65,8 +59,7 @@ def date(date: dt.date = None) -> str:
 
 
 def month(date: dt.date = None) -> str:
-    """
-    Gives month period with standard format.
+    """Gives month period with standard format.
 
     Parameters:
     -----------
@@ -84,8 +77,7 @@ def month(date: dt.date = None) -> str:
 
 
 def year(date: dt.date = None) -> str:
-    """
-    Gives year period with standard format.
+    """Gives year period with standard format.
 
     Parameters:
     -----------
@@ -103,8 +95,7 @@ def year(date: dt.date = None) -> str:
 
 
 def week(date: dt.date = None) -> str:
-    """
-    Gives week period with standard format.
+    """Gives week period with standard format.
 
     Parameters:
     -----------
@@ -122,8 +113,7 @@ def week(date: dt.date = None) -> str:
 
 
 def year_days(date: dt.date = None) -> str:
-    """
-    Gives day of year period with standard format.
+    """Gives day of year period with standard format.
 
     Parameters:
     -----------
@@ -141,8 +131,7 @@ def year_days(date: dt.date = None) -> str:
 
 
 def quarterly(date: dt.date = None) -> str:
-    """
-    Gives quarter period with standard format.
+    """Gives quarter period with standard format.
 
     Parameters:
     -----------
@@ -160,8 +149,7 @@ def quarterly(date: dt.date = None) -> str:
 
 
 def bimester(date: dt.date = None) -> str:
-    """
-    Gives bimester period with standard format.
+    """Gives bimester period with standard format.
 
     Parameters:
     -----------
@@ -188,8 +176,7 @@ def bimester(date: dt.date = None) -> str:
 
 
 def triannual(date: dt.date = None) -> str:
-    """
-    Gives triannual period with standard format.
+    """Gives triannual period with standard format.
 
     Parameters:
     -----------
@@ -209,8 +196,7 @@ def triannual(date: dt.date = None) -> str:
 
 
 def halfyear(date: dt.date = None) -> str:
-    """
-    Gives halfyear period with standard format.
+    """Gives halfyear period with standard format.
 
     Parameters:
     -----------
@@ -229,9 +215,8 @@ def halfyear(date: dt.date = None) -> str:
     return f"{year(date)}-H{period}"
 
 
-def _find_period(period_dict: Dict[str, List[int]], month: int) -> str:
-    """
-    Finds any self-made period based on a dict where keys are
+def _find_period(period_dict: dict[str, list[int]], month: int) -> str:
+    """Finds any self-made period based on a dict where keys are
     the self-mabe period, and the values are list of int that
     represent a month between 1 and 12.
 

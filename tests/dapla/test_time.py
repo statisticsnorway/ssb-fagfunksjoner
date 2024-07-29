@@ -2,18 +2,16 @@ import datetime as dt
 
 import pytest
 
-from fagfunksjoner.dapla.standards.time import (
-    bimester,
-    date,
-    date_time,
-    halfyear,
-    month,
-    quarterly,
-    triannual,
-    week,
-    year,
-    year_days,
-)
+from fagfunksjoner.dapla.standards.time import bimester
+from fagfunksjoner.dapla.standards.time import date
+from fagfunksjoner.dapla.standards.time import date_time
+from fagfunksjoner.dapla.standards.time import halfyear
+from fagfunksjoner.dapla.standards.time import month
+from fagfunksjoner.dapla.standards.time import quarterly
+from fagfunksjoner.dapla.standards.time import triannual
+from fagfunksjoner.dapla.standards.time import week
+from fagfunksjoner.dapla.standards.time import year
+from fagfunksjoner.dapla.standards.time import year_days
 
 
 @pytest.mark.parametrize(

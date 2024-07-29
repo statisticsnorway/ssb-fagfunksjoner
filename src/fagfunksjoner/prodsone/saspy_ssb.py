@@ -1,13 +1,13 @@
 """Simplifications of saspy package for SSB use.
 Helps you store password in prodsone.
 Sets libnames automatically for you when just wanting to open a file,
-or convert it."""
+or convert it.
+"""
 
 import getpass
 import os
 import re
 import shutil
-import typing
 from pathlib import Path
 
 import pandas as pd
@@ -21,7 +21,7 @@ def saspy_session() -> saspy.SASsession:
 
     Use the default config, getting your password if you've set one.
 
-    Returns
+    Returns:
     -------
     saspy.SASsession
         An initialized saspy-session
@@ -127,7 +127,7 @@ def swap_server(new_server: int) -> None:
         f.write("\n".join(new_content))
 
 
-def split_path_for_sas(path: Path) -> typing.Tuple[str, str, str]:
+def split_path_for_sas(path: Path) -> tuple[str, str, str]:
     """Splits a path in three parts, mainly for having a name for the libname
 
     Parameters
@@ -135,7 +135,7 @@ def split_path_for_sas(path: Path) -> typing.Tuple[str, str, str]:
     path: pathlib.Path
         The full path to be split
 
-    Returns
+    Returns:
     -------
     tuple[str]
         The three parts the path has been split into.
@@ -156,7 +156,7 @@ def saspy_df_from_path(path: str) -> pd.DataFrame:
     path: str
         The full path to the sasfile you want to open with sas.
 
-    Returns
+    Returns:
     -------
     pandas.DataFrame
         The raw content of the sasfile straight from saspy
@@ -189,7 +189,7 @@ def sasfile_to_parquet(
     gzip: bool
         If you want the parquetfile gzipped or not.
 
-    Returns
+    Returns:
     -------
     pandas.DataFrame
         In case you want to use the content for something else.
@@ -227,7 +227,7 @@ def cp(from_path: str, to_path: str) -> dict:
     to_path: str
         The path to place the copy on
 
-    Returns
+    Returns:
     -------
     dict
         A key for if it succeded, and a key for holding the log as string.

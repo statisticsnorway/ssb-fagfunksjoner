@@ -1,7 +1,8 @@
 """Automatically changes dtypes on pandas dataframes using logic.
 Tries to keep objects as strings if numeric, but with leading zeros.
 Downcasts ints to smalles size. Changes possible columns to categoricals.
-The function you most likely want is "auto_dype"."""
+The function you most likely want is "auto_dype".
+"""
 
 import gc
 import json
@@ -50,7 +51,6 @@ def auto_dtype(
     to categoricals,
     if number of unique values in the columns are below the threshold.
     """
-
     if show_memory:
         logger.info("\nMemory usage before cleanup:")
         orig_size = df.memory_usage(deep=True).sum()

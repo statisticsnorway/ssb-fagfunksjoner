@@ -4,7 +4,9 @@ import logging
 import sys
 from typing import Any
 
-from colorama import Back, Fore, Style
+from colorama import Back
+from colorama import Fore
+from colorama import Style
 
 
 class ColoredFormatter(logging.Formatter):
@@ -12,9 +14,9 @@ class ColoredFormatter(logging.Formatter):
 
     def __init__(
         self,
-        *args: Any,  # noqa: ANN401
+        *args: Any,
         colors: dict[str, str] | None = None,
-        **kwargs: Any,  # noqa: ANN401
+        **kwargs: Any,
     ) -> None:
         """Initialize the formatter with specified format strings."""
         super().__init__(*args, **kwargs)

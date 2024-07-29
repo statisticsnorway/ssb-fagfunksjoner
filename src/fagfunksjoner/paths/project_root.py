@@ -2,7 +2,8 @@
 and back from whence you came.
 One of the main uses will be importing local functions in a notebook based project.
 As notebooks run from the folder they are opened from, not root, and functions
-usually will be .py files located in other folders than the notebooks."""
+usually will be .py files located in other folders than the notebooks.
+"""
 
 import os
 from pathlib import Path
@@ -46,12 +47,12 @@ class ProjectRoot:
         config_file: str
             The path or filename of the config-file to load.
 
-        Returns
+        Returns:
         -------
         dict
             The contents of the toml-file
 
-        Raises
+        Raises:
         ------
         OSError
             If the file specified is not found in the current folder,
@@ -64,7 +65,7 @@ def navigate_root() -> Path:
     """Changes the current working directory to the project root.
     Saves the folder it start from in the global variable (in this module) START_DIR
 
-    Returns
+    Returns:
     -------
     pathlib.Path
         The starting directory, where you are currently, as a pathlib Path.
@@ -83,7 +84,7 @@ def find_root() -> Path:
     Changes the current working directory back and forth,
     but should end up in the original starting directory.
 
-    Returns
+    Returns:
     -------
     pathlib.Path
         The project root folder.
@@ -120,12 +121,12 @@ def load_toml(config_file: str) -> dict:
     config_file: str
         The path or filename of the config-file to load.
 
-    Returns
+    Returns:
     -------
     dict
         The contents of the toml-file
 
-    Raises
+    Raises:
     ------
     OSError
         If the file specified is not found in the current folder,

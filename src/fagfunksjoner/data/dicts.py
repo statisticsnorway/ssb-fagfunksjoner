@@ -12,12 +12,12 @@ def get_key_by_value(data: dict, value: str) -> str | list:
     value: str
         The value to look for in the dict
 
-    Returns
+    Returns:
     -------
     str | list
         Returns a str if a single match, otherwise returns a list of keys with the same value
 
-    Raises
+    Raises:
     ------
     ValueError
         If no matches are found on values

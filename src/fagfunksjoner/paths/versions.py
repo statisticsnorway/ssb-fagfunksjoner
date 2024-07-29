@@ -4,7 +4,6 @@ The main purpose is fileversions according to Statistics Norway standards.
 """
 
 from dapla import FileClient
-
 from fagfunksjoner.fagfunksjoner_logger import logger
 
 
@@ -28,7 +27,7 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
         List of strings that represents a filepath.
         Recommend that the list is created with glob operation.
 
-    Returns
+    Returns:
     -------
     list[str]
         List of strings with unique filepaths and its latest versions
@@ -42,8 +41,7 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
 
 
 def get_next_version_number(filepath: str) -> int:
-    """
-    Function for finding next version for a new file.
+    """Function for finding next version for a new file.
 
     Parameters
     ----------
@@ -51,7 +49,7 @@ def get_next_version_number(filepath: str) -> int:
         GCS filepath. Must not include version suffix.
         eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01.parquet
 
-    Returns
+    Returns:
     -------
     next_version_number: int
         The next version number for the file.

@@ -23,7 +23,6 @@ import os
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -43,8 +42,7 @@ from fagfunksjoner.fagfunksjoner_logger import logger
 
 # %%
 def is_valid_url(url):
-    """
-    Check if the provided URL is valid.
+    """Check if the provided URL is valid.
 
     Args:
         url (str): The URL to validate.
@@ -62,9 +60,7 @@ def is_valid_url(url):
 # %%
 @dataclass
 class ContextVariable:
-    """
-    Class representing a context variable.
-    """
+    """Class representing a context variable."""
 
     context_id: str
     title: str
@@ -78,9 +74,7 @@ class ContextVariable:
 
 @dataclass
 class CodeList:
-    """
-    Class representing a code list.
-    """
+    """Class representing a code list."""
 
     context_id: str
     codelist_title: str
@@ -91,33 +85,28 @@ class CodeList:
 
 @dataclass
 class Metadata:
-    """
-    Class representing metadata which includes context variables and code lists.
-    """
+    """Class representing metadata which includes context variables and code lists."""
 
-    context_variables: List[ContextVariable]
-    codelists: List[CodeList]
+    context_variables: list[ContextVariable]
+    codelists: list[CodeList]
 
 
 @dataclass
 class ArchiveData:
-    """
-    Class representing the archive data along with its metadata and code lists.
-    """
+    """Class representing the archive data along with its metadata and code lists."""
 
     df: pd.DataFrame
     metadata_df: pd.DataFrame
     codelist_df: pd.DataFrame
-    codelist_dict: Dict[str, CodeList]
-    names: List[str]
-    widths: List[int]
-    datatypes: Dict[str, str]
+    codelist_dict: dict[str, CodeList]
+    names: list[str]
+    widths: list[int]
+    datatypes: dict[str, str]
 
 
 # %%
 def extract_context_variables(root) -> list:
-    """
-    Extracts context variables from the XML root element and returns a list of ContextVariable objects.
+    """Extracts context variables from the XML root element and returns a list of ContextVariable objects.
 
     Args:
         root (ET.Element): The root element of the XML tree to parse.
@@ -156,8 +145,7 @@ def extract_context_variables(root) -> list:
 
 
 def extract_codelist(root) -> list:
-    """
-    Extracts code lists from the XML root element and returns a list of CodeList objects.
+    """Extracts code lists from the XML root element and returns a list of CodeList objects.
 
     Args:
         root (ET.Element): The root element of the XML tree to parse.
@@ -200,8 +188,7 @@ def extract_codelist(root) -> list:
 
 
 def codelist_to_df(codelist) -> pd.DataFrame:
-    """
-    Converts a list of CodeList objects to a DataFrame.
+    """Converts a list of CodeList objects to a DataFrame.
 
     Args:
         codelist (list): A list of CodeList objects.
@@ -213,8 +200,7 @@ def codelist_to_df(codelist) -> pd.DataFrame:
 
 
 def metadata_to_df(context_variables) -> pd.DataFrame:
-    """
-    Converts a list of ContextVariable objects to a DataFrame.
+    """Converts a list of ContextVariable objects to a DataFrame.
 
     Args:
         context_variables (list): A list of ContextVariable objects.
@@ -237,8 +223,7 @@ def metadata_to_df(context_variables) -> pd.DataFrame:
 
 
 def codelist_to_dict(codelist_df) -> dict:
-    """
-    Converts a DataFrame containing code lists to a dictionary.
+    """Converts a DataFrame containing code lists to a dictionary.
 
     Args:
         codelist_df (pd.DataFrame): DataFrame containing the code list information.
@@ -251,7 +236,7 @@ def codelist_to_dict(codelist_df) -> dict:
         return {}
 
     col_dict = {
-        col: dict(zip(sub_df["code_value"], sub_df["code_text"]))
+        col: dict(zip(sub_df["code_value"], sub_df["code_text"], strict=False))
         for col, sub_df in codelist_df.groupby("codelist_title")
     }
 
@@ -259,8 +244,7 @@ def codelist_to_dict(codelist_df) -> dict:
 
 
 def date_parser(date_str, format):
-    """
-    Parses a date string into a datetime object based on the provided format.
+    """Parses a date string into a datetime object based on the provided format.
 
     Args:
         date_str (str): The date string to be parsed.
@@ -276,8 +260,7 @@ def date_parser(date_str, format):
 
 
 def date_formats(metadata_df: pd.DataFrame) -> dict:
-    """
-    Creates a dictionary of date conversion functions based on the metadata DataFrame.
+    """Creates a dictionary of date conversion functions based on the metadata DataFrame.
 
     Args:
         metadata_df (pd.DataFrame): DataFrame containing metadata.
@@ -322,8 +305,7 @@ def date_formats(metadata_df: pd.DataFrame) -> dict:
 
 
 def import_parameters(df: pd.DataFrame) -> list:
-    """
-    Extracts parameters from the metadata DataFrame for importing archive data.
+    """Extracts parameters from the metadata DataFrame for importing archive data.
 
     Args:
         df (pd.DataFrame): A DataFrame containing metadata.
@@ -333,7 +315,7 @@ def import_parameters(df: pd.DataFrame) -> list:
     """
     col_names = df["title"].tolist()
     col_lengths = df["length"].astype(int).tolist()
-    datatype = dict(zip(df["title"], df["type"]))
+    datatype = dict(zip(df["title"], df["type"], strict=False))
     decimal = "," if "Desim. (K)" in df["datatype"].values else "."
     return col_names, col_lengths, datatype, decimal
 
@@ -376,8 +358,7 @@ def convert_dates(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def handle_decimals(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Adjusts the decimal values in the archive DataFrame based on the metadata or contained decimal sign.
+    """Adjusts the decimal values in the archive DataFrame based on the metadata or contained decimal sign.
 
     Args:
         df (pd.DataFrame): The DataFrame containing archive data.
@@ -413,8 +394,7 @@ def handle_decimals(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame
 
 
 def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData:
-    """
-    Imports archive data based on the given XML description and archive file.
+    """Imports archive data based on the given XML description and archive file.
 
     Args:
         archive_desc_xml (str): Path or URL to the XML file describing the archive.
@@ -448,7 +428,7 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     df, metadata_df = handle_decimals(df, metadata_df)
     df, metadata_df = downcast_ints(df, metadata_df)
     # Corrected datatype
-    datatypes = dict(zip(metadata_df["title"], metadata_df["type"]))
+    datatypes = dict(zip(metadata_df["title"], metadata_df["type"], strict=False))
     gc.collect()
     return ArchiveData(
         df, metadata_df, codelist_df, codelist_dict, names, widths, datatypes
@@ -458,7 +438,7 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
 def open_path_metapath_datadok(path: str, metapath: str) -> ArchiveData:
     """If open_path_datadok doesnt work, specify the path on linux AND the path in Datadok.
 
-     Args:
+    Args:
         path (str): Path to the archive file on linux.
         metapath (str): Path described in datadok.
 

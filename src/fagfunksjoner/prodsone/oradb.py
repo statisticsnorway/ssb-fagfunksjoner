@@ -1,6 +1,7 @@
-from getpass import getpass, getuser
+from getpass import getpass
+from getpass import getuser
 from types import TracebackType
-from typing import Any, Optional, Type
+from typing import Any
 
 import cx_Oracle as ora
 
@@ -75,7 +76,7 @@ class Oracle:
                     # gets the data as a list of tuples
                     rows = cur.fetchall()
                     # convert data from list of tuples to list of dictionaries
-                    data = [dict(zip(cols, row)) for row in rows]
+                    data = [dict(zip(cols, row, strict=False)) for row in rows]
         except ora.Error as error:
             raise error
         return data
@@ -141,7 +142,7 @@ class Oracle:
                         if not rows:
                             break
                         else:
-                            rows = [dict(zip(cols, row)) for row in rows]
+                            rows = [dict(zip(cols, row, strict=False)) for row in rows]
                             data = data + rows
         except ora.Error as error:
             raise error
@@ -169,9 +170,9 @@ class Oracle:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> bool:
         """Exit the context manager mode.
 

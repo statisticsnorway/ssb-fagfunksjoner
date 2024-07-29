@@ -48,8 +48,7 @@ def choose_value(
 def view_dataframe(
     dataframe: pd.DataFrame, column: str, operator: str = "==", unique_limit: int = 100
 ) -> widgets.HTML:
-    """
-    Display an interactive widget for filtering and viewing data in a DataFrame based on selection of values in one column
+    """Display an interactive widget for filtering and viewing data in a DataFrame based on selection of values in one column
 
     Parameters:
     - dataframe (pd.DataFrame): The DataFrame containing the data to be filtered.
@@ -81,7 +80,6 @@ def view_dataframe(
     view_dataframe(dataframe=df, column='hs', operator='==')
     ```
     """
-
     operator_comparison = [">=", ">", "<", "<="]
     operator_equality = ["==", "!="]
 

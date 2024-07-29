@@ -1,10 +1,8 @@
 import numpy as np
 import pyarrow as pa
 
-from fagfunksjoner.data.pyarrow import (
-    cast_pyarrow_table_schema,
-    restructur_pyarrow_schema,
-)
+from fagfunksjoner.data.pyarrow import cast_pyarrow_table_schema
+from fagfunksjoner.data.pyarrow import restructur_pyarrow_schema
 
 
 def mock_starting_schema_to_cast():

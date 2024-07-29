@@ -3,8 +3,8 @@ All combinations (including total-groups), over all categorical codes, in a set 
 This has some similar functionality to "proc means" in SAS.
 """
 
+from collections.abc import Callable
 from itertools import combinations
-from typing import Callable, Dict
 
 import pandas as pd
 
@@ -12,7 +12,7 @@ import pandas as pd
 def all_combos_agg(
     df: pd.DataFrame,
     groupcols: list,
-    aggargs: Dict[str, Callable],
+    aggargs: dict[str, Callable],
     fillna_dict: dict = None,
     keep_empty: bool = False,
     grand_total: dict | str = "",
@@ -87,8 +87,8 @@ def all_combos_agg(
                            fillna_dict=fillna_dict,
                            grand_total=fillna_dict
                           )
-    display(agg5)"""
-
+    display(agg5)
+    """
     dataframe = df.copy()
 
     # Hack using categoricals to keep all unobserved groups
@@ -170,7 +170,8 @@ def all_combos_agg(
 def fill_na_dict(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
     """Fills NAs in the passed dataframe with a dict.
     Keys in dict should be column names, the values what should be inputed in the cells.
-    Also handles categorical columns if they exist in the dataframe."""
+    Also handles categorical columns if they exist in the dataframe.
+    """
     df = df.copy()
     for col, fill_val in mapping.items():
         if df[col].dtype == "category":
@@ -181,7 +182,8 @@ def fill_na_dict(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
 
 def flatten_col_multiindex(df: pd.DataFrame, sep="_") -> pd.DataFrame:
     """If the dataframe has a multiindex as a column.
-    Flattens it by combining the names of the multiindex, using the seperator (sep)."""
+    Flattens it by combining the names of the multiindex, using the seperator (sep).
+    """
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = [sep.join(col).strip().strip(sep) for col in df.columns.values]
     return df

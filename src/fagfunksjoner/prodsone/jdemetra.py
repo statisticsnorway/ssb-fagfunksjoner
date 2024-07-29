@@ -65,8 +65,7 @@ def df2xml(
 def replace_input_paths(
     directory: str, find: str, replace: str, filePattern: str
 ) -> None:
-    """
-    Modifies in place, aka returns the same, but modified, files.
+    """Modifies in place, aka returns the same, but modified, files.
 
     Args:
         directory (str): Directory where you want (recursively) search through xml- and bak-files.

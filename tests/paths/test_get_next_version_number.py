@@ -1,8 +1,9 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
-from dapla import FileClient
 
+from dapla import FileClient
 from fagfunksjoner.paths.versions import get_next_version_number
 
 

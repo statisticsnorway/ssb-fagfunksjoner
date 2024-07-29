@@ -7,7 +7,8 @@ def read_datfile(path: str, input_setn: str, dtype_backend="pyarrow") -> pd.Data
     Delets any columns containing data, which should not be read...
 
     Currently only supports reading in everything as strings, but dtypes could in theory
-    be read from the sas-script, so that would be nice to develop if this sees use."""
+    be read from the sas-script, so that would be nice to develop if this sees use.
+    """
     spots = {}
     for row in input_setn.split("\n"):
         if row.strip():
