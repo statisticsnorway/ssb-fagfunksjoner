@@ -497,7 +497,7 @@ def open_path_datadok(path: str) -> pd.DataFrame:
         if not name.startswith("JUPYTERHUB") and filepath.startswith(f"${name}"):
             end = filepath.replace(f"${name}", "")
             if end.startswith(os.sep):
-                end = end[len(os.sep):]
+                end = end[len(os.sep) :]
             filepath = os.path.join(stamm, end)
 
     if filepath.endswith(".txt") or filepath.endswith(".dat"):

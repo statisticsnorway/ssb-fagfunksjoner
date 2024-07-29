@@ -5,6 +5,7 @@ import toml
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
+
 # Split into function for testing
 def _try_getting_pyproject_toml(e: Exception | None = None) -> str:
     if e is None:

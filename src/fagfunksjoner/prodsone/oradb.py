@@ -1,6 +1,6 @@
 from getpass import getpass, getuser
-from typing import Any, Optional, Type
 from types import TracebackType
+from typing import Any, Optional, Type
 
 import cx_Oracle as ora
 
@@ -24,9 +24,7 @@ class Oracle:
         cur (ora.Cursor): database cursor if using context manager
     """
 
-    def __init__(self,
-                 db: str,
-                 pw: str = None):
+    def __init__(self, db: str, pw: str = None):
         """The instanciation of the class.
 
         Note:
@@ -79,9 +77,7 @@ class Oracle:
             raise error
         return data
 
-    def update_or_insert(self,
-                         sql: str,
-                         update: list[tuple[Any, ...]]) -> None:
+    def update_or_insert(self, sql: str, update: list[tuple[Any, ...]]) -> None:
         """Update data or insert new data to Oracle database.
 
         Method to do either update or insert sql query. It is important that
@@ -162,10 +158,12 @@ class Oracle:
         self.cur.__enter__()
         return self.cur
 
-    def __exit__(self,
-                 exc_type: Optional[Type[BaseException]],
-                 exc_value: Optional[BaseException],
-                 traceback: Optional[TracebackType]) -> bool:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> bool:
         """Exit the context manager mode.
 
         When exiting context manager, it closes both cursor and connection,

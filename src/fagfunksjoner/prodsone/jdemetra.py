@@ -1,19 +1,16 @@
 import fnmatch
 import os
 import xml.etree.ElementTree as ET
-import pandas as pd
 
+import pandas as pd
 from bs4 import BeautifulSoup
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
 
-def df2xml(data: pd.DataFrame,
-           out: str,
-           outpath: str, 
-           pstart: str,
-           ystart: str,
-           freq: str) -> None:
+def df2xml(
+    data: pd.DataFrame, out: str, outpath: str, pstart: str, ystart: str, freq: str
+) -> None:
     """Output a XML-file in your specified directory.
 
     Args:
@@ -65,10 +62,9 @@ def df2xml(data: pd.DataFrame,
     )
 
 
-def replace_input_paths(directory: str,
-                        find: str,
-                        replace: str,
-                        filePattern: str) -> None:
+def replace_input_paths(
+    directory: str, find: str, replace: str, filePattern: str
+) -> None:
     """
     Modifies in place, aka returns the same, but modified, files.
 
@@ -76,7 +72,7 @@ def replace_input_paths(directory: str,
         directory (str): Directory where you want (recursively) search through xml- and bak-files.
         find (str): The text-string you want to search replace. Use the full path, i.e. "/ssb/stamme01/vakanse/wk1"
         replace (str): The text-string you want to insert. Use full path, i.e. "/home/jovyan/repos/sesjust/"
-        filePattern (str): List of filepatterns to search through. For example: ["*.xml", "*.bak"])      
+        filePattern (str): List of filepatterns to search through. For example: ["*.xml", "*.bak"])
     """
     find = find.replace("/", "%2F")
     replace = replace.replace("/", "%2F")

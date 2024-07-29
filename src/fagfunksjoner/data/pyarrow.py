@@ -1,8 +1,7 @@
 import pyarrow as pa
 
 
-def cast_pyarrow_table_schema(data: pa.Table,
-                              schema: pa.schema) -> pa.Table:
+def cast_pyarrow_table_schema(data: pa.Table, schema: pa.schema) -> pa.Table:
     """
     Set correct schema on Pyarrow Table, especially when
     dictionary datatype is wanted.
@@ -29,12 +28,11 @@ def cast_pyarrow_table_schema(data: pa.Table,
 
 
 def restructur_pyarrow_schema(
-    inuse_schema: pa.Schema,
-    wanted_schema: pa.Schema
+    inuse_schema: pa.Schema, wanted_schema: pa.Schema
 ) -> pa.Schema:
     """
     Reorder and set the schema you want to fit the in-use schema.
-        
+
     The column names in the in use schema must be present in the wanted schema.
     They should preferably have the same datatype, but not necessarily
     the same datatype settings, especially when it comes to DictionaryType.
