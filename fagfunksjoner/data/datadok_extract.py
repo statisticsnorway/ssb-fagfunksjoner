@@ -406,13 +406,15 @@ def handle_decimals(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame
 
 
 
-def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData:
+def import_archive_data(archive_desc_xml: str, archive_file: str, **kwargs) -> ArchiveData:
     """
     Imports archive data based on the given XML description and archive file.
 
     Args:
         archive_desc_xml (str): Path or URL to the XML file describing the archive.
         archive_file (str): Path to the archive file.
+        kwargs: Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
+            so dont use those.
 
     Returns:
         ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
@@ -435,8 +437,19 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     codelist_df = codelist_to_df(metadata.codelists)
     codelist_dict = codelist_to_dict(codelist_df)
     names, widths, datatypes, decimal = import_parameters(metadata_df)
+
+    # Default historical file encoding used at SSB
+    if "encoding" not in kwargs:
+        kwargs["encoding"] = "latin1"
+    # Throw error if user passes in params we will overwrite
+    overwrites = ["filepath_or_buffer", "dtype", "widths", "name", "na_values"]
+    for param in overwrites:
+        if param in kwargs:
+            err = f"You cannot pass {param} to pandas.fwf(), because we are overwriting it."
+            raise ValueError(err)
+
     df = pd.read_fwf(
-        archive_file, dtype=datatypes, widths=widths, names=names, na_values = "."
+        archive_file, dtype=datatypes, widths=widths, names=names, na_values = ".", **kwargs
     )
     df, metadata_df = convert_dates(df, metadata_df)
     df, metadata_df = handle_decimals(df, metadata_df)
@@ -448,27 +461,32 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
         df, metadata_df, codelist_df, codelist_dict, names, widths, datatypes
     )
 
-def open_path_metapath_datadok(path: str, metapath: str) -> ArchiveData:
+def open_path_metapath_datadok(path: str, metapath: str, **kwargs) -> ArchiveData:
     """If open_path_datadok doesnt work, specify the path on linux AND the path in Datadok.
     
      Args:
         path (str): Path to the archive file on linux.
         metapath (str): Path described in datadok.
+        kwargs: Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
+            so dont use those.
 
     Returns:
         ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.   
     """
     return import_archive_data(archive_desc_xml=f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={metapath}", 
-                               archive_file=path)
+                               archive_file=path,
+                               **kwargs)
 
 
-def open_path_datadok(path: str) -> pd.DataFrame:
+def open_path_datadok(path: str, **kwargs) -> pd.DataFrame:
     """Get archive data only based on the path of the .dat or .txt file
 
     This function attempts to correct and test options, to try track down the file and metadata mentioned.
 
     Args:
         path (str): The path to the archive file in prodsonen to attempt to get metadata for and open.
+        kwargs: Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
+            so dont use those.
 
     Returns:
         ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
@@ -503,4 +521,4 @@ def open_path_datadok(path: str) -> pd.DataFrame:
             print(filepath)
             filepath += ".dat"
 
-    return import_archive_data(url_address, filepath)
+    return import_archive_data(url_address, filepath, **kwargs)
