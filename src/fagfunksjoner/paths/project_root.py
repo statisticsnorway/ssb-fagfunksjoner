@@ -6,8 +6,8 @@ usually will be .py files located in other folders than the notebooks."""
 
 import os
 from pathlib import Path
-import toml
 
+import toml
 
 START_DIR = None
 

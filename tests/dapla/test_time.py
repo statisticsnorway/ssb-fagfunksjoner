@@ -1,16 +1,18 @@
 import datetime as dt
+
 import pytest
+
 from fagfunksjoner.dapla.standards.time import (
-    date_time,
-    date,
-    month,
-    year,
-    week,
-    year_days,
-    quarterly,
     bimester,
-    triannual,
+    date,
+    date_time,
     halfyear,
+    month,
+    quarterly,
+    triannual,
+    week,
+    year,
+    year_days,
 )
 
 

@@ -3,10 +3,10 @@ All combinations (including total-groups), over all categorical codes, in a set 
 This has some similar functionality to "proc means" in SAS.
 """
 
-from typing import Dict, Callable
+from itertools import combinations
+from typing import Callable, Dict
 
 import pandas as pd
-from itertools import combinations
 
 
 def all_combos_agg(

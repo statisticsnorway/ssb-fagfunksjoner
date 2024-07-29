@@ -3,13 +3,14 @@ Tries to keep objects as strings if numeric, but with leading zeros.
 Downcasts ints to smalles size. Changes possible columns to categoricals.
 The function you most likely want is "auto_dype"."""
 
-import pandas as pd
 import gc
 import json
 
+import pandas as pd
+
 
 def dtype_set_from_json(df: pd.DataFrame, json_path: str) -> pd.DataFrame:
-    with open(json_path, "r") as json_file:
+    with open(json_path) as json_file:
         json_dtypes = json.load(json_file)
     for col, dtypes in json_dtypes.items():
         if dtypes["secondary_dtype"]:
@@ -87,7 +88,6 @@ def decode_bytes(
     to_check = df.select_dtypes(include="object").head(check_row_len)
     byte_cols = []
     for col in to_check.columns:
-        byte = False
         for row in to_check[col]:
             if isinstance(row, bytes):
                 byte_cols += [col]
@@ -101,7 +101,7 @@ def decode_bytes(
             print(f"\rDecoding {col}" + " " * 40, end="")
             try:
                 df[col] = df[col].str.decode("utf-8")
-            except UnicodeDecodeError as e:
+            except UnicodeDecodeError:
                 print(f"\rFailed to decode {col} from bytes")
                 fails += [col]
             # Shit is memory intensive, lets try collecting garbage...

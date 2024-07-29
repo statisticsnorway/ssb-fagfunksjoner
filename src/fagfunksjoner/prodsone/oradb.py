@@ -1,6 +1,7 @@
-import cx_Oracle as ora
 from getpass import getpass, getuser
 from typing import Any
+
+import cx_Oracle as ora
 
 
 class Oracle:
@@ -172,5 +173,3 @@ class Oracle:
 
 class OraError(ora.Error):
     """An Error class so we can raise our database error messages."""
-
-    pass

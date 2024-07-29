@@ -1,6 +1,8 @@
-from fagfunksjoner.prodsone.oradb import Oracle
-import pandas as pd
 import warnings
+
+import pandas as pd
+
+from fagfunksjoner.prodsone.oradb import Oracle
 
 
 def dynarev_uttrekk(

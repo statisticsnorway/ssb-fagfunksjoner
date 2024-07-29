@@ -9,10 +9,8 @@ from textwrap import dedent
 
 import nox
 
-
 try:
-    from nox_poetry import Session
-    from nox_poetry import session
+    from nox_poetry import Session, session
 except ImportError:
     message = f"""\
     Nox failed to import the 'nox-poetry' package.
@@ -133,6 +131,10 @@ def precommit(session: Session) -> None:
         "darglint",
         "ruff",
         "black",
+        "autoflake",
+        "isort",
+        "pyupgrade",
+        "pyproject-flake8",
     )
     session.run("pre-commit", *args)
     if args and args[0] == "install":

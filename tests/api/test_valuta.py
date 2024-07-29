@@ -1,6 +1,7 @@
 import pathlib
 
 import pytest
+
 from fagfunksjoner.api import valuta
 
 

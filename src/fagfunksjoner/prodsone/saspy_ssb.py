@@ -5,10 +5,10 @@ or convert it."""
 
 import getpass
 import os
+import re
 import shutil
 import typing
 from pathlib import Path
-import re
 
 import pandas as pd
 import saspy
@@ -105,7 +105,7 @@ def swap_server(new_server: int) -> None:
         print(
             f"Found an existing copy of sascfg.py in your folder /ssb/bruker/{brukernavn}"
         )
-    with open(cfgfile_user, "r") as f:
+    with open(cfgfile_user) as f:
         content = f.read()
     new_content = []
     for line in content.split("\n"):

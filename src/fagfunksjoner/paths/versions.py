@@ -3,7 +3,6 @@ but it works locally as well if standard for versionizing datafiles are implemen
 The main purpose is fileversions according to Statistics Norway standards.
 """
 
-import dapla as dp
 from dapla import FileClient
 
 
@@ -36,7 +35,7 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
         sorted([file for file in glob_list_path if file.startswith(unique)])[-1]
         for unique in sorted(
             list(
-                set([file[0] for file in [file.split("_v") for file in glob_list_path]])
+                {file[0] for file in [file.split("_v") for file in glob_list_path]}
             )
         )
     ]

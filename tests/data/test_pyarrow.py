@@ -1,5 +1,6 @@
 import numpy as np
 import pyarrow as pa
+
 from fagfunksjoner.data.pyarrow import (
     cast_pyarrow_table_schema,
     restructur_pyarrow_schema,

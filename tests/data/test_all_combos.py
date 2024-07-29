@@ -1,7 +1,6 @@
-from fagfunksjoner.data.pandas_combinations import all_combos_agg
 import pandas as pd
-import pytest
-from unittest import mock
+
+from fagfunksjoner.data.pandas_combinations import all_combos_agg
 
 
 def dataset1():

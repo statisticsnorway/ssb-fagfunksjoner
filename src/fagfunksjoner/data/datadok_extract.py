@@ -16,19 +16,18 @@
 # # Import file description from Datadok and use that to import archive file
 # We use the path in Datadok and the name of the archive file as arguments to the function
 
+import gc
+
 # %%
-import os, gc
+import os
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from io import StringIO
 from typing import Dict, List
 from urllib.parse import urlparse
 
-import numpy as np
 import pandas as pd
 import requests
-
 
 # %% [markdown]
 # ## Hente fra api til Datadok
@@ -297,7 +296,6 @@ def date_formats(metadata_df: pd.DataFrame) -> dict:
 
     # If there are dateformats we dont know about, we want an error on that
     not_catched = metadata_df[~date_metas_mask]
-    missing_date_formats = []
     for _, row in not_catched.iterrows():
         if "dato" in row["datatype"].lower() or "date" in row["datatype"].lower():
             raise ValueError(f"Dataformatting for metadatarow not catched: {row}")
@@ -427,7 +425,7 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     if is_valid_url(archive_desc_xml):
         xml_file = requests.get(archive_desc_xml).text
     else:
-        with open(archive_desc_xml, "r") as file:
+        with open(archive_desc_xml) as file:
             xml_file = file.read()
     root = ET.fromstring(xml_file)
     context_variables = extract_context_variables(root)

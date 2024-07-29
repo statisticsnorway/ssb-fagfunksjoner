@@ -1,9 +1,10 @@
-import requests as rs
 import json
-from functools import lru_cache
 from collections import defaultdict
-from xml.etree import cElementTree as ET
+from functools import lru_cache
+from xml.etree import ElementTree as ET
+
 import dateutil
+import requests as rs
 
 
 @lru_cache(maxsize=1)  # Will be slow first time, but then caches result

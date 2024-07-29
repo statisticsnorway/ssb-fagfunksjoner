@@ -3,10 +3,10 @@ Functions that helps Statistics Norway following their specified standards.
 Docs: https://statistics-norway.atlassian.net/wiki/spaces/MPD/pages/2953084957/Standardformater
 """
 
-from typing import List, Dict
 import datetime as dt
-from pandas import Timestamp
+from typing import Dict, List
 
+from pandas import Timestamp
 
 FORMATS: dict = {
     "date_time": "%Y-%m-%dT%H:%M:%S",

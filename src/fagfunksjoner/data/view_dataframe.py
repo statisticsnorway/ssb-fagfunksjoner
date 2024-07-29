@@ -1,6 +1,6 @@
-import pandas as pd
-import numpy as np
 import ipywidgets as widgets
+import numpy as np
+import pandas as pd
 
 
 def choose_value(

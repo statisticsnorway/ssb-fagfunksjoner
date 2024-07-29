@@ -1,6 +1,6 @@
 import os
+
 from fagfunksjoner.paths import ProjectRoot
-import pytest
 
 
 def test_ProjectRoot_context_manager():
