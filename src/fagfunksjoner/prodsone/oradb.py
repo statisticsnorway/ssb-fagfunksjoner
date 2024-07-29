@@ -59,6 +59,9 @@ class Oracle:
 
         Returns:
             list[dict[str, Any]]: A list of dictionary of every record, column names as keys.
+
+        Raises:
+            ora.Error: If the connection returns an error.
         """
         try:
             # create connection to database
@@ -87,6 +90,9 @@ class Oracle:
         Args:
             sql (str): sql query statement, insert or update.
             update (list[tuple[Any, ...]]): list of record values to insert or update.
+
+        Raises:
+            ora.Error: If the connection returns an error.
         """
         try:
             # create connection to database
@@ -115,6 +121,9 @@ class Oracle:
 
         Returns:
             list[dict[str, Any]]: A list of dictionary of every record, column names as keys.
+
+        Raises:
+            ora.Error: If the connection returns an error.
         """
         try:
             # create connection to database

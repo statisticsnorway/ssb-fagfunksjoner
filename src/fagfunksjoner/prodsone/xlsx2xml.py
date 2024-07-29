@@ -32,7 +32,7 @@ def change_input_to_xml(
         x = child.attrib
         y = list(x.values())
         a.append(y)
-    NoOfSeries = len(a[1:len(a)])
+    NoOfSeries = len(a[1 : len(a)])
 
     # Set new path
     for x in range(1, NoOfSeries):

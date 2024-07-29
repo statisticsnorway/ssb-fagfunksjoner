@@ -89,7 +89,7 @@ def dynarev_uttrekk(
             """
             sfu = pd.DataFrame(oracle_conn.select(sql=query_sfu))
 
-            if sfu_cols == True:
+            if sfu_cols:
                 logger.info("Taking out SFU data with all columns.")
             else:
                 sfu = sfu[sfu_cols]

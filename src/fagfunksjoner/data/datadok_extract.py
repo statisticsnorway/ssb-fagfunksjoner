@@ -284,6 +284,9 @@ def date_formats(metadata_df: pd.DataFrame) -> dict:
 
     Returns:
         dict: A dictionary mapping column titles to date conversion formats.
+
+    Raises:
+        ValueError: On unrecognized dateformats.
     """
     date_formats = {
         ("Dato1", 8): "%Y%m%d",
