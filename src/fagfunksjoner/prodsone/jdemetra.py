@@ -1,22 +1,28 @@
 import fnmatch
 import os
 import xml.etree.ElementTree as ET
+import pandas as pd
 
 from bs4 import BeautifulSoup
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
-def df2xml(data, out: str, outpath: str, pstart: str, ystart: str, freq: str):
-    """
-    Parameters:
-        data : A Pandas DataFrame you want to convert.
-        out : The name of the outputfile and attribute name in tscollection.
-        outpath : Directory you want to save the output-file.
-        pstart : The period (month, quarter) you want the sa to start in the first year.
-        ystart : Startyear of the series.
-        freq : Yearly frequency of the series. Quarterly is 4, monthly is 12, etc..
-    Returns:
-        An XML-file in your specified directory.
+
+def df2xml(data: pd.DataFrame,
+           out: str,
+           outpath: str, 
+           pstart: str,
+           ystart: str,
+           freq: str) -> None:
+    """Output a XML-file in your specified directory.
+
+    Args:
+        data (pd.DataFrame): A Pandas DataFrame you want to convert.
+        out (str): The name of the outputfile and attribute name in tscollection.
+        outpath (str): Directory you want to save the output-file.
+        pstart (str): The period (month, quarter) you want the sa to start in the first year.
+        ystart (str): Startyear of the series.
+        freq (str): Yearly frequency of the series. Quarterly is 4, monthly is 12, etc..
     """
     # Deletes the first column since its because in our data thats a period-column
     RawSeries2 = data.drop(data.columns[0], axis=1)
@@ -59,17 +65,18 @@ def df2xml(data, out: str, outpath: str, pstart: str, ystart: str, freq: str):
     )
 
 
-def replace_input_paths(directory, find, replace, filePattern):
+def replace_input_paths(directory: str,
+                        find: str,
+                        replace: str,
+                        filePattern: str) -> None:
     """
-    Parameters:
-        directory: Directory where you want (recursively) search through xml- and bak-files.
-        find: The text-string you want to search replace. Use the full path, i.e. "/ssb/stamme01/vakanse/wk1"
-        replace: The text-string you want to insert. Use full path, i.e. "/home/jovyan/repos/sesjust/"
-        filePattern: List of filepatterns to search through. For example: ["*.xml", "*.bak"])
+    Modifies in place, aka returns the same, but modified, files.
 
-    Returns:
-        Modifys in place, aka returns the same, but modified, files.
-
+    Args:
+        directory (str): Directory where you want (recursively) search through xml- and bak-files.
+        find (str): The text-string you want to search replace. Use the full path, i.e. "/ssb/stamme01/vakanse/wk1"
+        replace (str): The text-string you want to insert. Use full path, i.e. "/home/jovyan/repos/sesjust/"
+        filePattern (str): List of filepatterns to search through. For example: ["*.xml", "*.bak"])      
     """
     find = find.replace("/", "%2F")
     replace = replace.replace("/", "%2F")

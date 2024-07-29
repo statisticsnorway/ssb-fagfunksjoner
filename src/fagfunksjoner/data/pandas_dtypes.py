@@ -151,9 +151,7 @@ def smaller_ints(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
 
 
 def categories_threshold(
-    df: pd.DataFrame,
-    cardinality_threshold: int = 0,
-    copy_df: bool = True
+    df: pd.DataFrame, cardinality_threshold: int = 0, copy_df: bool = True
 ) -> pd.DataFrame:
     if copy_df:
         df = df.copy()

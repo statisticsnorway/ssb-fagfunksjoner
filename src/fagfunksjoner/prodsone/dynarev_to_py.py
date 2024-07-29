@@ -2,25 +2,30 @@ import warnings
 
 import pandas as pd
 
-from fagfunksjoner.prodsone.oradb import Oracle
 from fagfunksjoner.fagfunksjoner_logger import logger
+from fagfunksjoner.prodsone.oradb import Oracle
 
 
 def dynarev_uttrekk(
-    delreg_nr: str, skjema: str, dublettsjekk: bool = False, sfu_cols: list = []
-):
+    delreg_nr: str,
+    skjema: str,
+    dublettsjekk: bool = False,
+    sfu_cols: list[str]|None = None
+) -> pd.DataFrame:
     """
     Fetches and processes data from the Oracle database using the Oracle class for connection management.
 
-    Parameters:
-        delreg_nr : Delregisternummer.
-        skjema : Skjemanavn.
-        dublettsjekk (optional) : If True, checks for and returns duplicates.
-        sfu_cols (optional) : Specify a list of columns for SFU data; if True, returns all SFU columns.
+    Args:
+        delreg_nr (str): Delregisternummer.
+        skjema (str): Skjemanavn.
+        dublettsjekk (bool) : If True, checks for and returns duplicates.
+        sfu_cols (list) : Specify a list of columns for SFU data; if True, returns all SFU columns.
 
     Returns:
-        A dataframe or tuple of dataframes based on the input options.
+        pd.dataframe: A dataframe or tuple of dataframes based on the input options.
     """
+    if sfu_cols is None:
+        sfu_cols = []
     db_name = input("Name of Oracle Database: ")
     oracle_conn = Oracle(db=db_name)  # Create an Oracle connection object
 

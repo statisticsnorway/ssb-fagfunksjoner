@@ -2,19 +2,22 @@ import xml.etree.ElementTree as ET
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
-def change_input_to_xml(
-    spec_path, spec_filename, input_path, input_filename, output_path
-):
-    """
-    Parameters:
-        spec_path: Path to where your specification-files are localed. Typically in a folder called SAProcessing/
-        spec_filename: Name of specification-file. Default from Jdemetra+ is SAProcessing-1, SAProcessing-2, etc.
-        input_path: Path to directory where input-files are located. I.e. ~/sa/project/input
-        input_filename: Name of input-file for the specfication stated in the first two arguments.
-        output_path: Path to where you want to save the new specification-files.
 
-    Returns:
-        Parses specification-files from Jdemetra+ and replaces references to old file format and replaces them with XML-file-references.
+def change_input_to_xml(
+    spec_path: str,
+    spec_filename: str,
+    input_path: str,
+    input_filename: str,
+    output_path: str,
+) -> None:
+    """Parse specification-files from Jdemetra+ and replaces references to old file format and replaces them with XML-file-references.
+
+    Args:
+        spec_path (str): Path to where your specification-files are localed. Typically in a folder called SAProcessing/
+        spec_filename (str): Name of specification-file. Default from Jdemetra+ is SAProcessing-1, SAProcessing-2, etc.
+        input_path (str): Path to directory where input-files are located. I.e. ~/sa/project/input
+        input_filename (str): Name of input-file for the specfication stated in the first two arguments.
+        output_path (str): Path to where you want to save the new specification-files.
 
     """
     path = spec_path
@@ -29,7 +32,7 @@ def change_input_to_xml(
         x = child.attrib
         y = list(x.values())
         a.append(y)
-    NoOfSeries = len(a[1 : len(a)])
+    NoOfSeries = len(a[1:len(a)])
 
     # Set new path
     for x in range(1, NoOfSeries):

@@ -1,5 +1,6 @@
 from getpass import getpass, getuser
-from typing import Any
+from typing import Any, Optional, Type
+from types import TracebackType
 
 import cx_Oracle as ora
 
@@ -16,14 +17,16 @@ class Oracle:
         User must remember to the close method after final use.
 
     Attributes:
-        user: user id
-        db: database name
-        pw: user password
-        conn: database connection if using context manager
-        cur: database cursor if using context manager
+        user (str): user id
+        db (str): database name
+        pw (str): user password
+        conn (ora.Connection): database connection if using context manager
+        cur (ora.Cursor): database cursor if using context manager
     """
 
-    def __init__(self, db: str, pw: str = None):
+    def __init__(self,
+                 db: str,
+                 pw: str = None):
         """The instanciation of the class.
 
         Note:
@@ -39,25 +42,25 @@ class Oracle:
         self._passw()
 
     def _passw(self):
-        """Method for checking if user password exist
+        """Method for checking if user password exists.
 
-        If password is not given when instanciated,
-        then ask for it to the user.
+        If password is not given when instantiated,
+        then ask for it from the user.
         """
         if self.pw is None:
             self.pw = getpass(f"Password for user {self.user}: ")
 
     def select(self, sql: str) -> list[dict[str, Any]]:
-        """Gets data from Oracle database with fetchall method.
+        """Get data from Oracle database with fetchall method.
 
         Method for normal select sql query. It will do a fetchall procedure.
         If it is to much data, then use method select_many instead.
 
         Args:
-            sql: the sql query statement
+            sql (str): the sql query statement
 
         Returns:
-            A list of dictionary of every record, column names as keys.
+            list[dict[str, Any]]: A list of dictionary of every record, column names as keys.
         """
         try:
             # create connection to database
@@ -76,16 +79,18 @@ class Oracle:
             raise error
         return data
 
-    def update_or_insert(self, sql: str, update: list[tuple[Any, ...]]) -> None:
-        """Updates data or insert new data to Oracle database.
+    def update_or_insert(self,
+                         sql: str,
+                         update: list[tuple[Any, ...]]) -> None:
+        """Update data or insert new data to Oracle database.
 
         Method to do either update or insert sql query. It is important that
         the sql quary statement and the data column names and value comes in
         correct order to each other.
 
         Args:
-            sql: sql query statement, insert or update.
-            update: list of record values to insert or update.
+            sql (str): sql query statement, insert or update.
+            update (list[tuple[Any, ...]]): list of record values to insert or update.
         """
         try:
             # create connection to database
@@ -103,17 +108,17 @@ class Oracle:
             raise error
 
     def select_many(self, sql: str, batchsize: int) -> list[dict[str, Any]]:
-        """Gets data from Oracle database in batches with fetchmany method.
+        """Get data from Oracle database in batches with fetchmany method.
 
         Method for normal select sql query. It will do a fetchmany procedure,
         which is prefered when theres a lot of data that need to be fetched.
 
         Args:
-            sql: the sql query statement.
-            batchsize: the size of rows per batch.
+            sql (str): the sql query statement.
+            batchsize (int): the size of rows per batch.
 
         Returns:
-            A list of dictionary of every record, column names as keys.
+            list[dict[str, Any]]: A list of dictionary of every record, column names as keys.
         """
         try:
             # create connection to database
@@ -138,18 +143,18 @@ class Oracle:
         return data
 
     def close(self) -> None:
-        """Method for closing and deleting the class attribute values"""
+        """Close connection and delete the class attribute values"""
         del self.user
         del self.pw
         del self.db
 
-    def __enter__(self):
-        """Dunder method for entering context manager mode.
+    def __enter__(self) -> ora.Cursor:
+        """Enter context manager mode.
 
-        When entering context manager it will go straigt to the cursor.
+        When entering context manager it will go straight to the cursor.
 
         Returns:
-            the cursor
+            ora.Cursor: the cursor
         """
         self.conn = ora.connect(self.user + "/" + self.pw + "@" + self.db)
         self.conn.__enter__()
@@ -157,12 +162,18 @@ class Oracle:
         self.cur.__enter__()
         return self.cur
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Dunder method for exiting context manager mode.
+    def __exit__(self,
+                 exc_type: Optional[Type[BaseException]],
+                 exc_value: Optional[BaseException],
+                 traceback: Optional[TracebackType]) -> bool:
+        """Exit the context manager mode.
 
-        when exiting context manager, it closes both cursor and connection,
+        When exiting context manager, it closes both cursor and connection,
         as well as closing the class itself. All class attribute values
         will be deleted as well.
+
+
+
         """
         self.cur.__exit__(exc_type, exc_value, traceback)
         self.conn.__exit__(exc_type, exc_value, traceback)

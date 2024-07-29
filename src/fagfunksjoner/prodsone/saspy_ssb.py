@@ -15,6 +15,7 @@ import saspy
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
+
 def saspy_session() -> saspy.SASsession:
     """Get an initialized saspy.SASsession object.
 
@@ -28,7 +29,9 @@ def saspy_session() -> saspy.SASsession:
     brukernavn = getpass.getuser()
     authpath = "/ssb/bruker/" + brukernavn + "/.authinfo"
     if not os.path.exists(authpath):
-        logger.warn("Cant find the auth-file, consider running saspy_session.set_password()")
+        logger.warn(
+            "Cant find the auth-file, consider running saspy_session.set_password()"
+        )
         logger.info(help(set_password))
     else:
         with open(authpath) as f:
@@ -101,7 +104,9 @@ def swap_server(new_server: int) -> None:
     cfgfile_user = f"/ssb/bruker/{brukernavn}/sascfg.py"
     cfgfile_general = f"{felles}/sascfg.py"
     if not os.path.exists(cfgfile_user):
-        logger.info(f"Making a new copy of sascfg.py in your folder /ssb/bruker/{brukernavn}")
+        logger.info(
+            f"Making a new copy of sascfg.py in your folder /ssb/bruker/{brukernavn}"
+        )
         shutil.copy(cfgfile_general, cfgfile_user)
     else:
         logger.info(

@@ -7,6 +7,7 @@ from dapla import FileClient
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
+
 def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
     """Recieves a list of filenames with multiple versions,
     and returns the latest versions of the files.

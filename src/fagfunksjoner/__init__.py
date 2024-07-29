@@ -3,6 +3,7 @@ import importlib.metadata
 
 import toml
 
+from fagfunksjoner.fagfunksjoner_logger import logger
 
 # Split into function for testing
 def _try_getting_pyproject_toml(e: Exception | None = None) -> str:
@@ -11,14 +12,18 @@ def _try_getting_pyproject_toml(e: Exception | None = None) -> str:
     else:
         passed_excep = e
     try:
-        version: str = toml.load("pyproject.toml")["tool"]["poetry"]["version"]
-        return version
-    except Exception:
-        version_missing: str = "0.0.0"
-        print(
-            f"Error from ssb-fagfunksjoner __init__, not able to get version-number, setting it to {version_missing}: {passed_excep}"
+        try:
+            version: str = toml.load("../pyproject.toml")["tool"]["poetry"]["version"]
+        except FileNotFoundError:
+            version = toml.load("./pyproject.toml")["tool"]["poetry"]["version"]
+    except toml.TomlDecodeError as e:
+        version = "0.0.0"
+        logger.exception(
+            f"Error from ssb-fagfunksjoner __init__, not able to get version-number, setting it to %s. Exception: %s",
+            version,
+            str(passed_excep),
         )
-        return version_missing
+    return version
 
 
 # Gets the installed version from pyproject.toml, then there is no need to update this file

@@ -59,10 +59,10 @@ def test_cast_pyarrow_table_schema():
     testdata = mock_data()
     schema_start = mock_starting_schema_to_cast()
     schema_want = mock_wanted_schema_after_cast()
-    assert testdata.schema.equals(schema_start) == True
-    assert testdata.schema.equals(schema_want) == False
+    assert testdata.schema.equals(schema_start)
+    assert not testdata.schema.equals(schema_want)
     casted_data = cast_pyarrow_table_schema(testdata, schema_want)
-    assert casted_data.schema.equals(schema_want) == True
+    assert casted_data.schema.equals(schema_want)
 
 
 def mock_starting_schema_to_reorder():
@@ -109,4 +109,4 @@ def test_restructur_pyarrow_schema():
     schema_should = mock_wanted_schema_settings()
     schema_start = mock_starting_schema_to_reorder()
     schema = restructur_pyarrow_schema(schema_start, schema_should)
-    assert schema_want.equals(schema) == True
+    assert schema_want.equals(schema)

@@ -2,8 +2,11 @@ import pandas as pd
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
+
 def prosent_av_kolonne_na(df: pd.DataFrame, col: str) -> None:
-    logger.info(len(df[df[col].isna()]), "av", len(df), "har tomme verdier i kolonnen", col)
+    logger.info(
+        len(df[df[col].isna()]), "av", len(df), "har tomme verdier i kolonnen", col
+    )
     logger.info("Det er", round(len(df[df[col].isna()]) / len(df) * 100, 2), "%")
 
 
