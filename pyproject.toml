@@ -75,6 +75,9 @@ pretty = true
 show_column_numbers = true
 show_error_context = true
 
+[tool.isort]
+profile = "black"
+
 [tool.ruff]
 force-exclude = true  # Apply excludes to pre-commit
 show-fixes = true
