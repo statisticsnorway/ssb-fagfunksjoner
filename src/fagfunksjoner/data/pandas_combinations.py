@@ -41,8 +41,8 @@ def all_combos_agg(
             counts the number of group columns used for the aggregation.
 
     Raises:
-        ValueError: On sending in a grand_total-parameter we dont understand, not a string or a dict.        
-    
+        ValueError: On sending in a grand_total-parameter we dont understand, not a string or a dict.
+
     Known problems:
         You should not use dataframes with multi-index columns as they cause trouble.
 
