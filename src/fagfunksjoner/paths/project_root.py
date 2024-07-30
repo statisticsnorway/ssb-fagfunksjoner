@@ -1,5 +1,5 @@
-"""This module lets you easily navigate to the root of your local project files,
-and back from whence you came.
+"""This module lets you easily navigate to the root of your local project files.
+
 One of the main uses will be importing local functions in a notebook based project.
 As notebooks run from the folder they are opened from, not root, and functions
 usually will be .py files located in other folders than the notebooks.
@@ -7,9 +7,10 @@ usually will be .py files located in other folders than the notebooks.
 
 import os
 from pathlib import Path
+from types import TracebackType
+from typing import Any
 
 import toml
-from typing import Any
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
@@ -17,22 +18,37 @@ START_DIR = None
 
 
 class ProjectRoot:
-    """Contextmanager to import locally "with". As in:
+    """Contextmanager to import locally "with".
+
+    As in:
     with ProjectRoot():
         from src.functions.local_functions import local_function
 
     So this class navigates back and forth using a single line/"instruction"
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the projectroot by finding the correct folder.
+
+        And navigating back to, and storing the starting folder.
+        """
         self.path = find_root()
         self.workdir = Path(os.getcwd())
 
-    def __enter__(self):
+    def __enter__(self) -> None:
+        """Entering the context manager navigates to the project root."""
         navigate_root()
 
     @staticmethod
-    def __exit__(exc_type, exc_value, traceback):
+    def __exit__(
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> bool:
+        """Exiting the project root navigates back to the current folder.
+
+        THEN raises any errors.
+        """
         return_to_work_dir()
         if exc_type is not None:
             logger.warn(traceback)
@@ -40,8 +56,9 @@ class ProjectRoot:
 
     @staticmethod
     def load_toml(config_file: str) -> dict[Any]:
-        """Looks for a .toml file to load the contents from,
-        in the current folder, the specified path, the project root.
+        """Looks for a .toml file to load the contents from.
+
+        Looks in the current folder, the specified path, the project root.
 
         Args:
         config_file (str): The path or filename of the config-file to load.
@@ -106,8 +123,9 @@ def return_to_work_dir():
 
 
 def load_toml(config_file: str) -> dict[Any]:
-    """Looks for a .toml file to load the contents from,
-    in the current folder, the specified path, the project root.
+    """Look for a .toml file to load the contents from.
+
+    Looks in the current folder, the specified path, the project root.
 
     Args:
         config_file (str): The path or filename of the config-file to load.

@@ -14,7 +14,15 @@ from fagfunksjoner.fagfunksjoner_logger import logger
 
 
 def dtype_set_from_json(df: pd.DataFrame, json_path: str) -> pd.DataFrame:
-    
+    """Use a stored json to change the dtypes of a dataframe to match what was stored.
+
+    Args:
+        df (pd.DataFrame): The Dataframe to manipulate towards the stored dtypes.
+        json_path (str): The jsonfile containing the dtypes on the columns.
+
+    Returns:
+        pd.DataFrame: The manipulated dataframe, with newly set dtypes.
+    """
     with open(json_path) as json_file:
         json_dtypes = json.load(json_file)
     for col, dtypes in json_dtypes.items():
@@ -25,6 +33,12 @@ def dtype_set_from_json(df: pd.DataFrame, json_path: str) -> pd.DataFrame:
 
 
 def dtype_store_json(df: pd.DataFrame, json_path: str) -> None:
+    """Store the dtypes of a dataframes columns as a json for later reference.
+
+    Args:
+        df (pd.DataFrame): The dataframe to look at for column names and dtypes.
+        json_path (str): The path to the jsonfile, to store dtypes in.
+    """
     dtype_metadata = {}
     for col, dtype in df.dtypes.items():
         second_dtype = None
@@ -52,6 +66,16 @@ def auto_dtype(
     If cardinality_threshold is set above 0, will convert object and strings
     to categoricals,
     if number of unique values in the columns are below the threshold.
+
+    Args:
+        df (pd.DataFrame): The dataframe to manipulate
+        cardinality_threshold (int, optional): Less unique values in columns than this threshold,
+            means it should be converted to a categorical. Defaults to 0, meaning no conversion to categoricals.
+        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        show_memory (bool, optional): Show the user how much memory was saved by doing the conversion, does require some processing. Defaults to True.
+
+    Returns:
+        pd.DataFrame: _description_
     """
     if show_memory:
         logger.info("\nMemory usage before cleanup:")
@@ -88,6 +112,16 @@ def auto_dtype(
 def decode_bytes(
     df: pd.DataFrame, copy_df: bool = True, check_row_len: int = 50
 ) -> pd.DataFrame:
+    """Check object columns if they contain bytes and should be attempted to convert to real utf8 strings.
+
+    Args:
+        df (pd.DataFrame): The dataframe to check.
+        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        check_row_len (int, optional): How many rows to look for byte-content in, conserves processing, but might miss columns if set too low. Defaults to 50.
+
+    Returns:
+        pd.DataFrame: The dataframe with converted byte-columns to string-columns.
+    """
     # Find columns containing bytes
     if len(df) < check_row_len:
         check_row_len = len(df)
@@ -106,7 +140,7 @@ def decode_bytes(
         for col in df.select_dtypes(include=["object", "string"]).columns:
             logger.info(f"\rDecoding {col}" + " " * 40, end="")
             try:
-                df[col] = df[col].str.decode("utf-8")
+                df[col] = df[col].str.decode("utf-8").astype("string[pyarrow]")
             except UnicodeDecodeError:
                 logger.info(f"\rFailed to decode {col} from bytes")
                 fails += [col]
@@ -119,16 +153,36 @@ def decode_bytes(
 
 
 def object_to_strings(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
+    """Convert columns that are still "object", to pyarrow strings.
+
+    Args:
+        df (pd.DataFrame): The dataframe to manipulate.
+        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+
+    Returns:
+        pd.DataFrame: The modified dataframe.
+    """
     if copy_df:
         df = df.copy()
     for col in df.select_dtypes(include="object").columns:
         if df[col].dtype == "object":
             logger.info(f"\rConverting {col} to string", " " * 40, end="")
-            df[col] = df[col].astype("string").str.strip()
+            df[col] = df[col].astype("string[pyarrow]").str.strip()
     return df
 
 
 def strings_to_int(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
+    """Checks string columns to see if their content can be converted safely to ints.
+
+    This conserves A LOT of storage and memory.
+
+    Args:
+        df (pd.DataFrame): The dataframe to manipulate.
+        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+
+    Returns:
+        pd.DataFrame: The manipulated dataframe.
+    """
     if copy_df:
         df = df.copy()
     for col in df.select_dtypes(include=["object", "string"]).columns:
@@ -145,6 +199,15 @@ def strings_to_int(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
 
 
 def smaller_ints(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
+    """Downcasts ints to smaller int-dtypes to conserve space.
+
+    Args:
+        df (pd.DataFrame): The dataframe to manipulate.
+        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+
+    Returns:
+        pd.DataFrame: The manipulated dataframe.
+    """
     if copy_df:
         df = df.copy()
     for col in df.select_dtypes(include="Int64").columns:
@@ -155,6 +218,17 @@ def smaller_ints(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
 def categories_threshold(
     df: pd.DataFrame, cardinality_threshold: int = 0, copy_df: bool = True
 ) -> pd.DataFrame:
+    """Convert to categoricals using a threshold of unique values.
+
+    Args:
+        df (pd.DataFrame): The dataframe to convert to categoricals on.
+        cardinality_threshold (int, optional): Less unique values in columns than this threshold,
+            means it should be converted to a categorical. Defaults to 0, meaning no conversion to categoricals.
+        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+
+    Returns:
+        pd.DataFrame: The dataframe with converted columns to categoricals.
+    """
     if copy_df:
         df = df.copy()
     str_cols = df.select_dtypes(include=["object", "string"])

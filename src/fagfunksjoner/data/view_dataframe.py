@@ -5,10 +5,7 @@ from IPython.display import display
 
 
 def filter_display(
-    dataframe: pd.DataFrame,
-    column: str,
-    value: str | int | float,
-    operator: str
+    dataframe: pd.DataFrame, column: str, value: str | int | float, operator: str
 ) -> None:
     """Filter data based on args, and display the result.
 
@@ -57,12 +54,9 @@ def filter_display(
 
 
 def view_dataframe(
-    dataframe: pd.DataFrame,
-    column: str,
-    operator: str = "==",
-    unique_limit: int = 100
+    dataframe: pd.DataFrame, column: str, operator: str = "==", unique_limit: int = 100
 ) -> widgets.HTML:
-    """Display an interactive widget for filtering and viewing data in a DataFrame based on selection of values in one column
+    """Display an interactive widget for filtering and viewing data in a DataFrame based on selection of values in one column.
 
     Args:
         dataframe (pd.DataFrame): The DataFrame containing the data to be filtered.

@@ -1,26 +1,24 @@
-"""Extra functionality operating on baseline dicts added to this module"""
+"""Extra functionality operating on baseline dicts added to this module."""
+
+from collections.abc import Hashable
+from typing import Any
 
 
-def get_key_by_value(data: dict, value: str) -> str | list:
-    """Searches through the values in a dict for a match, returns the key,
-    if a single match, a list of keys, if more than one match.
+def get_key_by_value(
+    data: dict[Hashable, Any], value: Any
+) -> Hashable | list[Hashable]:
+    """Searches through the values in a dict for a match, returns the key.
 
-    Parameters
-    ----------
-    data: dict
-        The data to search through, will only look in top most level...
-    value: str
-        The value to look for in the dict
+    Args:
+        data (dict[Hashable, Any]): The data to search through, will only look in top most level...
+        value (Any): The value to look for in the dict
 
     Returns:
-    -------
-    str | list
-        Returns a str if a single match, otherwise returns a list of keys with the same value
+        Hashable | list[Hashable]: Returns a single key if a single match on value,
+            otherwise returns a list of keys with the same value.
 
     Raises:
-    ------
-    ValueError
-        If no matches are found on values
+        ValueError: If no matches are found on values
     """
     result = []
     for key, heystack_value in data.items():
@@ -30,4 +28,4 @@ def get_key_by_value(data: dict, value: str) -> str | list:
         return result[0]
     elif result:
         return result
-    raise ValueError("Can’t find search-value")
+    raise ValueError("Can't find search-value")

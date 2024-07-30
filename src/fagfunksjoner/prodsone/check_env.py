@@ -27,8 +27,9 @@ def check_env() -> str:
 
 
 def linux_shortcuts(insert_environ: bool = False) -> dict:
-    """Manually load the "linux-forkortelser" in as dict,
-    if the function can find the file they are shared in.
+    """Manually load the "linux-forkortelser" in as dict.
+
+    If the function can find the file they are shared in.
 
     Parameters
     ----------

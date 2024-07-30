@@ -17,77 +17,68 @@ def all_combos_agg(
     keep_empty: bool = False,
     grand_total: dict | str = "",
 ) -> pd.DataFrame:
-    """Generate all aggregation levels for a set of columns in a dataframe
+    """Generate all aggregation levels for a set of columns in a dataframe.
 
-    Parameters:
-    -----------
-        df: pandas.DataFrame
-            dataframe to aggregate.
-        groupcols: list[str]
-            List of columns to group by.
-        aggargs: Dict[str, Callable]
-            how to aggregate, is sent to the agg function in pandas, look at its documentation.
-        fillna_dict: Dict[str, str]
-            Fills "totals" in the groupcols, by filling their NA values.
+    Args:
+        df (pd.DataFrame): dataframe to aggregate.
+        groupcols (list[str]): List of columns to group by.
+        aggargs (dict[str, Callable]): how to aggregate, is sent to the agg function in pandas, look at its documentation.
+        fillna_dict (dict[str, str]): Fills "totals" in the groupcols, by filling their NA values.
             Send a dict with col names as keys, and string-values to put in cells as values.
-        keep_empty: bool
-            Keep groups without observations through the process.
+        keep_empty (bool): Keep groups without observations through the process.
             Removing them is default behaviour of Pandas
-        grand_total: str | Dict[str|str]
-            Fill this value, if you want a grand total in your aggregations.
+        grand_total (str | dict[str|str]): Fill this value, if you want a grand total in your aggregations.
             If you use a string, this will be input in the fields in the groupcol columns.
             If you send a dict, like to the fillna_dict parameter, the values in the cells
             in the grand_total will reflect the values in the dict.
 
     Returns:
-    --------
-        dataframe with all the group-by columns, all the aggregation columns combined
-        with the aggregation functions, a column called aggregation_level which
-        separates the different aggregation levels, and a column called aggregation_ways which
-        counts the number of group columns used for the aggregation.
+        pd.DataFrame: with all the group-by columns, all the aggregation columns combined
+            with the aggregation functions, a column called aggregation_level which
+            separates the different aggregation levels, and a column called aggregation_ways which
+            counts the number of group columns used for the aggregation.
 
     Known problems:
-    ---------------
         You should not use dataframes with multi-index columns as they cause trouble.
 
     Examples:
-    import pandas as pd
-    from fagfunksjoner.data.pandas_combinations import all_combos_agg
-    data = {
-            'alder': [20, 60, 33, 33, 20],
-            'kommune': ['0301', '3001', '0301', '5401', '0301'],
-            'kjonn': ['1', '2', '1', '2', '2'],
-            'inntekt': [1000000, 120000, 220000, 550000, 50000],
-            'formue': [25000, 50000, 33000, 44000, 90000]
-        }
-    pers = pd.DataFrame(data)
+        import pandas as pd
+        from fagfunksjoner.data.pandas_combinations import all_combos_agg
+        data = {
+                'alder': [20, 60, 33, 33, 20],
+                'kommune': ['0301', '3001', '0301', '5401', '0301'],
+                'kjonn': ['1', '2', '1', '2', '2'],
+                'inntekt': [1000000, 120000, 220000, 550000, 50000],
+                'formue': [25000, 50000, 33000, 44000, 90000]
+            }
+        pers = pd.DataFrame(data)
 
-    agg1 = all_combos_agg(pers, groupcols=['kjonn'], keep_empty=True, aggargs={'inntekt':['mean', 'sum']})
-    display(agg1)
+        agg1 = all_combos_agg(pers, groupcols=['kjonn'], keep_empty=True, aggargs={'inntekt':['mean', 'sum']})
+        display(agg1)
 
-    agg2 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], aggargs={'inntekt':['mean', 'sum']})
-    display(agg2)
+        agg2 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], aggargs={'inntekt':['mean', 'sum']})
+        display(agg2)
 
-    agg3 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True,
-                                                   grand_total='Grand total',
-                                                   aggargs={'inntekt':['mean', 'sum']})
-    display(agg3)
-    agg4 = all_combos_agg(pers, groupcols=['kjonn', 'alder'],
-                           fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'},
-                           aggargs={'inntekt':['mean', 'sum'], 'formue': ['count', 'min', 'max']},
-                           grand_total="Total"
-                          )
-    display(agg4)
-    pers['antall'] = 1
-    groupcols = pers.columns[0:3].tolist()
-    func_dict = {'inntekt':['mean', 'sum'], 'formue': ['sum', 'std', 'count']}
-    fillna_dict = {'kjonn': 'Total kjønn', 'alder': 'Total alder', 'kommune': 'Total kommune'}
-    agg5 = all_combos_agg(pers, groupcols=groupcols,
-                           aggargs=func_dict,
-                           fillna_dict=fillna_dict,
-                           grand_total=fillna_dict
-                          )
-    display(agg5)
+        agg3 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True,
+                                                    grand_total='Grand total',
+                                                    aggargs={'inntekt':['mean', 'sum']})
+        display(agg3)
+        agg4 = all_combos_agg(pers, groupcols=['kjonn', 'alder'],
+                            fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'},
+                            aggargs={'inntekt':['mean', 'sum'], 'formue': ['count', 'min', 'max']},
+                            grand_total="Total"
+                            )
+        display(agg4)
+        pers['antall'] = 1
+        groupcols = pers.columns[0:3].tolist()
+        func_dict = {'inntekt':['mean', 'sum'], 'formue': ['sum', 'std', 'count']}
+        fillna_dict = {'kjonn': 'Total kjønn', 'alder': 'Total alder', 'kommune': 'Total kommune'}
+        agg5 = all_combos_agg(pers, groupcols=groupcols,
+                            aggargs=func_dict,
+                            fillna_dict=fillna_dict,
+                            grand_total=fillna_dict
+                            )
+        display(agg5)
     """
     dataframe = df.copy()
 
@@ -169,8 +160,16 @@ def all_combos_agg(
 
 def fill_na_dict(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
     """Fills NAs in the passed dataframe with a dict.
+
     Keys in dict should be column names, the values what should be inputed in the cells.
     Also handles categorical columns if they exist in the dataframe.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to fill NAs on.
+        mapping (dict): What each of the columns should have their NAs filled with.
+
+    Returns:
+        pd.DataFrame: The DataFrame with filled NAs.
     """
     df = df.copy()
     for col, fill_val in mapping.items():
@@ -182,7 +181,15 @@ def fill_na_dict(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
 
 def flatten_col_multiindex(df: pd.DataFrame, sep="_") -> pd.DataFrame:
     """If the dataframe has a multiindex as a column.
+
     Flattens it by combining the names of the multiindex, using the seperator (sep).
+
+    Args:
+        df (pd.DataFrame): The DataFrame with multiindexed columns.
+        sep (str, optional): What should seperate the names of the levels in the multiindex. Defaults to "_".
+
+    Returns:
+        pd.DataFrame: The DataFrame with the flattened column headers.
     """
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = [sep.join(col).strip().strip(sep) for col in df.columns.values]

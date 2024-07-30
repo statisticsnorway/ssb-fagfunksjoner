@@ -25,7 +25,7 @@ class Oracle:
         cur (ora.Cursor): database cursor if using context manager
     """
 
-    def __init__(self, db: str, pw: str|None = None) -> None:
+    def __init__(self, db: str, pw: str | None = None) -> None:
         """The instanciation of the class.
 
         Note:

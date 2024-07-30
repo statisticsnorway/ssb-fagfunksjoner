@@ -1,4 +1,5 @@
 """Simplifications of saspy package for SSB use.
+
 Helps you store password in prodsone.
 Sets libnames automatically for you when just wanting to open a file,
 or convert it.
@@ -51,8 +52,10 @@ def saspy_session() -> saspy.SASsession:
 
 
 def set_password(password: str):
-    """Pass into this function, an encrypted version of your password that you can get
-    in SAS EG, running the following code (swap MY PASSWORD for your actual common-password):
+    """Pass into this function, an encrypted version of your password.
+
+    Get the encrypted password in SAS EG, running the following code
+    (swap MY PASSWORD for your actual common-password):
 
     proc pwencode in='MY PASSWORD' method=sas004;
     run;
@@ -119,7 +122,7 @@ def swap_server(new_server: int) -> None:
     for line in content.split("\n"):
         if "sl-sas-work-" in line:
             line = re.sub(
-                r"sl-sas-work-p.*\.ssb\.no", f"sl-sas-comp-p{new_server}.ssb.no", line
+                r"sl-sas-work-.*\.ssb\.no", f"sl-sas-comp-p{new_server}.ssb.no", line
             )
             logger.info(f"Setting server to {new_server} with resulting line: {line}")
         if "sl-sas-comp-p" in line:
@@ -133,7 +136,7 @@ def swap_server(new_server: int) -> None:
 
 
 def split_path_for_sas(path: Path) -> tuple[str, str, str]:
-    """Split a path in three parts, mainly for having a name for the libname
+    """Split a path in three parts, mainly for having a name for the libname.
 
     Args:
         path (pathlib.Path): The full path to be split
@@ -178,7 +181,7 @@ def sasfile_to_parquet(
 ) -> pd.DataFrame:
     """Convert a sasfile directly to a parquetfile, using saspy and pandas.
 
-    Args
+    Args:
         path (str): The path to the in-sas-file.
         out_path (str): The path to place the parquet-file on
         gzip (bool): If you want the parquetfile gzipped or not.
