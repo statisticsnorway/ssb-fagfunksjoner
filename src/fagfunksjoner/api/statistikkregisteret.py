@@ -1,13 +1,12 @@
 import json
 from collections import defaultdict
+from datetime import datetime
 from functools import lru_cache
+from typing import Any
 from xml.etree import ElementTree as ET
 
 import dateutil
 import requests as rs
-
-from typing import Any
-from datetime import datetime
 
 
 @lru_cache(maxsize=1)  # Will be slow first time, but then caches result
@@ -80,8 +79,9 @@ def single_stat_xml(stat_id: str = "4922") -> dict[str, Any]:
 
 
 @lru_cache(maxsize=128)
-def find_publishings(shortname: str = "trosamf",
-                     get_publishing_specifics: bool = True) -> dict[str, Any]:
+def find_publishings(
+    shortname: str = "trosamf", get_publishing_specifics: bool = True
+) -> dict[str, Any]:
     """Get the publishings for a specific shortcode.
 
     Args:

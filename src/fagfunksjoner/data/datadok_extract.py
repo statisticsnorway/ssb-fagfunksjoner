@@ -245,18 +245,18 @@ def codelist_to_dict(codelist_df: pd.DataFrame) -> dict[Hashable, Any]:
     return col_dict
 
 
-def date_parser(date_str: str, format: str) -> datetime | pd.NaT:
+def date_parser(date_str: str, date_format: str) -> datetime | pd.NaT:
     """Parses a date string into a datetime object based on the provided format.
 
     Args:
         date_str (str): The date string to be parsed.
-        format (str): The format in which the date string is.
+        date_format (str): The format in which the date string is.
 
     Returns:
         datetime: The parsed datetime object, or pd.NaT if parsing fails.
     """
     try:
-        return datetime.strptime(date_str, format)
+        return datetime.strptime(date_str, date_format)
     except ValueError:
         return pd.NaT
 
