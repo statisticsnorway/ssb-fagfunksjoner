@@ -26,23 +26,19 @@ def check_env() -> str:
         raise OSError("Ikke i prodsonen, eller på Dapla? Må funksjonen skrives om?")
 
 
-def linux_shortcuts(insert_environ: bool = False) -> dict:
+def linux_shortcuts(insert_environ: bool = False) -> dict[str, str]:
     """Manually load the "linux-forkortelser" in as dict.
 
     If the function can find the file they are shared in.
 
-    Parameters
-    ----------
-    insert_environ: bool
-        Set to True if you want the dict to be inserted into the
-        environment variables (os.environ).
+    Args:
+        insert_environ (bool): Set to True if you want the dict to be inserted into the
+            environment variables (os.environ).
 
     Returns:
-    -------
-    dict
-        The "linux-forkortelser" as a dict
+        dict[str, str]:  The "linux-forkortelser" as a dict
     """
-    stm = {}
+    stm: dict[str, str] = {}
     with open("/etc/profile.d/stamme_variabel") as stam_var:
         for line in stam_var:
             line = line.strip()
@@ -50,7 +46,9 @@ def linux_shortcuts(insert_environ: bool = False) -> dict:
                 line_parts = line.replace("export ", "").split("=")
                 if len(line_parts) != 2:
                     raise ValueError("Too many equal-signs?")
-                stm[line_parts[0]] = line_parts[1]
+                first: str = line_parts[0]  # Helping mypy
+                second: str = line_parts[1]  # Helping mypy
+                stm[first] = second
                 if insert_environ:
-                    os.environ[[line_parts[0]]] = line_parts[1]
+                    os.environ[first] = second
     return stm

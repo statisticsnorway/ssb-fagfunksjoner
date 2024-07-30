@@ -37,17 +37,20 @@ class Oracle:
         """
         self.user = getuser()
         self.db = db
-        self.pw = pw
-        self._passw()
 
-    def _passw(self) -> None:
+        self.pw: str
+        self._passw(pw)
+
+    def _passw(self, pw: str | None = None) -> None:
         """Method for checking if user password exists.
 
         If password is not given when instantiated,
         then ask for it from the user.
         """
-        if self.pw is None:
+        if pw is None:
             self.pw = getpass(f"Password for user {self.user}: ")
+        else:
+            self.pw = pw
 
     def select(self, sql: str) -> list[dict[str, Any]]:
         """Get data from Oracle database with fetchall method.
@@ -136,7 +139,7 @@ class Oracle:
                     # gets the column names
                     cols = [c[0].lower() for c in cur.description]
                     # gets all the data in batches
-                    data = []
+                    data: list[dict[str, Any]] = []
                     while True:
                         rows = cur.fetchmany(batchsize)
                         if not rows:
@@ -179,16 +182,10 @@ class Oracle:
         When exiting context manager, it closes both cursor and connection,
         as well as closing the class itself. All class attribute values
         will be deleted as well.
-
-
-
         """
         self.cur.__exit__(exc_type, exc_value, traceback)
         self.conn.__exit__(exc_type, exc_value, traceback)
         self.close()
         del self.cur
         del self.conn
-
-
-class OraError(ora.Error):
-    """An Error class so we can raise our database error messages."""
+        return True

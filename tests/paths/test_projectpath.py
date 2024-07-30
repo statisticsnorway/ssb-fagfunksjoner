@@ -1,9 +1,9 @@
 import os
 
-from fagfunksjoner.paths import ProjectRoot
+from fagfunksjoner.paths.project_root import ProjectRoot
 
 
-def test_ProjectRoot_context_manager():
+def test_ProjectRoot_context_manager() -> None:
     try:
         test_folder = "test_folder_from_ProjectRoot_test"
         os.makedirs(test_folder)

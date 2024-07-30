@@ -2,7 +2,6 @@ import xml.etree.ElementTree as ET
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
-
 def change_input_to_xml(
     spec_path: str,
     spec_filename: str,
@@ -10,53 +9,48 @@ def change_input_to_xml(
     input_filename: str,
     output_path: str,
 ) -> None:
-    """Parse specification-files from Jdemetra+ and replaces references to old file format and replaces them with XML-file-references.
+    """Parse specification-files from Jdemetra+ and replace references to the old file format with XML-file references.
 
     Args:
-        spec_path (str): Path to where your specification-files are localed. Typically in a folder called SAProcessing/
+        spec_path (str): Path to where your specification-files are located, typically in a folder called SAProcessing/.
         spec_filename (str): Name of specification-file. Default from Jdemetra+ is SAProcessing-1, SAProcessing-2, etc.
-        input_path (str): Path to directory where input-files are located. I.e. ~/sa/project/input
-        input_filename (str): Name of input-file for the specfication stated in the first two arguments.
+        input_path (str): Path to directory where input-files are located, e.g., ~/sa/project/input.
+        input_filename (str): Name of input-file for the specification stated in the first two arguments.
         output_path (str): Path to where you want to save the new specification-files.
 
     """
-    path = spec_path
-    tree = ET.parse(path + "/" + spec_filename)
+    # Parse the specification file
+    tree = ET.parse(f"{spec_path}/{spec_filename}")
     root = tree.getroot()
     namespace = {"ns": "ec/tss.core"}
     logger.info(tree)
 
     # Number of series to adjust
-    a = []
-    for child in root:
-        x = child.attrib
-        y = list(x.values())
-        a.append(y)
-    NoOfSeries = len(a[1 : len(a)])
+    series_list = [list(child.attrib.values()) for child in root]
+    number_of_series = len(series_list[1:])
 
-    # Set new path
-    for x in range(1, NoOfSeries):
-        y = x - 1
-        series = f"sa{x}"
-        b2tf = root.findall(
-            f"""./ns:item/[@name="{series}"]/ns:subset/ns:item/ns:ts/ns:metaData/""",
+    # Set new path for each series
+    input_path_encoded = input_path.replace("/", "%2F")
+    for series_index in range(1, number_of_series):
+        series_name = f"sa{series_index}"
+        subset_item = root.findall(
+            f"./ns:item[@name='{series_name}']/ns:subset/ns:item/ns:ts/ns:metaData/",
+            namespace,
+        )[2]
+        new_path = (
+            f"demetra://tsprovider/Xml/20111201/SERIES?file={input_path_encoded}%2F"
+            f"{input_filename}#collectionIndex=0&seriesIndex={series_index - 1}"
+        )
+        subset_item.set("value", new_path)
+
+    # Set source/file type for each series
+    for series_index in range(1, number_of_series):
+        series_name = f"sa{series_index}"
+        metadata_items = root.findall(
+            f"./ns:item[@name='{series_name}']/ns:subset/ns:item/ns:ts/ns:metaData/",
             namespace,
         )
-        b2tgb = b2tf[2]
-        input_path2 = input_path.replace("/", "%2F")
-        newpath = f"""demetra://tsprovider/Xml/20111201/SERIES?file={input_path2}%2F{input_filename}#collectionIndex=0&seriesIndex={y}"""
-        b2tgb.set("value", newpath)
+        metadata_items[1].set("value", "Xml")
 
-    # Set source/filetype
-    for x in range(1, NoOfSeries):
-        y = x - 1
-        series = f"sa{x}"
-        src = root.findall(
-            f"""./ns:item/[@name="{series}"]/ns:subset/ns:item/ns:ts/ns:metaData/""",
-            namespace,
-        )
-        src2 = src[1]
-        new_src = "Xml"
-        src2.set("value", new_src)
-
+    # Save the modified tree to the output path
     tree.write(f"{output_path}/{spec_filename}")

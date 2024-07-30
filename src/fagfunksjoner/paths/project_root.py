@@ -6,7 +6,6 @@ usually will be .py files located in other folders than the notebooks.
 """
 
 import os
-from collections.abc import Hashable
 from pathlib import Path
 from types import TracebackType
 from typing import Any
@@ -54,9 +53,10 @@ class ProjectRoot:
         if exc_type is not None:
             logger.warn(traceback)
             raise exc_type(exc_value)
+        return True
 
     @staticmethod
-    def load_toml(config_file: str) -> dict[Any]:
+    def load_toml(config_file: str) -> dict[Any, Any]:
         """Looks for a .toml file to load the contents from.
 
         Looks in the current folder, the specified path, the project root.
@@ -123,7 +123,7 @@ def return_to_work_dir() -> None:
         logger.info("START_DIR not set, assuming you never left the working dir")
 
 
-def load_toml(config_file: str) -> dict[Hashable, Any]:
+def load_toml(config_file: str) -> dict[Any, Any]:
     """Look for a .toml file to load the contents from.
 
     Looks in the current folder, the specified path, the project root.
@@ -146,7 +146,7 @@ def load_toml(config_file: str) -> dict[Hashable, Any]:
         ...
     # We found the config-file in the project_root
     elif os.path.isfile(Path(find_root()) / config_file):
-        config_file = Path(find_root()) / config_file
+        config_file = str(Path(find_root()) / config_file)
     else:
         raise OSError(f"Cant find that config-file: {config_file}")
     return toml.load(config_file)

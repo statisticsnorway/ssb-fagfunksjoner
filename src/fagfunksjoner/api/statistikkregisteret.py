@@ -18,7 +18,8 @@ def get_statistics_register() -> dict[str, Any]:
     """
     response = rs.get("https://i.ssb.no/statistikkregisteret/statistics")
     response.raise_for_status()
-    return json.loads(response.text)["statistics"]
+    stats: dict[str, Any] = response.json()["statistics"]
+    return stats
 
 
 def find_stat_shortcode(

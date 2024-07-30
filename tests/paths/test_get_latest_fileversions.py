@@ -1,7 +1,7 @@
-from fagfunksjoner.paths import get_latest_fileversions
+from fagfunksjoner.paths.versions import get_latest_fileversions
 
 
-def test_get_latest_fileversions():
+def test_get_latest_fileversions() -> None:
     """Test the get_latest_fileversions function."""
     testfiles = [
         "gs://dir/data1_v1.parquet",

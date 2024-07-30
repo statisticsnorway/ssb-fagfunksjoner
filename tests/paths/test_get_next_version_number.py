@@ -5,6 +5,7 @@ import pytest
 
 from dapla import FileClient
 from fagfunksjoner.paths.versions import get_next_version_number
+from typing import Callable
 
 
 @pytest.fixture
@@ -15,7 +16,7 @@ def mock_file_system():
 
 
 @patch.object(FileClient, "get_gcs_file_system")
-def test_get_next_version_number(mock_get_gcs_file_system, mock_file_system):
+def test_get_next_version_number(mock_get_gcs_file_system: FileClient, mock_file_system: Callable):
     # Configure the mock to return the mock file system
     mock_get_gcs_file_system.return_value = mock_file_system
 
@@ -44,7 +45,8 @@ def test_get_next_version_number(mock_get_gcs_file_system, mock_file_system):
 
     for case in test_cases:
         mock_file_system.ls.return_value = case["files"]
-        result = get_next_version_number(case["filepath"])
+        path: str = case["filepath"]
+        result = get_next_version_number(path)
         assert (
             result == case["expected"]
         ), f"Expected {case['expected']} but got {result}"

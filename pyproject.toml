@@ -28,6 +28,11 @@ cx_Oracle = ">=8.3.0"
 saspy = ">=5.2.1"
 ipywidgets = ">=8.1.1"
 pyarrow = ">=14.0.1"
+# Stubs for Mypy
+pandas-stubs = ">=2.1.1.230928"
+types-requests = ">=2.31.0.10"
+types-toml = ">=0.10.8.7"
+types-colorama = ">=0.4.15.20240205"
 
 
 [tool.poetry.group.dev.dependencies]

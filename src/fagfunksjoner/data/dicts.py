@@ -1,12 +1,11 @@
 """Extra functionality operating on baseline dicts added to this module."""
 
-from collections.abc import Hashable
 from typing import Any
 
 
 def get_key_by_value(
-    data: dict[Hashable, Any], value: Any
-) -> Hashable | list[Hashable]:
+    data: dict[Any, Any], value: Any
+) -> Any | list[Any]:
     """Searches through the values in a dict for a match, returns the key.
 
     Args:
