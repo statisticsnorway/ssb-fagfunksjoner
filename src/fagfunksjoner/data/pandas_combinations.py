@@ -198,5 +198,5 @@ def flatten_col_multiindex(df: pd.DataFrame, sep: str = "_") -> pd.DataFrame:
         pd.DataFrame: The DataFrame with the flattened column headers.
     """
     if isinstance(df.columns, pd.MultiIndex):
-        df.columns = [sep.join(col).strip().strip(sep) for col in df.columns.values]
+        df.columns = pd.Index([sep.join(col).strip().strip(sep) for col in df.columns.values])
     return df

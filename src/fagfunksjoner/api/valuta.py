@@ -12,7 +12,7 @@ URL_NORGES_BANK = (
 
 
 def exchange_rates(
-    csv_data: str, dec_point: str = ",", time_column: int = 14
+    csv_data: str|pathlib.Path, dec_point: str = ",", time_column: int = 14
 ) -> pd.DataFrame:
     """Convert exchange rate data to a dataframe by reading as CSV.
 

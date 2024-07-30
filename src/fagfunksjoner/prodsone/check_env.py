@@ -37,6 +37,9 @@ def linux_shortcuts(insert_environ: bool = False) -> dict[str, str]:
 
     Returns:
         dict[str, str]:  The "linux-forkortelser" as a dict
+
+    Raises:
+        ValueError: If the stamme_variabel file is wrongly formatted.
     """
     stm: dict[str, str] = {}
     with open("/etc/profile.d/stamme_variabel") as stam_var:

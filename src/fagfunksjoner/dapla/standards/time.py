@@ -7,13 +7,13 @@ import datetime as dt
 
 from pandas import Timestamp
 
-FORMATS: dict = {
-    "date_time": "%Y-%m-%dT%H:%M:%S",
-    "date": "%Y-%m-%d",
-    "month": "%Y-%m",
-    "year": "%Y",
-    "week": "%GW%V",
-    "year_days": "%Y-%j",
+FORMATS: dict[str, str] = {
+    "date_time": r"%Y-%m-%dT%H:%M:%S",
+    "date": r"%Y-%m-%d",
+    "month": r"%Y-%m",
+    "year": r"%Y",
+    "week": r"%GW%V",
+    "year_days": r"%Y-%j",
 }
 
 
