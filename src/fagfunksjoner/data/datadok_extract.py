@@ -21,8 +21,10 @@ import gc
 # %%
 import os
 import xml.etree.ElementTree as ET
+from collections.abc import Hashable
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -41,7 +43,7 @@ from fagfunksjoner.fagfunksjoner_logger import logger
 
 
 # %%
-def is_valid_url(url):
+def is_valid_url(url: str) -> bool:
     """Check if the provided URL is valid.
 
     Args:
@@ -105,7 +107,7 @@ class ArchiveData:
 
 
 # %%
-def extract_context_variables(root) -> list:
+def extract_context_variables(root: ET.Element) -> list[ContextVariable]:
     """Extracts context variables from the XML root element and returns a list of ContextVariable objects.
 
     Args:
@@ -144,14 +146,14 @@ def extract_context_variables(root) -> list:
     return data
 
 
-def extract_codelist(root) -> list:
+def extract_codelist(root: ET.Element) -> list[CodeList]:
     """Extracts code lists from the XML root element and returns a list of CodeList objects.
 
     Args:
         root (ET.Element): The root element of the XML tree to parse.
 
     Returns:
-        list: A list of CodeList objects.
+        list[Codelist]: A list of CodeList objects.
     """
     codelist_data = []
     for context_var in root.findall("{http://www.ssb.no/ns/meta}ContextVariable"):
@@ -187,11 +189,11 @@ def extract_codelist(root) -> list:
     return codelist_data
 
 
-def codelist_to_df(codelist) -> pd.DataFrame:
+def codelist_to_df(codelist: list[CodeList]) -> pd.DataFrame:
     """Converts a list of CodeList objects to a DataFrame.
 
     Args:
-        codelist (list): A list of CodeList objects.
+        codelist (list[CodeList]): A list of CodeList objects.
 
     Returns:
         pd.DataFrame: A DataFrame containing the code list information.
@@ -199,11 +201,11 @@ def codelist_to_df(codelist) -> pd.DataFrame:
     return pd.DataFrame([vars(cl) for cl in codelist])
 
 
-def metadata_to_df(context_variables) -> pd.DataFrame:
+def metadata_to_df(context_variables: list[ContextVariable]) -> pd.DataFrame:
     """Converts a list of ContextVariable objects to a DataFrame.
 
     Args:
-        context_variables (list): A list of ContextVariable objects.
+        context_variables (list[ContextVariable]): A list of ContextVariable objects.
 
     Returns:
         pd.DataFrame: A DataFrame containing the context variable information.
@@ -222,14 +224,14 @@ def metadata_to_df(context_variables) -> pd.DataFrame:
     return df
 
 
-def codelist_to_dict(codelist_df) -> dict:
+def codelist_to_dict(codelist_df: pd.DataFrame) -> dict[Hashable, Any]:
     """Converts a DataFrame containing code lists to a dictionary.
 
     Args:
         codelist_df (pd.DataFrame): DataFrame containing the code list information.
 
     Returns:
-        dict: A dictionary mapping code list titles to dictionaries of code values and texts.
+        dict[Hashable, Any]: A dictionary mapping code list titles to dictionaries of code values and texts.
     """
     if codelist_df.empty:
         logger.info("NOTE: Filbeskrivelsen har ingen kodelister")
@@ -243,7 +245,7 @@ def codelist_to_dict(codelist_df) -> dict:
     return col_dict
 
 
-def date_parser(date_str, format):
+def date_parser(date_str: str, format: str) -> datetime | pd.NaT:
     """Parses a date string into a datetime object based on the provided format.
 
     Args:
@@ -259,14 +261,14 @@ def date_parser(date_str, format):
         return pd.NaT
 
 
-def date_formats(metadata_df: pd.DataFrame) -> dict:
+def date_formats(metadata_df: pd.DataFrame) -> dict[str, str]:
     """Creates a dictionary of date conversion functions based on the metadata DataFrame.
 
     Args:
         metadata_df (pd.DataFrame): DataFrame containing metadata.
 
     Returns:
-        dict: A dictionary mapping column titles to date conversion formats.
+        dict[str, str]: A dictionary mapping column titles to date conversion formats.
 
     Raises:
         ValueError: On unrecognized dateformats.
@@ -304,14 +306,16 @@ def date_formats(metadata_df: pd.DataFrame) -> dict:
     return formattings
 
 
-def import_parameters(df: pd.DataFrame) -> list:
+def extract_parameters(
+    df: pd.DataFrame,
+) -> tuple[list[str], list[int], dict[str, str], str]:
     """Extracts parameters from the metadata DataFrame for importing archive data.
 
     Args:
         df (pd.DataFrame): A DataFrame containing metadata.
 
     Returns:
-        list: A list containing column names, column lengths, datatypes, and decimal separator.
+        tuple[list[str], list[int], dict[str, str], str]: Extracted parameters to input into archive import.
     """
     col_names = df["title"].tolist()
     col_lengths = df["length"].astype(int).tolist()
@@ -420,7 +424,7 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     metadata_df = metadata_to_df(metadata.context_variables)
     codelist_df = codelist_to_df(metadata.codelists)
     codelist_dict = codelist_to_dict(codelist_df)
-    names, widths, datatypes, decimal = import_parameters(metadata_df)
+    names, widths, datatypes, decimal = extract_parameters(metadata_df)
     df = pd.read_fwf(
         archive_file, dtype=datatypes, widths=widths, names=names, na_values="."
     )
@@ -452,7 +456,7 @@ def open_path_metapath_datadok(path: str, metapath: str) -> ArchiveData:
 
 
 def open_path_datadok(path: str) -> pd.DataFrame:
-    """Get archive data only based on the path of the .dat or .txt file
+    """Get archive data only based on the path of the .dat or .txt file.
 
     This function attempts to correct and test options, to try track down the file and metadata mentioned.
 

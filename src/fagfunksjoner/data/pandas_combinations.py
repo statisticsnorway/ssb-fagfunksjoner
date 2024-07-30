@@ -1,10 +1,12 @@
 """The background for these functions is a common operation before publishing to the "statbank" at statistics Norway.
+
 All combinations (including total-groups), over all categorical codes, in a set of columns, need to have their numbers aggregated.
 This has some similar functionality to "proc means" in SAS.
 """
 
 from collections.abc import Callable
 from itertools import combinations
+from typing import Any
 
 import pandas as pd
 
@@ -13,9 +15,9 @@ def all_combos_agg(
     df: pd.DataFrame,
     groupcols: list,
     aggargs: dict[str, Callable],
-    fillna_dict: dict = None,
+    fillna_dict: dict[str, Any] | None = None,
     keep_empty: bool = False,
-    grand_total: dict | str = "",
+    grand_total: dict[str, str] | str = "",
 ) -> pd.DataFrame:
     """Generate all aggregation levels for a set of columns in a dataframe.
 
@@ -145,7 +147,7 @@ def all_combos_agg(
 
         # Append the grand total row to the combined results and sort by levels and groupcols
         all_levels = pd.concat([all_levels, gt], ignore_index=True)
-    all_levels = all_levels.sort_values(["level"] + groupcols)
+    all_levels = all_levels.sort_values(["level", *groupcols])
 
     # Fill missing group columns with value
     if fillna_dict:
@@ -179,7 +181,7 @@ def fill_na_dict(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
     return df
 
 
-def flatten_col_multiindex(df: pd.DataFrame, sep="_") -> pd.DataFrame:
+def flatten_col_multiindex(df: pd.DataFrame, sep: str = "_") -> pd.DataFrame:
     """If the dataframe has a multiindex as a column.
 
     Flattens it by combining the names of the multiindex, using the seperator (sep).

@@ -51,7 +51,7 @@ def saspy_session() -> saspy.SASsession:
     return saspy.SASsession(cfgname=cfgtype, cfgfile=cfgfile, encoding="latin1")
 
 
-def set_password(password: str):
+def set_password(password: str) -> None:
     """Pass into this function, an encrypted version of your password.
 
     Get the encrypted password in SAS EG, running the following code

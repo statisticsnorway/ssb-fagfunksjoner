@@ -6,6 +6,7 @@ usually will be .py files located in other folders than the notebooks.
 """
 
 import os
+from collections.abc import Hashable
 from pathlib import Path
 from types import TracebackType
 from typing import Any
@@ -113,7 +114,7 @@ def find_root() -> Path:
     return Path(project_root)
 
 
-def return_to_work_dir():
+def return_to_work_dir() -> None:
     """Navigate back to the last recorded START_DIR."""
     global START_DIR
     if START_DIR:
@@ -122,7 +123,7 @@ def return_to_work_dir():
         logger.info("START_DIR not set, assuming you never left the working dir")
 
 
-def load_toml(config_file: str) -> dict[Any]:
+def load_toml(config_file: str) -> dict[Hashable, Any]:
     """Look for a .toml file to load the contents from.
 
     Looks in the current folder, the specified path, the project root.

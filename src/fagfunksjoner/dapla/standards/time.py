@@ -1,4 +1,5 @@
 """Functions that helps Statistics Norway following their specified standards.
+
 Docs: https://statistics-norway.atlassian.net/wiki/spaces/MPD/pages/2953084957/Standardformater
 """
 
@@ -16,19 +17,17 @@ FORMATS: dict = {
 }
 
 
-def date_time(date: dt.datetime = None) -> str:
-    """Gives date and time with standard format.
+def date_time(date: dt.datetime | None = None) -> str:
+    """Get date and time with standard format.
+
     See: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
 
-    Parameters:
-    -----------
-    date:
-        A specified datetime you want to convert to string format.
-        If not specified, it will give the datetime right now.
+    Args:
+        date (dt.datetime | None): A specified datetime you want to convert to string format.
+            If not specified, it will give the datetime right now.
 
     Returns:
-    --------
-    Datetime in string format, YYYY-MM-DDThh:mm:ss, and according to the standards.
+        str: Datetime in string format, YYYY-MM-DDThh:mm:ss, and according to the standards.
     """
     if date is None:
         date = dt.datetime.now()
@@ -36,130 +35,113 @@ def date_time(date: dt.datetime = None) -> str:
 
 
 def timestamp() -> str:
-    """Gives date and time right now with standard format."""
+    """Gives date and time right now with standard format.
+
+    Returns:
+        str: The standard timestamp.
+    """
     return date_time()
 
 
-def date(date: dt.date = None) -> str:
-    """Gives date with standard format.
+def date(date: dt.date | None = None) -> str:
+    """Get date with standard format.
 
-    Parameters:
-    -----------
-    date:
-        A specified date you want to convert to string format.
-        If not specified, it will give the date today.
+    Args:
+        date (dt.date | None): A specified date you want to convert to string format.
+            If not specified, it will give the date today.
 
     Returns:
-    --------
-    Date in string format YYYY-MM-DD.
+        str: Date in string format YYYY-MM-DD.
     """
     if date is None:
         date = dt.date.today()
     return date.strftime(FORMATS["date"])
 
 
-def month(date: dt.date = None) -> str:
-    """Gives month period with standard format.
+def month(date: dt.date | None = None) -> str:
+    """Get month period with standard format.
 
-    Parameters:
-    -----------
-    date:
-        A specified date you want to convert to string format.
-        If not specified, it will give the date today.
+    Args:
+        date (dt.date | None): A specified date you want to convert to string format.
+            If not specified, it will give the date today.
 
     Returns:
-    --------
-    Month period in string format YYYY-MM.
+        str: Month period in string format YYYY-MM.
     """
     if date is None:
         date = dt.date.today()
     return date.strftime(FORMATS["month"])
 
 
-def year(date: dt.date = None) -> str:
-    """Gives year period with standard format.
+def year(date: dt.date | None = None) -> str:
+    """Get year period with standard format.
 
-    Parameters:
-    -----------
-    date:
-        A specified date you want to convert to string format.
-        If not specified, it will give the date today.
+    Args:
+        date (dt.date | None): A specified date you want to convert to string format.
+            If not specified, it will give the date today.
 
     Returns:
-    --------
-    Month period in string format YYYY.
+        str: Month period in string format YYYY.
     """
     if date is None:
         date = dt.date.today()
     return date.strftime(FORMATS["year"])
 
 
-def week(date: dt.date = None) -> str:
-    """Gives week period with standard format.
+def week(date: dt.date | None = None) -> str:
+    """Get week period with standard format.
 
-    Parameters:
-    -----------
-    date:
-        A specified date you want to convert to string format.
-        If not specified, it will give the date today.
+    Args:
+        date (dt.date | None): A specified date you want to convert to string format.
+            If not specified, it will give the date today.
 
     Returns:
-    --------
-    Month period in string format YYYYWww.
+        str: Month period in string format YYYYWww.
     """
     if date is None:
         date = dt.date.today()
     return date.strftime(FORMATS["week"])
 
 
-def year_days(date: dt.date = None) -> str:
+def year_days(date: dt.date | None = None) -> str:
     """Gives day of year period with standard format.
 
-    Parameters:
-    -----------
-    date:
-        A specified date you want to convert to string format.
-        If not specified, it will give the date today.
+    Args:
+        date (dt.date | None): A specified date you want to convert to string format.
+            If not specified, it will give the date today.
 
     Returns:
-    --------
-    Day of year period in string format YYYY-DDD.
+        str: Day of year period in string format YYYY-DDD.
     """
     if date is None:
         date = dt.date.today()
     return date.strftime(FORMATS["year_days"])
 
 
-def quarterly(date: dt.date = None) -> str:
-    """Gives quarter period with standard format.
+def quarterly(date: dt.date | None = None) -> str:
+    """Get quarter period with standard format.
 
-    Parameters:
-    -----------
-    date:
-        A specified date you want to convert to string format.
-        If not specified, it will give the date today.
+    Args:
+        date (dt.date | None): A specified date you want to convert to string format.
+            If not specified, it will give the date today.
 
     Returns:
-    --------
-    Quarter period in string format YYYY-Qq.
+        str: Quarter period in string format YYYY-Qq.
     """
     if date is None:
         date = dt.date.today()
     return f"{year(date)}-Q{Timestamp(date).quarter}"
 
 
-def bimester(date: dt.date = None) -> str:
-    """Gives bimester period with standard format.
+def bimester(date: dt.date | None = None) -> str:
+    """Get bimester period with standard format.
 
-    Parameters:
-    -----------
-    date:
-        A specified date you want to convert to string format.
-        If not specified, it will give the date today.
+    Args:
+        date (dt.date | None): A specified date you want to convert to string format.
+            If not specified, it will give the date today.
 
     Returns:
-    --------
-    Bimester period in string format YYYY-Bb.
+        str: Bimester period in string format YYYY-Bb.
     """
     if date is None:
         date = dt.date.today()
@@ -175,18 +157,15 @@ def bimester(date: dt.date = None) -> str:
     return f"{year(date)}-B{period}"
 
 
-def triannual(date: dt.date = None) -> str:
+def triannual(date: dt.date | None = None) -> str:
     """Gives triannual period with standard format.
 
-    Parameters:
-    -----------
-    date:
-        A specified date you want to convert to string format.
-        If not specified, it will give the date today.
+    Args:
+        date (dt.date | None): A specified date you want to convert to string format.
+            If not specified, it will give the date today.
 
     Returns:
-    --------
-    Triannual period in string format YYYY-Tt.
+        str: Triannual period in string format YYYY-Tt.
     """
     if date is None:
         date = dt.date.today()
@@ -195,18 +174,15 @@ def triannual(date: dt.date = None) -> str:
     return f"{year(date)}-T{period}"
 
 
-def halfyear(date: dt.date = None) -> str:
-    """Gives halfyear period with standard format.
+def halfyear(date: dt.date | None = None) -> str:
+    """Get halfyear period with standard format.
 
-    Parameters:
-    -----------
-    date:
-        A specified date you want to convert to string format.
-        If not specified, it will give the date today.
+    Args:
+        date (dt.date | None): A specified date you want to convert to string format.
+            If not specified, it will give the date today.
 
     Returns:
-    --------
-    Halfyear period in string format YYYY-Hh.
+        str: Halfyear period in string format YYYY-Hh.
     """
     if date is None:
         date = dt.date.today()
@@ -216,22 +192,19 @@ def halfyear(date: dt.date = None) -> str:
 
 
 def _find_period(period_dict: dict[str, list[int]], month: int) -> str:
-    """Finds any self-made period based on a dict where keys are
-    the self-mabe period, and the values are list of int that
+    """Find any self-made period based on a dict.
+
+    The keys are the self-made period, and the values are list of int that
     represent a month between 1 and 12.
 
-    Parameters:
-    -----------
-    period_dict:
-        Dict with self-made period standard. The keys represent the
-        self-made period, and the values are list of int that represent
-        a month between 1 and 12.
-    month:
-        Current month in number, between 1 and 12.
+    Args:
+        period_dict (dict[str, list[int]]): Dict with self-made period standard.
+            The keys represent the self-made period,
+            and the values are list of int that represent a month between 1 and 12.
+        month (int): Current month in number, between 1 and 12.
 
     Returns:
-    --------
-    The self-made period, the key, fram the period_dict.
+        str: The self-made period, the key, fram the period_dict.
     """
     for k, v in period_dict.items():
         if month in v:
