@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
+
 def change_input_to_xml(
     spec_path: str,
     spec_filename: str,

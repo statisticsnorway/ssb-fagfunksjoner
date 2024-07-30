@@ -84,7 +84,7 @@ def auto_dtype(
     if copy_df:
         df = df.copy()
     # Lowercase all column names
-    df.columns = [col.lower() for col in df.columns]
+    df = df.rename(columns={col: col.lower() for col in df.columns})
     # Try to decode any objects/strings into utf-8 (might be bytes)
     df = decode_bytes(df, False)
     # Have pandas do its best guess
@@ -138,7 +138,7 @@ def decode_bytes(
         if copy_df:
             df = df.copy()
         for col in df.select_dtypes(include=["object", "string"]).columns:
-            logger.info(f"\rDecoding {col}" + " " * 40, end="")
+            logger.info(f"\rDecoding {col}" + " " * 40)
             try:
                 df[col] = df[col].str.decode("utf-8").astype("string[pyarrow]")
             except UnicodeDecodeError:
@@ -166,7 +166,7 @@ def object_to_strings(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
         df = df.copy()
     for col in df.select_dtypes(include="object").columns:
         if df[col].dtype == "object":
-            logger.info(f"\rConverting {col} to string", " " * 40, end="")
+            logger.info(f"\rConverting {col} to string", " " * 40)
             df[col] = df[col].astype("string[pyarrow]").str.strip()
     return df
 
@@ -193,7 +193,7 @@ def strings_to_int(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
         if any(df[col].str[0] == "0"):
             continue
         if df[col].str.isdigit().all():
-            logger.info(f"\rConverting {col} to int" + " " * 40, end="")
+            logger.info(f"\rConverting {col} to int" + " " * 40)
             df[col] = df[col].astype("Int64")
     return df
 

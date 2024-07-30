@@ -3,9 +3,7 @@
 from typing import Any
 
 
-def get_key_by_value(
-    data: dict[Any, Any], value: Any
-) -> Any | list[Any]:
+def get_key_by_value(data: dict[Any, Any], value: Any) -> Any | list[Any]:
     """Searches through the values in a dict for a match, returns the key.
 
     Args:

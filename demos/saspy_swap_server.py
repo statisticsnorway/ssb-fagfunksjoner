@@ -19,5 +19,3 @@ saspy_ssb.swap_server(2)
 # -
 
 saspy_ssb.saspy_session()
-
-

@@ -16,13 +16,12 @@
 # This is a demo of the function view_dataframe. view_dataframe views a dataframe in a dynamically way using ipywidgets
 
 # +
+# -
+import ipywidgets
 import numpy as np
 import pandas as pd
 
 from fagfunksjoner import view_dataframe
-# -
-
-import ipywidgets
 
 ipywidgets.interactive()
 
@@ -30,7 +29,10 @@ ipywidgets.interactive()
 # ## Generate test data
 # Here is a function that generates some test data. We can choose the share of missing values we shall have on the column 'value'
 
-def generate_test_dataframe(num_rows: int = 10, missing_percentage: float = 0.1) -> pd.DataFrame:
+
+def generate_test_dataframe(
+    num_rows: int = 10, missing_percentage: float = 0.1
+) -> pd.DataFrame:
     """Generate testdataset to view with widget.
 
     Args:
@@ -43,21 +45,25 @@ def generate_test_dataframe(num_rows: int = 10, missing_percentage: float = 0.1)
     np.random.seed(42324)  # For reproducibility
 
     data = {
-        'hs': np.random.choice(['03010000', '30019000', '54022711'], size=num_rows),
-        'value': np.random.choice(list(range(10000, 1000000)), size=num_rows).astype(float),
-        'weight': np.random.randint(1, 10000, size=num_rows),
-        'import': np.random.choice([True, False], size=num_rows),
+        "hs": np.random.choice(["03010000", "30019000", "54022711"], size=num_rows),
+        "value": np.random.choice(list(range(10000, 1000000)), size=num_rows).astype(
+            float
+        ),
+        "weight": np.random.randint(1, 10000, size=num_rows),
+        "import": np.random.choice([True, False], size=num_rows),
     }
-    
+
     # Introduce missing values in 'value' column
     num_missing = int(missing_percentage * num_rows)
-    indices_to_make_missing = np.random.choice(num_rows, size=num_missing, replace=False)
-    data['value'][indices_to_make_missing] = None
+    indices_to_make_missing = np.random.choice(
+        num_rows, size=num_missing, replace=False
+    )
+    data["value"][indices_to_make_missing] = None
 
     df = pd.DataFrame(data)
 
     # Add a new column 'price'
-    df['price'] = df['value'] / df['weight']
+    df["price"] = df["value"] / df["weight"]
 
     return df
 
@@ -66,33 +72,35 @@ def generate_test_dataframe(num_rows: int = 10, missing_percentage: float = 0.1)
 # First we use the slider to select data. It is used when we choose comparison operators (>,>=, <, <=). The default value for the slider bar is the median of the values.
 
 foreign_trade = generate_test_dataframe(50, missing_percentage=0.1)
-view_dataframe(dataframe=foreign_trade, column='value', operator='>=')
+view_dataframe(dataframe=foreign_trade, column="value", operator=">=")
 
 # ## Use the function with equality parameters
 # When we use equality operators (==, !=), a multiple dropdown list is used. Now we can select data from this multiple select dropdown menu. If wanted, mark more than one line in the dropdown list by using the *shift* or *ctrl* key when you select values.
 
-view_dataframe(dataframe=foreign_trade, column='hs', operator='==')
+view_dataframe(dataframe=foreign_trade, column="hs", operator="==")
 
 # ## Sort values that is used by the view_dataframe function
 
-view_dataframe(dataframe=foreign_trade.sort_values('price'), column='price', operator='>=')
+view_dataframe(
+    dataframe=foreign_trade.sort_values("price"), column="price", operator=">="
+)
 
 # ## string column with missing values
 # There are always issues when missing values appears. One special situation is when there are missing values in a string column. It is taken care of.
 
-foreign_trade['value_o'] = foreign_trade['value'].astype(str)
+foreign_trade["value_o"] = foreign_trade["value"].astype(str)
 display(foreign_trade.dtypes)
-view_dataframe(dataframe=foreign_trade, column='value_o', operator='==')
+view_dataframe(dataframe=foreign_trade, column="value_o", operator="==")
 
 # ## Boolean columns are not treated as numeric columns
 
-view_dataframe(dataframe=foreign_trade, column='import', operator='>=')
+view_dataframe(dataframe=foreign_trade, column="import", operator=">=")
 
-view_dataframe(dataframe=foreign_trade, column='import', operator='==')
+view_dataframe(dataframe=foreign_trade, column="import", operator="==")
 
 # ## The unique_limit parameter
 # If we have more than 100 different values to use with the equality operators, we get an error message. We can change the limit, however we should not use the equality operators on columns with very many unique values
 
-view_dataframe(dataframe=foreign_trade, column='value_o', operator='==', unique_limit=1000)
-
-
+view_dataframe(
+    dataframe=foreign_trade, column="value_o", operator="==", unique_limit=1000
+)

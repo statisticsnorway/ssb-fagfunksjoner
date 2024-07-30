@@ -32,7 +32,7 @@ def saspy_session() -> saspy.SASsession:
         logger.warn(
             "Cant find the auth-file, consider running saspy_session.set_password()"
         )
-        logger.info(help(set_password))
+        logger.info(set_password.__doc__)
     else:
         with open(authpath) as f:
             file = f.read()
@@ -168,7 +168,7 @@ def saspy_df_from_path(path: str) -> pd.DataFrame:
     sas = saspy_session()
     try:
         _ = sas.saslib(librefname, path=librefpath)
-        df = sas.sasdata2dataframe(filename, libref=librefname)
+        df: pd.DataFrame = sas.sasdata2dataframe(filename, libref=librefname)
     except Exception as e:
         logger.error(e)
     finally:
@@ -178,29 +178,29 @@ def saspy_df_from_path(path: str) -> pd.DataFrame:
 
 
 def sasfile_to_parquet(
-    path: str, out_path: str = "", gzip: bool = False
+    path_str: str, out_path_str: str = "", gzip: bool = False
 ) -> pd.DataFrame:
     """Convert a sasfile directly to a parquetfile, using saspy and pandas.
 
     Args:
-        path (str): The path to the in-sas-file.
-        out_path (str): The path to place the parquet-file on
+        path_str (str): The path to the in-sas-file.
+        out_path_str (str): The path to place the parquet-file on
         gzip (bool): If you want the parquetfile gzipped or not.
 
     Returns:
         pandas.DataFrame: In case you want to use the content for something else.
             I mean, we already read it into memory...
     """
-    path = Path(path)
-    df = saspy_df_from_path(path)
-    if not out_path:
+    df = saspy_df_from_path(path_str)
+
+    path = Path(path_str)
+    if not out_path_str:
         out_path = path
     else:
-        out_path = Path(out_path)
+        out_path = Path(out_path_str)
         out_path = out_path.parent.joinpath(
             out_path.stem.split(".")[0]
         )  # Avoid extra file extensions
-
     if gzip:
         out_path = out_path.with_suffix(".parquet.gzip")
         logger.info(path, out_path)
@@ -223,4 +223,5 @@ def cp(from_path: str, to_path: str) -> dict[str, Any]:
     Returns:
         dict[str, Any]: A key for if it succeded, and a key for holding the log as string.
     """
-    return saspy_session().file_copy(from_path, to_path)
+    result: dict[str, Any] = saspy_session().file_copy(from_path, to_path)
+    return result

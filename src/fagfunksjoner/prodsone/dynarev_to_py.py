@@ -9,7 +9,7 @@ def dynarev_uttrekk(
     skjema: str,
     dublettsjekk: bool = False,
     sfu_cols: list[str] | None = None,
-) -> pd.DataFrame:
+) -> pd.DataFrame | tuple[pd.DataFrame]:
     """Fetches and processes data from the Oracle database using the Oracle class for connection management.
 
     Args:
@@ -19,7 +19,7 @@ def dynarev_uttrekk(
         sfu_cols (list) : Specify a list of columns for SFU data; if True, returns all SFU columns.
 
     Returns:
-        pd.dataframe: A dataframe or tuple of dataframes based on the input options.
+        pd.DataFrame | tuple[pd.DataFrame]: A dataframe or tuple of dataframes based on the input options.
     """
     if sfu_cols is None:
         sfu_cols = []

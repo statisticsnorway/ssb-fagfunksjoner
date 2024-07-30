@@ -4,17 +4,18 @@ All combinations (including total-groups), over all categorical codes, in a set 
 This has some similar functionality to "proc means" in SAS.
 """
 
-from collections.abc import Callable
 from itertools import combinations
 from typing import Any
 
 import pandas as pd
+from pandas._typing import AggFuncTypeBase
+from pandas._typing import AggFuncTypeDictSeries
 
 
 def all_combos_agg(
     df: pd.DataFrame,
     groupcols: list[str],
-    aggargs: dict[str, Callable],
+    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries,
     fillna_dict: dict[str, Any] | None = None,
     keep_empty: bool = False,
     grand_total: dict[str, str] | str = "",
@@ -24,7 +25,7 @@ def all_combos_agg(
     Args:
         df (pd.DataFrame): dataframe to aggregate.
         groupcols (list[str]): List of columns to group by.
-        aggargs (dict[str, Callable]): how to aggregate, is sent to the agg function in pandas, look at its documentation.
+        aggargs (AggFuncTypeBase | AggFuncTypeDictSeries): how to aggregate, is sent to the agg function in pandas, look at its documentation.
         fillna_dict (dict[str, str]): Fills "totals" in the groupcols, by filling their NA values.
             Send a dict with col names as keys, and string-values to put in cells as values.
         keep_empty (bool): Keep groups without observations through the process.
