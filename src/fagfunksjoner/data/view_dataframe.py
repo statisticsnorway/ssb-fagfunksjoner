@@ -61,10 +61,10 @@ def view_dataframe(
     Args:
         dataframe (pd.DataFrame): The DataFrame containing the data to be filtered.
         column (str): The column in the DataFrame to be filtered.
-        operator (str, optional): The comparison operator for filtering  (may be altered during the display).
+        operator (str): The comparison operator for filtering  (may be altered during the display).
             Options: '==', '!=', '>=', '>', '<', '<='.
             Default: '=='.
-        unique_limit (int, optional): The maximum number of unique values in the column
+        unique_limit (int): The maximum number of unique values in the column
             for using '==' or '!=' operators.
             Default: 100.
 

@@ -62,14 +62,10 @@ class ProjectRoot:
         Looks in the current folder, the specified path, the project root.
 
         Args:
-        config_file (str): The path or filename of the config-file to load.
+            config_file (str): The path or filename of the config-file to load.
 
         Returns:
             dict[Any]: The contents of the toml-file.
-
-        Raises:
-            OSError: If the file specified is not found in the current folder,
-                the specified path, or the project root.
         """
         return load_toml(config_file)
 
@@ -80,7 +76,7 @@ def navigate_root() -> Path:
     Saves the folder it start from in the global variable (in this module) START_DIR
 
     Returns:
-        pathlib.Path: The starting directory, where you are currently, as a pathlib Path.
+        Path: The starting directory, where you are currently, as a pathlib Path.
             Changing the current working directory to root (different than returned)
             as a side-effect.
     """
@@ -98,7 +94,11 @@ def find_root() -> Path:
     but should end up in the original starting directory.
 
     Returns:
-        pathlib.Path: The project root folder.
+        Path: The project root folder.
+
+    Raises:
+        OSError: If the file specified is not found in the current folder,
+            the specified path, or the project root.
     """
     global START_DIR
     START_DIR = os.getcwd()

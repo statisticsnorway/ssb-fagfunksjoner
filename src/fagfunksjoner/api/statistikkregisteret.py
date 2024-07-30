@@ -30,10 +30,10 @@ def find_stat_shortcode(
     """Find the data for a statistical product by searching by its shortname.
 
     Args:
-        shortcode_or_id (str, optional): The shortname for the statistical product. Defaults to "trosamf".
-        get_singles (bool, optional): Get more single data. Defaults to True.
-        get_publishings (bool, optional): Get more publishing data. Defaults to True.
-        get_publishing_specifics (bool, optional): Get the specific publishings data as well. Defaults to True.
+        shortcode_or_id (str): The shortname for the statistical product. Defaults to "trosamf".
+        get_singles (bool): Get more single data. Defaults to True.
+        get_publishings (bool): Get more publishing data. Defaults to True.
+        get_publishing_specifics (bool): Get the specific publishings data as well. Defaults to True.
 
     Returns:
         list[dict[str, Any]]: A data structure containing the found data on the product.
@@ -67,7 +67,7 @@ def single_stat_xml(stat_id: str = "4922") -> dict[str, Any]:
     """Get the metadata for specific product.
 
     Args:
-        stat_id (str, optional): The ID for the product in statistikkregisteret. Defaults to "4922".
+        stat_id (str): The ID for the product in statistikkregisteret. Defaults to "4922".
 
     Returns:
         dict[str, Any]: Datastructure with the found metadata.
@@ -85,8 +85,8 @@ def find_publishings(
     """Get the publishings for a specific shortcode.
 
     Args:
-        shortname (str, optional): The shortcode to look for in the API among the publishings. Defaults to "trosamf".
-        get_publishing_specifics (bool, optional): Looks up more info about each of the publishings found. Defaults to True.
+        shortname (str): The shortcode to look for in the API among the publishings. Defaults to "trosamf".
+        get_publishing_specifics (bool): Looks up more info about each of the publishings found. Defaults to True.
 
     Returns:
         dict[str, Any]: A datastructure with the found metadata about the publishings.
@@ -105,7 +105,7 @@ def find_latest_publishing(shortname: str = "trosamf") -> datetime:
     """Find the date of the latest publishing of the statistical product.
 
     Args:
-        shortname (str, optional): The shortname to find the latest publishing for. Defaults to "trosamf".
+        shortname (str): The shortname to find the latest publishing for. Defaults to "trosamf".
 
     Returns:
         datetime: The date the shortcode will have its latest publishing.
@@ -126,7 +126,7 @@ def specific_publishing(publish_id: str = "162143") -> dict[str, Any]:
     """Get the publishing-data from a specific publishing-ID in statistikkregisteret.
 
     Args:
-        publish_id (str, optional): The API-ID for the publishing. Defaults to "162143".
+        publish_id (str): The API-ID for the publishing. Defaults to "162143".
 
     Returns:
         dict[str, Any]: The metadata found for the specific publishing.

@@ -69,10 +69,10 @@ def auto_dtype(
 
     Args:
         df (pd.DataFrame): The dataframe to manipulate
-        cardinality_threshold (int, optional): Less unique values in columns than this threshold,
+        cardinality_threshold (int): Less unique values in columns than this threshold,
             means it should be converted to a categorical. Defaults to 0, meaning no conversion to categoricals.
-        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
-        show_memory (bool, optional): Show the user how much memory was saved by doing the conversion, does require some processing. Defaults to True.
+        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        show_memory (bool): Show the user how much memory was saved by doing the conversion, does require some processing. Defaults to True.
 
     Returns:
         pd.DataFrame: _description_
@@ -116,8 +116,8 @@ def decode_bytes(
 
     Args:
         df (pd.DataFrame): The dataframe to check.
-        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
-        check_row_len (int, optional): How many rows to look for byte-content in, conserves processing, but might miss columns if set too low. Defaults to 50.
+        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        check_row_len (int): How many rows to look for byte-content in, conserves processing, but might miss columns if set too low. Defaults to 50.
 
     Returns:
         pd.DataFrame: The dataframe with converted byte-columns to string-columns.
@@ -157,7 +157,7 @@ def object_to_strings(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
 
     Args:
         df (pd.DataFrame): The dataframe to manipulate.
-        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
 
     Returns:
         pd.DataFrame: The modified dataframe.
@@ -178,7 +178,7 @@ def strings_to_int(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
 
     Args:
         df (pd.DataFrame): The dataframe to manipulate.
-        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
 
     Returns:
         pd.DataFrame: The manipulated dataframe.
@@ -203,7 +203,7 @@ def smaller_ints(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
 
     Args:
         df (pd.DataFrame): The dataframe to manipulate.
-        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
 
     Returns:
         pd.DataFrame: The manipulated dataframe.
@@ -222,9 +222,9 @@ def categories_threshold(
 
     Args:
         df (pd.DataFrame): The dataframe to convert to categoricals on.
-        cardinality_threshold (int, optional): Less unique values in columns than this threshold,
+        cardinality_threshold (int): Less unique values in columns than this threshold,
             means it should be converted to a categorical. Defaults to 0, meaning no conversion to categoricals.
-        copy_df (bool, optional): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
 
     Returns:
         pd.DataFrame: The dataframe with converted columns to categoricals.

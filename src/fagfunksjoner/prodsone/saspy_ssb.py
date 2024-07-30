@@ -10,6 +10,7 @@ import os
 import re
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import saspy
@@ -139,7 +140,7 @@ def split_path_for_sas(path: Path) -> tuple[str, str, str]:
     """Split a path in three parts, mainly for having a name for the libname.
 
     Args:
-        path (pathlib.Path): The full path to be split
+        path (Path): The full path to be split
 
     Returns:
         tuple[str]: The three parts the path has been split into.
@@ -212,14 +213,14 @@ def sasfile_to_parquet(
     return df
 
 
-def cp(from_path: str, to_path: str) -> dict:
+def cp(from_path: str, to_path: str) -> dict[str, Any]:
     """Use saspy and sas-server to copy files.
 
     Args:
-    from_path (str): The path for the source file to copy
-    to_path (str): The path to place the copy on
+        from_path (str): The path for the source file to copy
+        to_path (str): The path to place the copy on
 
     Returns:
-        dict: A key for if it succeded, and a key for holding the log as string.
+        dict[str, Any]: A key for if it succeded, and a key for holding the log as string.
     """
     return saspy_session().file_copy(from_path, to_path)

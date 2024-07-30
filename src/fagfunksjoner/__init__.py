@@ -1,6 +1,7 @@
 """Fagfunksjoner is a place for "loose, small functionality" produced at Statistics Norway in Python.
 
-Often created by "fag", not IT these are often small "helper-functions" that many might be interested in."""
+Often created by "fag", not IT these are often small "helper-functions" that many might be interested in.
+"""
 
 import importlib
 import importlib.metadata

@@ -13,7 +13,7 @@ import pandas as pd
 
 def all_combos_agg(
     df: pd.DataFrame,
-    groupcols: list,
+    groupcols: list[str],
     aggargs: dict[str, Callable],
     fillna_dict: dict[str, Any] | None = None,
     keep_empty: bool = False,
@@ -40,6 +40,9 @@ def all_combos_agg(
             separates the different aggregation levels, and a column called aggregation_ways which
             counts the number of group columns used for the aggregation.
 
+    Raises:
+        ValueError: On sending in a grand_total-parameter we dont understand, not a string or a dict.        
+    
     Known problems:
         You should not use dataframes with multi-index columns as they cause trouble.
 
@@ -188,7 +191,7 @@ def flatten_col_multiindex(df: pd.DataFrame, sep: str = "_") -> pd.DataFrame:
 
     Args:
         df (pd.DataFrame): The DataFrame with multiindexed columns.
-        sep (str, optional): What should seperate the names of the levels in the multiindex. Defaults to "_".
+        sep (str): What should seperate the names of the levels in the multiindex. Defaults to "_".
 
     Returns:
         pd.DataFrame: The DataFrame with the flattened column headers.
