@@ -1,57 +1,30 @@
 import xml.etree.ElementTree as ET
 
+import openpyxl
+
 from fagfunksjoner.fagfunksjoner_logger import logger
 
 
-def change_input_to_xml(
-    spec_path: str,
-    spec_filename: str,
-    input_path: str,
-    input_filename: str,
-    output_path: str,
-) -> None:
-    """Parse specification-files from Jdemetra+ and replace references to the old file format with XML-file references.
+def convert_excel_to_xml(file_name: str, sheet_name: str = "Ark1") -> None:
+    """Convert an Excel sheet to an XML file.
+
+    This function reads an Excel sheet specified by the sheet name and converts its contents
+    to an XML format. Each cell in the sheet is represented as an XML element.
 
     Args:
-        spec_path (str): Path to where your specification-files are located, typically in a folder called SAProcessing/.
-        spec_filename (str): Name of specification-file. Default from Jdemetra+ is SAProcessing-1, SAProcessing-2, etc.
-        input_path (str): Path to directory where input-files are located, e.g., ~/sa/project/input.
-        input_filename (str): Name of input-file for the specification stated in the first two arguments.
-        output_path (str): Path to where you want to save the new specification-files.
+        file_name (str): The name of the Excel file to read.
+        sheet_name (str): The name of the sheet within the Excel file to convert to XML.
 
+    Example:
+        convert_excel_to_xml("example.xlsx", "Sheet1")
     """
-    # Parse the specification file
-    tree = ET.parse(f"{spec_path}/{spec_filename}")
-    root = tree.getroot()
-    namespace = {"ns": "ec/tss.core"}
-    logger.info(tree)
-
-    # Number of series to adjust
-    series_list = [list(child.attrib.values()) for child in root]
-    number_of_series = len(series_list[1:])
-
-    # Set new path for each series
-    input_path_encoded = input_path.replace("/", "%2F")
-    for series_index in range(1, number_of_series):
-        series_name = f"sa{series_index}"
-        subset_item = root.findall(
-            f"./ns:item[@name='{series_name}']/ns:subset/ns:item/ns:ts/ns:metaData/",
-            namespace,
-        )[2]
-        new_path = (
-            f"demetra://tsprovider/Xml/20111201/SERIES?file={input_path_encoded}%2F"
-            f"{input_filename}#collectionIndex=0&seriesIndex={series_index - 1}"
-        )
-        subset_item.set("value", new_path)
-
-    # Set source/file type for each series
-    for series_index in range(1, number_of_series):
-        series_name = f"sa{series_index}"
-        metadata_items = root.findall(
-            f"./ns:item[@name='{series_name}']/ns:subset/ns:item/ns:ts/ns:metaData/",
-            namespace,
-        )
-        metadata_items[1].set("value", "Xml")
-
-    # Save the modified tree to the output path
-    tree.write(f"{output_path}/{spec_filename}")
+    wb = openpyxl.load_workbook(file_name)
+    sheet = wb[sheet_name]
+    root = ET.Element("root")
+    for row in sheet.rows:
+        for cell in row:
+            ET.SubElement(root, "cell", value=cell.value)
+    tree = ET.ElementTree(root)
+    path = f"{sheet_name}.xml"
+    tree.write(path)
+    logger.info("Output to %s", path)

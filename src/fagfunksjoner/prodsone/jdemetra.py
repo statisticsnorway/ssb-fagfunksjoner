@@ -11,12 +11,7 @@ from fagfunksjoner.prodsone.check_env import check_env
 
 
 def df2xml(
-    data: pd.DataFrame,
-    out: str,
-    outpath: str,
-    pstart: str,
-    ystart: str,
-    freq: str
+    data: pd.DataFrame, out: str, outpath: str, pstart: str, ystart: str, freq: str
 ) -> None:
     """Output a XML-file in your specified directory, and logs a message to clarify.
 
