@@ -234,6 +234,6 @@ def categories_threshold(
     str_cols = df.select_dtypes(include=["object", "string"])
     for i, num in str_cols.nunique().items():
         if num < cardinality_threshold:
-            logger.info("\rConverting to categorical:", i, num, " " * 40, end="")
+            logger.info("\rConverting to categorical:", i, num, " " * 40)
             df[i] = df[i].astype("category")
     return df

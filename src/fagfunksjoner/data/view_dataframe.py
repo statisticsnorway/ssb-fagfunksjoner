@@ -1,13 +1,15 @@
+from collections.abc import Callable
+
 import ipywidgets as widgets
 import pandas as pd
-from typing import Callable
 from IPython.display import display
+
 
 def filter_display(
     dataframe: pd.DataFrame,
     column: str,
     value: widgets.Widget,
-    operator: widgets.Dropdown
+    operator: widgets.Dropdown,
 ) -> None:
     """Filter data based on args, and display the result.
 
@@ -40,7 +42,7 @@ def filter_display(
 
 def view_dataframe(
     dataframe: pd.DataFrame, column: str, operator: str = "==", unique_limit: int = 100
-) -> widgets.HTML|widgets.interactive:
+) -> widgets.HTML | widgets.interactive:
     """Display an interactive widget for filtering and viewing data in a DataFrame based on selection of values in one column.
 
     Args:

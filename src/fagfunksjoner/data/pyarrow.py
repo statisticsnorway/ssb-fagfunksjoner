@@ -1,7 +1,7 @@
 import pyarrow as pa
 
 
-def cast_pyarrow_table_schema(data: pa.Table, schema: pa.schema) -> pa.Table:
+def cast_pyarrow_table_schema(data: pa.Table, schema: pa.Schema) -> pa.Table:
     """Set correct schema on Pyarrow Table, especially when dictionary datatype is wanted.
 
     Args:
@@ -50,10 +50,13 @@ def restructur_pyarrow_schema(
         assert col in wanted_schema.names
     newfields = []
     for name in inuse_schema.names:
-        if type(inuse_schema.field(name).type) is type(wanted_schema.field(name).type):
-            newfields.append(
-                inuse_schema.field(name).with_type(wanted_schema.field(name).type)
-            )
+        inuse_field_index = inuse_schema.get_field_index(name)
+        wanted_field_index = wanted_schema.get_field_index(name)
+        inuse_field = inuse_schema.field(inuse_field_index)
+        wanted_field = wanted_schema.field(wanted_field_index)
+
+        if type(inuse_field.type) is type(wanted_field.type):
+            newfields.append(inuse_field.with_type(wanted_field.type))
         else:
-            newfields.append(wanted_schema.field(name))
+            newfields.append(wanted_field)
     return pa.schema(newfields)

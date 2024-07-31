@@ -15,7 +15,7 @@ from pandas._typing import AggFuncTypeDictSeries
 def all_combos_agg(
     df: pd.DataFrame,
     groupcols: list[str],
-    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries,
+    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries[str],
     fillna_dict: dict[str, Any] | None = None,
     keep_empty: bool = False,
     grand_total: dict[str, str] | str = "",
@@ -104,11 +104,11 @@ def all_combos_agg(
         # Calculate statistics using groupby
         if keep_empty:
             # Hack using categoricals to keep all unobserved groups
-            result = dataframe.groupby(list(comb), observed=False)
+            result_grps = dataframe.groupby(list(comb), observed=False)
         else:
-            result = dataframe.groupby(list(comb))
+            result_grps = dataframe.groupby(list(comb))
 
-        result = result.agg(aggargs).reset_index(names=list(comb))
+        result = result_grps.agg(aggargs).reset_index(names=list(comb))
 
         # Add a column to differentiate the combinations
         result["level"] = len(combos) - i
@@ -129,28 +129,26 @@ def all_combos_agg(
         if len(cat_groupcols):
             for col in cat_groupcols:
                 all_levels[col] = all_levels[col].add_categories(grand_total)
-        gt = dataframe.agg(aggargs)
-        # return gt
+        gt: pd.Series[Any] | pd.DataFrame = dataframe.agg(aggargs)
         if isinstance(gt, pd.DataFrame):
-            gt = gt.unstack()
-        gt = flatten_col_multiindex(pd.DataFrame(gt).T)
-        # display(gt)
-        # return gt
-        gt["level"] = 0
-        gt["ways"] = 0
+            gt_df = flatten_col_multiindex(pd.DataFrame(gt.unstack()).T)
+        else:
+            gt_df = flatten_col_multiindex(pd.DataFrame(gt).T)
+        gt_df["level"] = 0
+        gt_df["ways"] = 0
         if isinstance(grand_total, str):
-            gt[groupcols] = grand_total
+            gt_df[groupcols] = grand_total
         elif isinstance(grand_total, dict):
             for col, val in grand_total.items():
-                gt[col] = val
+                gt_df[col] = val
         else:
             raise ValueError(
                 "Dont know what to do with the grand_total arguement you sent"
             )
-        gt = gt[all_levels.columns]
+        gt_df = gt_df[all_levels.columns]
 
         # Append the grand total row to the combined results and sort by levels and groupcols
-        all_levels = pd.concat([all_levels, gt], ignore_index=True)
+        all_levels = pd.concat([all_levels, gt_df], ignore_index=True)
     all_levels = all_levels.sort_values(["level", *groupcols])
 
     # Fill missing group columns with value
@@ -164,7 +162,7 @@ def all_combos_agg(
     return all_levels.reset_index(drop=True)
 
 
-def fill_na_dict(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
+def fill_na_dict(df: pd.DataFrame, mapping: dict[str, Any]) -> pd.DataFrame:
     """Fills NAs in the passed dataframe with a dict.
 
     Keys in dict should be column names, the values what should be inputed in the cells.
@@ -198,5 +196,7 @@ def flatten_col_multiindex(df: pd.DataFrame, sep: str = "_") -> pd.DataFrame:
         pd.DataFrame: The DataFrame with the flattened column headers.
     """
     if isinstance(df.columns, pd.MultiIndex):
-        df.columns = pd.Index([sep.join(col).strip().strip(sep) for col in df.columns.values])
+        df.columns = pd.Index(
+            [sep.join(col).strip().strip(sep) for col in df.columns.values]
+        )
     return df

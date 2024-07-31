@@ -23,7 +23,6 @@ import os
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -69,7 +68,7 @@ class ContextVariable:
     datatype: str
     length: int
     start_position: int
-    precision: int
+    precision: int | None
     division: str
 
 
@@ -99,7 +98,7 @@ class ArchiveData:
     df: pd.DataFrame
     metadata_df: pd.DataFrame
     codelist_df: pd.DataFrame
-    codelist_dict: dict[str, CodeList]
+    codelist_dict: dict[str, dict[str, str]]
     names: list[str]
     widths: list[int]
     datatypes: dict[str, str]
@@ -117,29 +116,57 @@ def extract_context_variables(root: ET.Element) -> list[ContextVariable]:
     """
     data = []
     contact_info = root.find("{http://www.ssb.no/ns/meta}ContactInformation")
-    division = contact_info.find("{http://www.ssb.no/ns/meta/common}Division").text
+    if contact_info is None:
+        raise ValueError("ContactInformation not found in the XML")
+    division = contact_info.find("{http://www.ssb.no/ns/meta/common}Division")
+    if division is None or division.text is None:
+        raise ValueError("Division not found in the XML or has no text")
+
+    division_text = division.text
+
     for context_var in root.findall("{http://www.ssb.no/ns/meta}ContextVariable"):
         context_id = context_var.get("id")
-        title = context_var.find("{http://www.ssb.no/ns/meta}Title").text
-        description = context_var.find("{http://www.ssb.no/ns/meta}Description").text
+        title_elem = context_var.find("{http://www.ssb.no/ns/meta}Title")
+        description_elem = context_var.find("{http://www.ssb.no/ns/meta}Description")
         properties = context_var.find("{http://www.ssb.no/ns/meta}Properties")
-        datatype = properties.find("{http://www.ssb.no/ns/meta}Datatype").text
-        length = properties.find("{http://www.ssb.no/ns/meta}Length").text
-        start_position = properties.find(
+
+        if title_elem is None or title_elem.text is None:
+            raise ValueError("Title element missing or has no text")
+        if description_elem is None or description_elem.text is None:
+            raise ValueError("Description element missing or has no text")
+        if properties is None:
+            raise ValueError("Properties element missing")
+
+        datatype_elem = properties.find("{http://www.ssb.no/ns/meta}Datatype")
+        length_elem = properties.find("{http://www.ssb.no/ns/meta}Length")
+        start_position_elem = properties.find(
             "{http://www.ssb.no/ns/meta}StartPosition"
-        ).text
-        precision_tag = properties.find("{http://www.ssb.no/ns/meta}Precision")
-        precision = precision_tag.text if precision_tag is not None else None
+        )
+        precision_elem = properties.find("{http://www.ssb.no/ns/meta}Precision")
+
+        if datatype_elem is None or datatype_elem.text is None:
+            raise ValueError("Datatype element missing or has no text")
+        if length_elem is None or length_elem.text is None:
+            raise ValueError("Length element missing or has no text")
+        if start_position_elem is None or start_position_elem.text is None:
+            raise ValueError("StartPosition element missing or has no text")
+
+        precision = (
+            int(precision_elem.text)
+            if precision_elem is not None and precision_elem.text is not None
+            else None
+        )
+
         data.append(
             ContextVariable(
-                context_id,
-                title,
-                description,
-                datatype,
-                length,
-                start_position,
+                context_id if context_id is not None else "",
+                title_elem.text,
+                description_elem.text,
+                datatype_elem.text,
+                int(length_elem.text),
+                int(start_position_elem.text),
                 precision,
-                division,
+                division_text,
             )
         )
     return data
@@ -161,30 +188,54 @@ def extract_codelist(root: ET.Element) -> list[CodeList]:
             codelist_meta = codelist.find(
                 "{http://www.ssb.no/ns/meta/codelist}CodelistMeta"
             )
-            codelist_title = codelist_meta.find(
+            if codelist_meta is None:
+                continue
+
+            codelist_title_elem = codelist_meta.find(
                 "{http://www.ssb.no/ns/meta/codelist}Title"
-            ).text
-            codelist_description = codelist_meta.find(
+            )
+            codelist_description_elem = codelist_meta.find(
                 "{http://www.ssb.no/ns/meta/codelist}Description"
-            ).text
+            )
+
+            if codelist_title_elem is None or codelist_title_elem.text is None:
+                continue
+            if (
+                codelist_description_elem is None
+                or codelist_description_elem.text is None
+            ):
+                continue
+
+            codelist_title = codelist_title_elem.text
+            codelist_description = codelist_description_elem.text
 
             codes = codelist.find("{http://www.ssb.no/ns/meta/codelist}Codes")
-            for code in codes.findall("{http://www.ssb.no/ns/meta/codelist}Code"):
-                code_value = code.find(
-                    "{http://www.ssb.no/ns/meta/codelist}CodeValue"
-                ).text
-                code_text = code.find(
-                    "{http://www.ssb.no/ns/meta/codelist}CodeText"
-                ).text
-                codelist_data.append(
-                    CodeList(
-                        context_var.get("id"),
-                        codelist_title,
-                        codelist_description,
-                        code_value,
-                        code_text,
+            if codes is not None:
+                for code in codes.findall("{http://www.ssb.no/ns/meta/codelist}Code"):
+                    code_value_elem = code.find(
+                        "{http://www.ssb.no/ns/meta/codelist}CodeValue"
                     )
-                )
+                    code_text_elem = code.find(
+                        "{http://www.ssb.no/ns/meta/codelist}CodeText"
+                    )
+
+                    if code_value_elem is None or code_value_elem.text is None:
+                        continue
+                    if code_text_elem is None or code_text_elem.text is None:
+                        continue
+
+                    # Ensuring type for mypy
+                    context_id: str = context_var.get("id", "")
+
+                    codelist_data.append(
+                        CodeList(
+                            context_id,
+                            codelist_title,
+                            codelist_description,
+                            code_value_elem.text,
+                            code_text_elem.text,
+                        )
+                    )
     return codelist_data
 
 
@@ -236,15 +287,17 @@ def codelist_to_dict(codelist_df: pd.DataFrame) -> dict[str, dict[str, str]]:
         logger.info("NOTE: Filbeskrivelsen har ingen kodelister")
         return {}
 
-    col_dict = {
-        col: dict(zip(sub_df["code_value"], sub_df["code_text"], strict=False))
+    col_dict: dict[str, dict[str, str]] = {
+        str(col): dict(zip(sub_df["code_value"], sub_df["code_text"], strict=False))
         for col, sub_df in codelist_df.groupby("codelist_title")
     }
 
     return col_dict
 
 
-def date_parser(date_str: str, date_format: str) -> datetime | pd.NaTType:
+def date_parser(
+    date_str: str, date_format: str
+) -> datetime | pd._libs.tslibs.nattype.NaTType:
     """Parses a date string into a datetime object based on the provided format.
 
     Args:
@@ -323,7 +376,9 @@ def extract_parameters(
     return col_names, col_lengths, datatype, decimal
 
 
-def downcast_ints(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
+def downcast_ints(
+    df: pd.DataFrame, metadata_df: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Store ints as the lowest possible datatype that can contain the values.
 
     Args:
@@ -341,7 +396,9 @@ def downcast_ints(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     return df, metadata_df
 
 
-def convert_dates(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
+def convert_dates(
+    df: pd.DataFrame, metadata_df: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Faster to convert columns vectorized after importing as string, instead of running every row through a lambda.
 
     Args:
@@ -360,7 +417,9 @@ def convert_dates(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
     return df, metadata_df
 
 
-def handle_decimals(df: pd.DataFrame, metadata_df: pd.DataFrame) -> pd.DataFrame:
+def handle_decimals(
+    df: pd.DataFrame, metadata_df: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Adjusts the decimal values in the archive DataFrame based on the metadata or contained decimal sign.
 
     Args:
@@ -423,7 +482,7 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     metadata_df = metadata_to_df(metadata.context_variables)
     codelist_df = codelist_to_df(metadata.codelists)
     codelist_dict = codelist_to_dict(codelist_df)
-    names, widths, datatypes, decimal = extract_parameters(metadata_df)
+    names, widths, datatypes, _decimal = extract_parameters(metadata_df)
     df = pd.read_fwf(
         archive_file, dtype=datatypes, widths=widths, names=names, na_values="."
     )
@@ -454,7 +513,7 @@ def open_path_metapath_datadok(path: str, metapath: str) -> ArchiveData:
     )
 
 
-def open_path_datadok(path: str) -> pd.DataFrame:
+def open_path_datadok(path: str) -> ArchiveData:
     """Get archive data only based on the path of the .dat or .txt file.
 
     This function attempts to correct and test options, to try track down the file and metadata mentioned.
@@ -470,6 +529,8 @@ def open_path_datadok(path: str) -> pd.DataFrame:
     if dokpath.endswith(".dat") or dokpath.endswith(".txt"):
         dokpath = ".".join(dokpath.split(".")[:-1])
     url_address = f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={dokpath}"
+
+    # Correcting address if it doesnt go anywhere
     if 200 != requests.get(url_address).status_code and not path.startswith("$"):
         for name, stamm in os.environ.items():
             if not name.startswith("JUPYTERHUB") and path.startswith(stamm):
