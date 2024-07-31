@@ -113,6 +113,9 @@ def extract_context_variables(root: ET.Element) -> list[ContextVariable]:
 
     Returns:
         list: A list of ContextVariable objects.
+
+    Raises:
+        ValueError: Missing information in the XML.
     """
     data = []
     contact_info = root.find("{http://www.ssb.no/ns/meta}ContactInformation")
