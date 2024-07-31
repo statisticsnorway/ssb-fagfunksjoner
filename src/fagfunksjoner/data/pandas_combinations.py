@@ -5,17 +5,28 @@ This has some similar functionality to "proc means" in SAS.
 """
 
 from itertools import combinations
-from typing import Any
+from typing import Any, TypeVar
+from collections.abc import (
+    Callable,
+    Hashable,
+    Mapping,
+    )
+from typing_extensions import TypeAlias
 
 import pandas as pd
-from pandas._typing import AggFuncTypeBase
-from pandas._typing import AggFuncTypeDictSeries
+import numpy as np
+
+
+# Having trouble importing these from pandas
+AggFuncTypeBase: TypeAlias = Callable | str | np.ufunc
+HashableT = TypeVar("HashableT", bound=Hashable)
+AggFuncTypeDictSeries: TypeAlias = Mapping[HashableT, AggFuncTypeBase]
 
 
 def all_combos_agg(
     df: pd.DataFrame,
     groupcols: list[str],
-    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries[str],
+    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries,
     fillna_dict: dict[str, Any] | None = None,
     keep_empty: bool = False,
     grand_total: dict[str, str] | str = "",
