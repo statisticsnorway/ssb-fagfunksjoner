@@ -21,7 +21,6 @@ import gc
 # %%
 import os
 import xml.etree.ElementTree as ET
-from collections.abc import Hashable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -224,14 +223,14 @@ def metadata_to_df(context_variables: list[ContextVariable]) -> pd.DataFrame:
     return df
 
 
-def codelist_to_dict(codelist_df: pd.DataFrame) -> dict[Hashable, Any]:
+def codelist_to_dict(codelist_df: pd.DataFrame) -> dict[str, CodeList]:
     """Converts a DataFrame containing code lists to a dictionary.
 
     Args:
         codelist_df (pd.DataFrame): DataFrame containing the code list information.
 
     Returns:
-        dict[Hashable, Any]: A dictionary mapping code list titles to dictionaries of code values and texts.
+        dict[str, CodeList]: A dictionary mapping code list titles to dictionaries of code values and texts.
     """
     if codelist_df.empty:
         logger.info("NOTE: Filbeskrivelsen har ingen kodelister")
