@@ -9,7 +9,7 @@ def dynarev_uttrekk(
     skjema: str,
     dublettsjekk: bool = False,
     sfu_cols: list[str] | None = None,
-) -> pd.DataFrame | tuple[pd.DataFrame]:
+) -> pd.DataFrame | tuple[pd.DataFrame, ...]:
     """Fetches and processes data from the Oracle database using the Oracle class for connection management.
 
     Args:
@@ -45,7 +45,7 @@ def dynarev_uttrekk(
         df_all_data_pivot = df_all_data.pivot_table(
             index=pivot_cols, columns="felt_id", values="felt_verdi", aggfunc="first"
         ).reset_index()
-        result = [
+        result: list[pd.DataFrame] = [
             df_all_data_pivot
         ]  # Store the original pivoted dataframe in the result list
 

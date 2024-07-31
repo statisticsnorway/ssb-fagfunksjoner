@@ -223,7 +223,7 @@ def metadata_to_df(context_variables: list[ContextVariable]) -> pd.DataFrame:
     return df
 
 
-def codelist_to_dict(codelist_df: pd.DataFrame) -> dict[str, CodeList]:
+def codelist_to_dict(codelist_df: pd.DataFrame) -> dict[str, dict[str, str]]:
     """Converts a DataFrame containing code lists to a dictionary.
 
     Args:
@@ -244,7 +244,7 @@ def codelist_to_dict(codelist_df: pd.DataFrame) -> dict[str, CodeList]:
     return col_dict
 
 
-def date_parser(date_str: str, date_format: str) -> datetime | pd.NaT:
+def date_parser(date_str: str, date_format: str) -> datetime | pd.NaTType:
     """Parses a date string into a datetime object based on the provided format.
 
     Args:

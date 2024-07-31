@@ -1,56 +1,40 @@
 import ipywidgets as widgets
-import numpy as np
 import pandas as pd
 from IPython.display import display
 
-
 def filter_display(
-    dataframe: pd.DataFrame, column: str, value: str | int | float, operator: str
+    dataframe: pd.DataFrame,
+    column: str,
+    value: widgets.Widget,
+    operator: widgets.Dropdown
 ) -> None:
     """Filter data based on args, and display the result.
 
     Args:
         dataframe (pd.DataFrame): The DataFrame to filter.
         column (str): Column to base filter on.
-        value (str | int | float): Value to compare filter against.
-        operator (str): How to compare column against value.
+        value (widgets.Widget): Widget containing the value to compare filter against.
+        operator (widgets.Dropdown): Widget containing how to compare column against value.
     """
+    # Extract the actual value from the widgets
+    filter_value = value.value
+    filter_operator = operator.value
+
     operator_functions = {
-        ">": lambda df: df.loc[df[column] > value],
-        ">=": lambda df: df.loc[df[column] >= value],
-        "<=": lambda df: df.loc[df[column] <= value],
-        "<": lambda df: df.loc[df[column] < value],
-        "!=": lambda df: df.loc[~df[column].isin(value)],
-        "==": lambda df: df.loc[df[column].isin(value)],
+        ">": lambda df: df.loc[df[column] > filter_value],
+        ">=": lambda df: df.loc[df[column] >= filter_value],
+        "<=": lambda df: df.loc[df[column] <= filter_value],
+        "<": lambda df: df.loc[df[column] < filter_value],
+        "!=": lambda df: df.loc[~df[column].isin(filter_value)],
+        "==": lambda df: df.loc[df[column].isin(filter_value)],
     }
-    if operator == "==":
-        if ("NaN" in str(value)) & (
-            len(value) == 1
-        ):  # Special treatment of missing value when only missing is selected
-            display(dataframe.loc[dataframe[column].isna()])
-        elif "NaN" in str(
-            value
-        ):  # Special treatment of missing value when missing and other is selected
-            display(
-                dataframe.loc[
-                    (dataframe[column].isna()) | (dataframe[column].isin(value))
-                ]
-            )
-        else:
-            display(operator_functions[operator](dataframe))
-    elif operator == "!=":
-        if ("NaN" in str(value)) & (len(value)) == 1:
-            display(dataframe.loc[~dataframe[column].isna()])
-        elif "NaN" in str(value):
-            display(
-                dataframe.loc[
-                    ~((dataframe[column].isna()) | (dataframe[column].isin(value)))
-                ]
-            )
-        else:
-            display(operator_functions[operator](dataframe))
+
+    if filter_operator == "==" and "NaN" in filter_value:
+        display(dataframe.loc[dataframe[column].isna() | dataframe[column].isin([val for val in filter_value if val != "NaN"])])
+    elif filter_operator == "!=" and "NaN" in filter_value:
+        display(dataframe.loc[~dataframe[column].isna() & ~dataframe[column].isin([val for val in filter_value if val != "NaN"])])
     else:
-        display(operator_functions[operator](dataframe))
+        display(operator_functions[filter_operator](dataframe))
 
 
 def view_dataframe(
@@ -61,7 +45,7 @@ def view_dataframe(
     Args:
         dataframe (pd.DataFrame): The DataFrame containing the data to be filtered.
         column (str): The column in the DataFrame to be filtered.
-        operator (str): The comparison operator for filtering  (may be altered during the display).
+        operator (str): The comparison operator for filtering (may be altered during the display).
             Options: '==', '!=', '>=', '>', '<', '<='.
             Default: '=='.
         unique_limit (int): The maximum number of unique values in the column
@@ -92,8 +76,8 @@ def view_dataframe(
     operator_equality = ["==", "!="]
 
     if operator in operator_comparison:
-        if np.issubdtype(dataframe[column].dtype, np.number):
-            if np.issubdtype(dataframe[column].dtype, np.integer):
+        if pd.api.types.is_numeric_dtype(dataframe[column]):
+            if pd.api.types.is_integer_dtype(dataframe[column]):
                 slider_widget = widgets.IntSlider
             else:
                 slider_widget = widgets.FloatSlider
@@ -129,11 +113,11 @@ def view_dataframe(
         filter_type_select = widgets.Dropdown(
             options=operator_equality, value=operator, description="Operator"
         )
-        if np.issubdtype(dataframe[column].dtype, np.number):
+        if pd.api.types.is_numeric_dtype(dataframe[column]):
             values_unique = dataframe[column].unique()
             values_unique.sort()
             values_widget = [
-                val if not np.isnan(val) else "NaN" for val in values_unique
+                val if not pd.isna(val) else "NaN" for val in values_unique
             ]
         else:
             values_unique = (
