@@ -1,5 +1,6 @@
 import ipywidgets as widgets
 import pandas as pd
+from typing import Callable
 from IPython.display import display
 
 def filter_display(
@@ -20,7 +21,7 @@ def filter_display(
     filter_value = value.value
     filter_operator = operator.value
 
-    operator_functions = {
+    operator_functions: dict[str, Callable[[pd.DataFrame], pd.DataFrame]] = {
         ">": lambda df: df.loc[df[column] > filter_value],
         ">=": lambda df: df.loc[df[column] >= filter_value],
         "<=": lambda df: df.loc[df[column] <= filter_value],
@@ -30,16 +31,16 @@ def filter_display(
     }
 
     if filter_operator == "==" and "NaN" in filter_value:
-        display(dataframe.loc[dataframe[column].isna() | dataframe[column].isin([val for val in filter_value if val != "NaN"])])
+        display(dataframe.loc[dataframe[column].isna() | dataframe[column].isin([val for val in filter_value if val != "NaN"])])  # type: ignore[no-untyped-call]
     elif filter_operator == "!=" and "NaN" in filter_value:
-        display(dataframe.loc[~dataframe[column].isna() & ~dataframe[column].isin([val for val in filter_value if val != "NaN"])])
+        display(dataframe.loc[~dataframe[column].isna() & ~dataframe[column].isin([val for val in filter_value if val != "NaN"])])  # type: ignore[no-untyped-call]
     else:
-        display(operator_functions[filter_operator](dataframe))
+        display(operator_functions[filter_operator](dataframe))  # type: ignore[no-untyped-call]
 
 
 def view_dataframe(
     dataframe: pd.DataFrame, column: str, operator: str = "==", unique_limit: int = 100
-) -> widgets.HTML:
+) -> widgets.HTML|widgets.interactive:
     """Display an interactive widget for filtering and viewing data in a DataFrame based on selection of values in one column.
 
     Args:
@@ -56,21 +57,6 @@ def view_dataframe(
         widgets.interactive: An interactive widget for filtering and viewing data based on the specified criteria.
             The '==' and '!=' operators use a dropdown list for multiple selection
             The other (interval) parameters us a slider
-
-    Usage:
-        ```python
-        num_rows = 10
-        data = {
-            'hs': np.random.choice(['03010000', '30019000', '54022711'], size=num_rows),
-            'value': np.random.randint(100000, 1000000, size=num_rows),
-            'weight': np.random.randint(1, 10000, size=num_rows),
-            'import': np.random.choice([True, False], size=num_rows),
-        }
-
-        df = pd.DataFrame(data)
-        view_dataframe(dataframe=df, column='value', operator='>=')
-        view_dataframe(dataframe=df, column='hs', operator='==')
-        ```
     """
     operator_comparison = [">=", ">", "<", "<="]
     operator_equality = ["==", "!="]
@@ -124,7 +110,7 @@ def view_dataframe(
                 dataframe[column].fillna("NaN").unique()
             )  # When missing values appear in non-numeric columns, we replace it with the text NaN
             values_unique.sort()
-            values_widget = values_unique
+            values_widget = list(values_unique)
         values_select = widgets.SelectMultiple(
             options=values_widget, description="Value(s)", value=[values_widget[0]]
         )
