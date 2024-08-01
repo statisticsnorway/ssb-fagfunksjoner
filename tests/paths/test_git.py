@@ -1,5 +1,6 @@
-import pytest
 from unittest import mock
+
+import pytest
 
 from fagfunksjoner.paths.git import name_from_gitconfig
 
@@ -10,7 +11,9 @@ def test_name_from_gitconfig_found():
         "name = John Doe\n",
     ]
 
-    with mock.patch("builtins.open", mock.mock_open(read_data="".join(mock_gitconfig_content))):
+    with mock.patch(
+        "builtins.open", mock.mock_open(read_data="".join(mock_gitconfig_content))
+    ):
         with mock.patch("os.getcwd", return_value="/home/user/project"):
             with mock.patch("os.listdir", side_effect=[[], [], [".gitconfig"]]):
                 with mock.patch("os.chdir"):
@@ -32,7 +35,9 @@ def test_name_from_gitconfig_correct_directory_revert():
         "name = John Doe\n",
     ]
 
-    with mock.patch("builtins.open", mock.mock_open(read_data="".join(mock_gitconfig_content))):
+    with mock.patch(
+        "builtins.open", mock.mock_open(read_data="".join(mock_gitconfig_content))
+    ):
         with mock.patch("os.getcwd", return_value="/home/user/project") as mock_getcwd:
             with mock.patch("os.listdir", side_effect=[[], [], [".gitconfig"]]):
                 with mock.patch("os.chdir") as mock_chdir:

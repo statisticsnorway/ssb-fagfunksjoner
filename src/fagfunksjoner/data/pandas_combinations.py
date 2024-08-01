@@ -4,18 +4,16 @@ All combinations (including total-groups), over all categorical codes, in a set 
 This has some similar functionality to "proc means" in SAS.
 """
 
+from collections.abc import Callable
+from collections.abc import Hashable
+from collections.abc import Mapping
 from itertools import combinations
-from typing import Any, TypeVar
-from collections.abc import (
-    Callable,
-    Hashable,
-    Mapping,
-    )
-from typing_extensions import TypeAlias
+from typing import Any
+from typing import TypeAlias
+from typing import TypeVar
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 
 # Having trouble importing these from pandas._typing
 AggFuncTypeBase: TypeAlias = Callable | str | np.ufunc

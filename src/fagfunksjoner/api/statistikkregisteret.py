@@ -97,11 +97,15 @@ def find_publishings(
     publishings: dict[str, Any] = etree_to_dict(ET.fromstring(result.text))[
         "publiseringer"
     ]
+
+    # Ensure publishings["publisering"] is always a list
+    if not isinstance(publishings["publisering"], list):
+        publishings["publisering"] = [publishings["publisering"]]
+
     if get_publishing_specifics:
         for publish in publishings["publisering"]:
-            publish["specifics"] = specific_publishing(
-                publish["@id"]
-            )
+            publish["specifics"] = specific_publishing(publish["@id"])
+
     return publishings
 
 
@@ -117,9 +121,7 @@ def find_latest_publishing(shortname: str = "trosamf") -> dict[str, Any]:
     max_date = dateutil.parser.parse("2000-01-01")
     max_publ = None
     for pub in find_publishings(shortname)["publisering"]:
-        current_date = dateutil.parser.parse(
-            pub["tidspunkt"]
-        )
+        current_date = dateutil.parser.parse(pub["tidspunkt"])
         if current_date > max_date:
             max_publ = pub
             max_date = current_date

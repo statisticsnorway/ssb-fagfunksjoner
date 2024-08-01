@@ -1,13 +1,21 @@
+from unittest.mock import MagicMock
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from fagfunksjoner.prodsone.oradb import Oracle  # Replace 'fagfunksjoner.prodsone.oradb' with the actual module name
+
+from fagfunksjoner.prodsone.oradb import (
+    Oracle,  # Replace 'fagfunksjoner.prodsone.oradb' with the actual module name
+)
 
 # Sample data for testing
 sample_sql = "SELECT * FROM sample_table"
 sample_update_sql = "UPDATE sample_table SET col1 = :1 WHERE col2 = :2"
 sample_data = [("value1", "value2"), ("value3", "value4")]
 sample_batchsize = 2
-sample_result = [{"col1": "value1", "col2": "value2"}, {"col1": "value3", "col2": "value4"}]
+sample_result = [
+    {"col1": "value1", "col2": "value2"},
+    {"col1": "value3", "col2": "value4"},
+]
 
 
 @pytest.fixture
@@ -50,7 +58,8 @@ def test_select_many(mock_connect, oracle_instance):
     mock_cursor = MagicMock()
     mock_cursor.description = [("COL1",), ("COL2",)]
     mock_cursor.fetchmany.side_effect = [
-        [("value1", "value2"), ("value3", "value4")], []
+        [("value1", "value2"), ("value3", "value4")],
+        [],
     ]
     mock_conn = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor

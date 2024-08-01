@@ -1,8 +1,10 @@
 import os
-import pytest
 from unittest import mock
 
-from fagfunksjoner.prodsone.check_env import check_env, linux_shortcuts
+import pytest
+
+from fagfunksjoner.prodsone.check_env import check_env
+from fagfunksjoner.prodsone.check_env import linux_shortcuts
 
 
 def test_check_env_dapla():

@@ -1,8 +1,10 @@
-import requests
+from dataclasses import dataclass
 from datetime import date
 from typing import Any
-from dataclasses import dataclass
+
 import pandas as pd
+import requests
+
 
 @dataclass
 class Link:
@@ -11,13 +13,16 @@ class Link:
     uri: str | None = None
     urn: str | None = None
 
+
 @dataclass
 class Sender:
     id: str
 
+
 @dataclass
 class Receiver:
     id: str
+
 
 @dataclass
 class ValutaMeta:
@@ -29,6 +34,7 @@ class ValutaMeta:
     receiver: Receiver
     links: list[Link]
 
+
 @dataclass
 class Observation:
     id: str
@@ -37,6 +43,7 @@ class Observation:
     keyPosition: int
     role: str | None
     values: list[dict[str, str | float]]
+
 
 @dataclass
 class Attribute:
@@ -47,6 +54,7 @@ class Attribute:
     role: str | None
     values: list[dict[str, str]]
 
+
 @dataclass
 class Dimension:
     id: str
@@ -55,6 +63,7 @@ class Dimension:
     keyPosition: int
     role: str | None
     values: list[dict[str, str]]
+
 
 @dataclass
 class Structure:
@@ -66,10 +75,12 @@ class Structure:
     dimensions: dict[str, list[Dimension | Observation]]
     attributes: dict[str, list[Attribute]]
 
+
 @dataclass
 class Series:
     attributes: list[int]
     observations: dict[str, list[str]]
+
 
 @dataclass
 class DataSet:
@@ -79,10 +90,12 @@ class DataSet:
     action: str
     series: dict[str, Series]
 
+
 @dataclass
 class Data:
     dataSets: list[DataSet]
     structure: Structure
+
 
 @dataclass
 class ValutaData:
@@ -90,11 +103,13 @@ class ValutaData:
     data: Data
     df: pd.DataFrame | None = None
 
+
 URL_NORGES_BANK = (
     "https://data.norges-bank.no/api/data/EXR/{frequency}.{currency}.NOK.SP?"
     "format=sdmx-json&startPeriod={date_from}&endPeriod={date_to}"
     "&locale={language}&detail={detail}"
 )
+
 
 def parse_response(json_data: dict[str, Any]) -> ValutaData:
     meta = json_data["meta"]
@@ -111,14 +126,18 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
         datasetId=meta["datasetId"],
         sender=sender,
         receiver=receiver,
-        links=links_meta
+        links=links_meta,
     )
 
     # Parsing Structure
     structure = data["structure"]
     structure_links = [Link(**link) for link in structure["links"]]
-    dimensions = {k: [Dimension(**dim) for dim in v] for k, v in structure["dimensions"].items()}
-    attributes = {k: [Attribute(**attr) for attr in v] for k, v in structure["attributes"].items()}
+    dimensions = {
+        k: [Dimension(**dim) for dim in v] for k, v in structure["dimensions"].items()
+    }
+    attributes = {
+        k: [Attribute(**attr) for attr in v] for k, v in structure["attributes"].items()
+    }
     structure_obj = Structure(
         links=structure_links,
         name=structure["name"],
@@ -126,55 +145,107 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
         description=structure["description"],
         descriptions=structure["descriptions"],
         dimensions=dimensions,
-        attributes=attributes
+        attributes=attributes,
     )
 
     # Parsing DataSets
     datasets = []
     for dataset in data["dataSets"]:
         dataset_links = [Link(**link) for link in dataset["links"]]
-        series = {k: Series(attributes=v["attributes"], observations=v["observations"]) for k, v in dataset["series"].items()}
-        datasets.append(DataSet(
-            links=dataset_links,
-            reportingBegin=dataset["reportingBegin"],
-            reportingEnd=dataset["reportingEnd"],
-            action=dataset["action"],
-            series=series
-        ))
+        series = {
+            k: Series(attributes=v["attributes"], observations=v["observations"])
+            for k, v in dataset["series"].items()
+        }
+        datasets.append(
+            DataSet(
+                links=dataset_links,
+                reportingBegin=dataset["reportingBegin"],
+                reportingEnd=dataset["reportingEnd"],
+                action=dataset["action"],
+                series=series,
+            )
+        )
 
-    data_obj = Data(
-        dataSets=datasets,
-        structure=structure_obj
-    )
+    data_obj = Data(dataSets=datasets, structure=structure_obj)
 
     valuta_data = ValutaData(meta=valuta_meta, data=data_obj)
 
     # Create DataFrame
-    dimension_keys = [dim.id for dim in structure_obj.dimensions['series']]
-    observation_keys = [dim.id for dim in structure_obj.dimensions['observation']]
+    dimension_keys = [dim.id for dim in structure_obj.dimensions["series"]]
+    observation_keys = [dim.id for dim in structure_obj.dimensions["observation"]]
     records = []
     for dataset in data_obj.dataSets:
         for series_key, series in dataset.series.items():
             for obs_key, obs_value in series.observations.items():
                 record = {
-                    **{dim.id: dim.values[int(series_key.split(':')[dim.keyPosition])]['name'] for dim in structure_obj.dimensions['series']},
-                    **{dim.id + '_id': dim.values[int(series_key.split(':')[dim.keyPosition])]['id'] for dim in structure_obj.dimensions['series']},
-                    **{dim.id: next((val['name'] for val in dim.values if val['id'] == obs_key), obs_key) for dim in structure_obj.dimensions['observation']},
-                    **{dim.id + '_id': obs_key for dim in structure_obj.dimensions['observation']},
-                    'Observation': obs_value[0]
+                    **{
+                        dim.id: dim.values[int(series_key.split(":")[dim.keyPosition])][
+                            "name"
+                        ]
+                        for dim in structure_obj.dimensions["series"]
+                    },
+                    **{
+                        dim.id
+                        + "_id": dim.values[
+                            int(series_key.split(":")[dim.keyPosition])
+                        ]["id"]
+                        for dim in structure_obj.dimensions["series"]
+                    },
+                    **{
+                        dim.id: next(
+                            (val["name"] for val in dim.values if val["id"] == obs_key),
+                            obs_key,
+                        )
+                        for dim in structure_obj.dimensions["observation"]
+                    },
+                    **{
+                        dim.id + "_id": obs_key
+                        for dim in structure_obj.dimensions["observation"]
+                    },
+                    "Observation": obs_value[0],
                 }
                 # Add attribute information
                 for attr_key, attr_list in structure_obj.attributes.items():
                     for attr in attr_list:
-                        attr_index = structure_obj.dimensions['series'].index(next(filter(lambda x: x.id == attr.relationship['dimensions'][0], structure_obj.dimensions['series'])))
-                        record[attr.id] = attr.values[series.attributes[attr_index]]['name']
-                        record[attr.id + '_id'] = attr.values[series.attributes[attr_index]]['id']
+                        attr_index = structure_obj.dimensions["series"].index(
+                            next(
+                                filter(
+                                    lambda x: x.id
+                                    == attr.relationship["dimensions"][0],
+                                    structure_obj.dimensions["series"],
+                                )
+                            )
+                        )
+                        record[attr.id] = attr.values[series.attributes[attr_index]][
+                            "name"
+                        ]
+                        record[attr.id + "_id"] = attr.values[
+                            series.attributes[attr_index]
+                        ]["id"]
                 records.append(record)
-    
-    df = pd.DataFrame(records, columns=dimension_keys + [dim.id + '_id' for dim in structure_obj.dimensions['series']] + observation_keys + [dim.id + '_id' for dim in structure_obj.dimensions['observation']] + ['Observation'] + [attr.id for attr_list in structure_obj.attributes.values() for attr in attr_list] + [attr.id + '_id' for attr_list in structure_obj.attributes.values() for attr in attr_list])
+
+    df = pd.DataFrame(
+        records,
+        columns=dimension_keys
+        + [dim.id + "_id" for dim in structure_obj.dimensions["series"]]
+        + observation_keys
+        + [dim.id + "_id" for dim in structure_obj.dimensions["observation"]]
+        + ["Observation"]
+        + [
+            attr.id
+            for attr_list in structure_obj.attributes.values()
+            for attr in attr_list
+        ]
+        + [
+            attr.id + "_id"
+            for attr_list in structure_obj.attributes.values()
+            for attr in attr_list
+        ],
+    )
     valuta_data.df = df
 
     return valuta_data
+
 
 def download_exchange_rates(
     currency: str = "",

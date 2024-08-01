@@ -47,7 +47,9 @@ def dtype_store_json(df: pd.DataFrame, json_path: str) -> None:
         dtype = str(dtype)
         dtype_metadata[col] = {"dtype": dtype, "secondary_dtype": second_dtype}
     with open(json_path, "w") as json_file:
-        json_file.write(json.dumps(dtype_metadata))  # Needs to match test case in how it writes?
+        json_file.write(
+            json.dumps(dtype_metadata)
+        )  # Needs to match test case in how it writes?
 
 
 def auto_dtype(
