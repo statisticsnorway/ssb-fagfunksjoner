@@ -8,6 +8,15 @@ import requests
 
 @dataclass
 class Link:
+    """Represents a hyperlink related to the dataset.
+
+    Args:
+        rel (str): The relationship type of the link.
+        href (str | None): The URL of the link (if available).
+        uri (str | None): The URI of the link (if available).
+        urn (str | None): The URN of the link (if available).
+    """
+
     rel: str
     href: str | None = None
     uri: str | None = None
@@ -16,16 +25,40 @@ class Link:
 
 @dataclass
 class Sender:
+    """Represents the sender of the dataset.
+
+    Args:
+        id (str): The identifier of the sender.
+    """
+
     id: str
 
 
 @dataclass
 class Receiver:
+    """Represents the receiver of the dataset.
+
+    Args:
+        id (str): The identifier of the receiver.
+    """
+
     id: str
 
 
 @dataclass
 class ValutaMeta:
+    """Metadata related to the dataset.
+
+    Args:
+        id (str): The identifier of the metadata.
+        prepared (str): The preparation timestamp of the metadata.
+        test (bool): Indicates if the dataset is a test.
+        datasetId (str): The identifier of the dataset.
+        sender (Sender): The sender of the dataset.
+        receiver (Receiver): The receiver of the dataset.
+        links (list[Link]): A list of related links.
+    """
+
     id: str
     prepared: str
     test: bool
@@ -37,6 +70,17 @@ class ValutaMeta:
 
 @dataclass
 class Observation:
+    """Represents an observation within the dataset.
+
+    Args:
+        id (str): The identifier of the observation.
+        name (str): The name of the observation.
+        description (str): The description of the observation.
+        keyPosition (int): The key position of the observation in the dataset.
+        role (str | None): The role of the observation (if any).
+        values (list[dict[str, str | float]]): The values associated with the observation.
+    """
+
     id: str
     name: str
     description: str
@@ -47,6 +91,17 @@ class Observation:
 
 @dataclass
 class Attribute:
+    """Represents an attribute within the dataset.
+
+    Args:
+        id (str): The identifier of the attribute.
+        name (str): The name of the attribute.
+        description (str): The description of the attribute.
+        relationship (dict[str, list[str]]): The relationship of the attribute to dimensions.
+        role (str | None): The role of the attribute (if any).
+        values (list[dict[str, str]]): The values associated with the attribute.
+    """
+
     id: str
     name: str
     description: str
@@ -57,6 +112,17 @@ class Attribute:
 
 @dataclass
 class Dimension:
+    """Represents a dimension within the dataset.
+
+    Args:
+        id (str): The identifier of the dimension.
+        name (str): The name of the dimension.
+        description (str): The description of the dimension.
+        keyPosition (int): The key position of the dimension in the dataset.
+        role (str | None): The role of the dimension (if any).
+        values (list[dict[str, str]]): The values associated with the dimension.
+    """
+
     id: str
     name: str
     description: str
@@ -67,6 +133,18 @@ class Dimension:
 
 @dataclass
 class Structure:
+    """Represents the structure of the dataset.
+
+    Args:
+        links (list[Link]): A list of related links.
+        name (str): The name of the structure.
+        names (dict[str, str]): A dictionary of names in different languages.
+        description (str): The description of the structure.
+        descriptions (dict[str, str]): A dictionary of descriptions in different languages.
+        dimensions (dict[str, list[Dimension | Observation]]): The dimensions of the structure.
+        attributes (dict[str, list[Attribute]]): The attributes of the structure.
+    """
+
     links: list[Link]
     name: str
     names: dict[str, str]
@@ -78,12 +156,29 @@ class Structure:
 
 @dataclass
 class Series:
+    """Represents a series within the dataset.
+
+    Args:
+        attributes (list[int]): The attributes of the series.
+        observations (dict[str, list[str]]): The observations within the series.
+    """
+
     attributes: list[int]
     observations: dict[str, list[str]]
 
 
 @dataclass
 class DataSet:
+    """Represents a dataset.
+
+    Args:
+        links (list[Link]): A list of related links.
+        reportingBegin (str): The start date of the reporting period.
+        reportingEnd (str): The end date of the reporting period.
+        action (str): The action associated with the dataset.
+        series (dict[str, Series]): The series within the dataset.
+    """
+
     links: list[Link]
     reportingBegin: str
     reportingEnd: str
@@ -93,12 +188,27 @@ class DataSet:
 
 @dataclass
 class Data:
+    """Represents the data part of the dataset.
+
+    Args:
+        dataSets (list[DataSet]): A list of datasets.
+        structure (Structure): The structure of the dataset.
+    """
+
     dataSets: list[DataSet]
     structure: Structure
 
 
 @dataclass
 class ValutaData:
+    """Represents the entire dataset including metadata and data.
+
+    Args:
+        meta (ValutaMeta): The metadata of the dataset.
+        data (Data): The data part of the dataset.
+        df (pd.DataFrame | None): A DataFrame representation of the dataset (optional).
+    """
+
     meta: ValutaMeta
     data: Data
     df: pd.DataFrame | None = None
@@ -112,6 +222,14 @@ URL_NORGES_BANK = (
 
 
 def parse_response(json_data: dict[str, Any]) -> ValutaData:
+    """Convert the json response to a ValutaData object with nested dataclasses.
+
+    Args:
+        json_data (dict[str, Any]): The response from the Norske Bank API.
+
+    Returns:
+        ValutaData: An instance of the dataclass ValutaData.
+    """
     meta = json_data["meta"]
     data = json_data["data"]
 
@@ -205,7 +323,7 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
                     "Observation": obs_value[0],
                 }
                 # Add attribute information
-                for attr_key, attr_list in structure_obj.attributes.items():
+                for _attr_key, attr_list in structure_obj.attributes.items():
                     for attr in attr_list:
                         attr_index = structure_obj.dimensions["series"].index(
                             next(

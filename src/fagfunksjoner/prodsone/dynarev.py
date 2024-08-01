@@ -20,6 +20,9 @@ def dynarev_uttrekk(
 
     Returns:
         pd.DataFrame | tuple[pd.DataFrame]: A dataframe or tuple of dataframes based on the input options.
+
+    Raises:
+        ValueError: If the sfu_cols parameter does not fit expectations.
     """
     db_name = input("Name of Oracle Database: ")
     oracle_conn = Oracle(db=db_name)
