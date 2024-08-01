@@ -47,7 +47,7 @@ def dtype_store_json(df: pd.DataFrame, json_path: str) -> None:
         dtype = str(dtype)
         dtype_metadata[col] = {"dtype": dtype, "secondary_dtype": second_dtype}
     with open(json_path, "w") as json_file:
-        json.dump(dtype_metadata, json_file)
+        json_file.write(json.dumps(dtype_metadata))  # Needs to match test case in how it writes?
 
 
 def auto_dtype(
@@ -102,10 +102,10 @@ def auto_dtype(
     if cardinality_threshold:
         df = categories_threshold(df, cardinality_threshold, False)
     if show_memory:
-        logger.info("\nMemory usage after cleanup:")
+        logger.info("Memory usage after cleanup:")
         new_size = df.memory_usage(deep=True).sum()
         logger.info(f"{new_size:,}")
-        logger.info((new_size * 100) // orig_size, "% of original size.")
+        logger.info(f"{(new_size * 100) // orig_size}% of original size.")
     return df
 
 
@@ -138,7 +138,7 @@ def decode_bytes(
         if copy_df:
             df = df.copy()
         for col in df.select_dtypes(include=["object", "string"]).columns:
-            logger.info(f"\rDecoding {col}" + " " * 40)
+            logger.info(f"Decoding {col}")
             try:
                 df[col] = df[col].str.decode("utf-8").astype("string[pyarrow]")
             except UnicodeDecodeError:
@@ -148,7 +148,7 @@ def decode_bytes(
             # seems to work?
             gc.collect()
     if fails:
-        logger.warn("\nDecode failed on these:", fails)
+        logger.warning("Decode failed on these:", fails)
     return df
 
 
@@ -164,10 +164,9 @@ def object_to_strings(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
     """
     if copy_df:
         df = df.copy()
-    for col in df.select_dtypes(include="object").columns:
-        if df[col].dtype == "object":
-            logger.info(f"\rConverting {col} to string", " " * 40)
-            df[col] = df[col].astype("string[pyarrow]").str.strip()
+    for col in df.select_dtypes(include=["object", "string"]).columns:
+        logger.info(f"Converting {col} to string")
+        df[col] = df[col].astype("string[pyarrow]").str.strip()
     return df
 
 
@@ -193,7 +192,7 @@ def strings_to_int(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
         if any(df[col].str[0] == "0"):
             continue
         if df[col].str.isdigit().all():
-            logger.info(f"\rConverting {col} to int" + " " * 40)
+            logger.info(f"Converting {col} to int")
             df[col] = df[col].astype("Int64")
     return df
 
@@ -233,7 +232,7 @@ def categories_threshold(
         df = df.copy()
     str_cols = df.select_dtypes(include=["object", "string"])
     for i, num in str_cols.nunique().items():
-        if num < cardinality_threshold:
-            logger.info("\rConverting to categorical:", i, num, " " * 40)
+        if num <= cardinality_threshold:
+            logger.info(f"Converting to categorical: {i} {num}")
             df[i] = df[i].astype("category")
     return df

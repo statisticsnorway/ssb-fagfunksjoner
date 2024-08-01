@@ -17,7 +17,7 @@ import pandas as pd
 import numpy as np
 
 
-# Having trouble importing these from pandas
+# Having trouble importing these from pandas._typing
 AggFuncTypeBase: TypeAlias = Callable | str | np.ufunc
 HashableT = TypeVar("HashableT", bound=Hashable)
 AggFuncTypeDictSeries: TypeAlias = Mapping[HashableT, AggFuncTypeBase]

@@ -349,7 +349,7 @@ def date_formats(metadata_df: pd.DataFrame) -> dict[str, str]:
 
     # If there are no date columns to convert, exit function
     if not len(date_metas):
-        logger.warn("NOTE: Ingen datofelt funnet")
+        logger.warning("NOTE: Ingen datofelt funnet")
         return {}
 
     # Pick the formattings that are known

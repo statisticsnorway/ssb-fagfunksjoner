@@ -99,10 +99,9 @@ def find_publishings(
     ]
     if get_publishing_specifics:
         for publish in publishings["publisering"]:
-            publishings["publisering"][publish]["specifics"] = specific_publishing(
+            publish["specifics"] = specific_publishing(
                 publish["@id"]
             )
-
     return publishings
 
 
@@ -116,12 +115,13 @@ def find_latest_publishing(shortname: str = "trosamf") -> dict[str, Any]:
         datetime: The date the shortcode will have its latest publishing.
     """
     max_date = dateutil.parser.parse("2000-01-01")
+    max_publ = None
     for pub in find_publishings(shortname)["publisering"]:
         current_date = dateutil.parser.parse(
-            pub["specifics"]["publisering"]["@tidspunkt"]
+            pub["tidspunkt"]
         )
         if current_date > max_date:
-            max_publ: dict[str, Any] = pub
+            max_publ = pub
             max_date = current_date
     return max_publ
 

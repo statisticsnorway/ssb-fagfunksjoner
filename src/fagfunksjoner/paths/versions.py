@@ -58,7 +58,7 @@ def get_next_version_number(filepath: str) -> int:
         files = fs.ls(folder_path)
     except Exception as e:
         # Log the exception if needed
-        logger.warn(f"Error accessing file system: {e}")
+        logger.warning(f"Error accessing file system: {e}")
         return 1
 
     version_numbers = []

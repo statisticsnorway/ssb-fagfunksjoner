@@ -51,7 +51,7 @@ class ProjectRoot:
         """
         return_to_work_dir()
         if exc_type is not None:
-            logger.warn(traceback)
+            logger.warning(traceback)
             raise exc_type(exc_value)
         return True
 

@@ -29,7 +29,7 @@ def saspy_session() -> saspy.SASsession:
     brukernavn = getpass.getuser()
     authpath = "/ssb/bruker/" + brukernavn + "/.authinfo"
     if not os.path.exists(authpath):
-        logger.warn(
+        logger.warning(
             "Cant find the auth-file, consider running saspy_session.set_password()"
         )
         logger.info(set_password.__doc__)
@@ -37,7 +37,7 @@ def saspy_session() -> saspy.SASsession:
         with open(authpath) as f:
             file = f.read()
             if "IOM_Prod_Grid1" not in file:
-                logger.warn(
+                logger.warning(
                     "IOM_Prod_Grid1 is missing from .authinfo, try running saspy_session.set_password() again."
                 )
                 return
