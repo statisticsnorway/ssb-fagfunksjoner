@@ -150,7 +150,7 @@ class Structure:
     names: dict[str, str]
     description: str
     descriptions: dict[str, str]
-    dimensions: dict[str, list[Dimension | Observation]]
+    dimensions: dict[str, list[Dimension| Observation]]
     attributes: dict[str, list[Attribute]]
 
 
@@ -289,65 +289,61 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
     valuta_data = ValutaData(meta=valuta_meta, data=data_obj)
 
     # Create DataFrame
-    dimension_keys = [dim.id for dim in structure_obj.dimensions["series"]]
-    observation_keys = [dim.id for dim in structure_obj.dimensions["observation"]]
+    dimension_keys = [dim.id for dim in structure_obj.dimensions.get("series", [])]
+    observation_keys = [dim.id for dim in structure_obj.dimensions.get("observation", [])]
     records = []
-    for dataset in data_obj.dataSets:
-        for series_key, series in dataset.series.items():
+    for dataset_obj in data_obj.dataSets:
+        for series_key, series in dataset_obj.series.items():
             for obs_key, obs_value in series.observations.items():
                 record = {
                     **{
                         dim.id: dim.values[int(series_key.split(":")[dim.keyPosition])][
                             "name"
                         ]
-                        for dim in structure_obj.dimensions["series"]
+                        for dim in structure_obj.dimensions.get("series", [])
                     },
                     **{
                         dim.id
                         + "_id": dim.values[
                             int(series_key.split(":")[dim.keyPosition])
                         ]["id"]
-                        for dim in structure_obj.dimensions["series"]
+                        for dim in structure_obj.dimensions.get("series", [])
                     },
                     **{
                         dim.id: next(
                             (val["name"] for val in dim.values if val["id"] == obs_key),
                             obs_key,
                         )
-                        for dim in structure_obj.dimensions["observation"]
+                        for dim in structure_obj.dimensions.get("observation", [])
                     },
                     **{
                         dim.id + "_id": obs_key
-                        for dim in structure_obj.dimensions["observation"]
+                        for dim in structure_obj.dimensions.get("observation", [])
                     },
                     "Observation": obs_value[0],
                 }
                 # Add attribute information
                 for _attr_key, attr_list in structure_obj.attributes.items():
                     for attr in attr_list:
-                        attr_index = structure_obj.dimensions["series"].index(
-                            next(
-                                filter(
-                                    lambda x: x.id
-                                    == attr.relationship["dimensions"][0],
-                                    structure_obj.dimensions["series"],
-                                )
-                            )
+                        attr_index = next(
+                            (i for i, dim in enumerate(structure_obj.dimensions.get("series", [])) if dim.id == attr.relationship["dimensions"][0]), 
+                            None
                         )
-                        record[attr.id] = attr.values[series.attributes[attr_index]][
-                            "name"
-                        ]
-                        record[attr.id + "_id"] = attr.values[
-                            series.attributes[attr_index]
-                        ]["id"]
+                        if attr_index is not None:
+                            record[attr.id] = attr.values[series.attributes[attr_index]][
+                                "name"
+                            ]
+                            record[attr.id + "_id"] = attr.values[
+                                series.attributes[attr_index]
+                            ]["id"]
                 records.append(record)
 
     df = pd.DataFrame(
         records,
         columns=dimension_keys
-        + [dim.id + "_id" for dim in structure_obj.dimensions["series"]]
+        + [dim.id + "_id" for dim in structure_obj.dimensions.get("series", [])]
         + observation_keys
-        + [dim.id + "_id" for dim in structure_obj.dimensions["observation"]]
+        + [dim.id + "_id" for dim in structure_obj.dimensions.get("observation", [])]
         + ["Observation"]
         + [
             attr.id

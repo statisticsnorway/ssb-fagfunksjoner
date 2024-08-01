@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 # Having trouble importing these from pandas._typing
-AggFuncTypeBase: TypeAlias = Callable | str | np.ufunc
+AggFuncTypeBase: TypeAlias = Callable[[Any], Any] | str | np.ufunc
 HashableT = TypeVar("HashableT", bound=Hashable)
 AggFuncTypeDictSeries: TypeAlias = Mapping[HashableT, AggFuncTypeBase]
 
@@ -24,7 +24,7 @@ AggFuncTypeDictSeries: TypeAlias = Mapping[HashableT, AggFuncTypeBase]
 def all_combos_agg(
     df: pd.DataFrame,
     groupcols: list[str],
-    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries,
+    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries[str],
     fillna_dict: dict[str, Any] | None = None,
     keep_empty: bool = False,
     grand_total: dict[str, str] | str = "",

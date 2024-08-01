@@ -109,7 +109,7 @@ def find_publishings(
     return publishings
 
 
-def find_latest_publishing(shortname: str = "trosamf") -> dict[str, Any]:
+def find_latest_publishing(shortname: str = "trosamf") -> dict[str, Any] | None:
     """Find the date of the latest publishing of the statistical product.
 
     Args:
@@ -119,7 +119,7 @@ def find_latest_publishing(shortname: str = "trosamf") -> dict[str, Any]:
         datetime: The date the shortcode will have its latest publishing.
     """
     max_date = dateutil.parser.parse("2000-01-01")
-    max_publ = None
+    max_publ: dict[str, Any] | None = None
     for pub in find_publishings(shortname)["publisering"]:
         current_date = dateutil.parser.parse(pub["tidspunkt"])
         if current_date > max_date:
