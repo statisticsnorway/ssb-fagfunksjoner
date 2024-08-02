@@ -24,7 +24,7 @@ AggFuncTypeDictSeries: TypeAlias = Mapping[HashableT, AggFuncTypeBase]
 def all_combos_agg(
     df: pd.DataFrame,
     groupcols: list[str],
-    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries[str],
+    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries[str] | dict[str, list[str]],
     fillna_dict: dict[str, Any] | None = None,
     keep_empty: bool = False,
     grand_total: dict[str, str] | str = "",
@@ -128,7 +128,7 @@ def all_combos_agg(
         if len(cat_groupcols):
             for col in cat_groupcols:
                 all_levels[col] = all_levels[col].add_categories(grand_total)
-        gt: pd.Series[Any] | pd.DataFrame = dataframe.agg(aggargs)
+        gt: pd.Series | pd.DataFrame = dataframe.agg(aggargs)
         if isinstance(gt, pd.DataFrame):
             gt_df = flatten_col_multiindex(pd.DataFrame(gt.unstack()).T)
         else:

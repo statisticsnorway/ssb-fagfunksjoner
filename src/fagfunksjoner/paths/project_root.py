@@ -1,8 +1,7 @@
 """This module lets you easily navigate to the root of your local project files.
 
-One of the main uses will be importing local functions in a notebook based project.
-As notebooks run from the folder they are opened from, not root, and functions usually will be .py files located in other folders than the notebooks.
-"""
+One of the main uses will be importing local functions in a notebook based project. 
+As notebooks run from the folder they are opened from, not root, and functions usually will be .py files located in other folders than the notebooks."""
 
 import os
 from pathlib import Path
@@ -20,8 +19,11 @@ class ProjectRoot:
     """Contextmanager to import locally "with".
 
     As in:
-    with ProjectRoot():
-        from src.functions.local_functions import local_function
+    .. code-block:: python
+
+        with ProjectRoot():
+            from src.functions.local_functions import local_function
+
 
     So this class navigates back and forth using a single line/"instruction"
     """
