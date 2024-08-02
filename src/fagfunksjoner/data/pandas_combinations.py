@@ -55,7 +55,8 @@ def all_combos_agg(
     Known problems:
         You should not use dataframes with multi-index columns as they cause trouble.
 
-    Examples:
+    Examples::
+
         import pandas as pd
         from fagfunksjoner.data.pandas_combinations import all_combos_agg
 
@@ -107,7 +108,7 @@ def all_combos_agg(
         else:
             result_grps = dataframe.groupby(list(comb))
 
-        result = result_grps.agg(aggargs).reset_index(names=list(comb))
+        result = result_grps.agg(aggargs).reset_index(names=list(comb))  # type: ignore[arg-type]
 
         # Add a column to differentiate the combinations
         result["level"] = len(combos) - i
@@ -128,7 +129,7 @@ def all_combos_agg(
         if len(cat_groupcols):
             for col in cat_groupcols:
                 all_levels[col] = all_levels[col].add_categories(grand_total)
-        gt: pd.Series | pd.DataFrame = dataframe.agg(aggargs)
+        gt: pd.Series | pd.DataFrame = dataframe.agg(aggargs)  # type: ignore[type-arg, arg-type]
         if isinstance(gt, pd.DataFrame):
             gt_df = flatten_col_multiindex(pd.DataFrame(gt.unstack()).T)
         else:

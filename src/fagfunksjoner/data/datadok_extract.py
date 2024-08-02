@@ -23,6 +23,7 @@ import os
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -458,17 +459,22 @@ def handle_decimals(
     return df, metadata_df
 
 
-def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData:
+def import_archive_data(
+    archive_desc_xml: str, archive_file: str, **read_fwf_params: Any
+) -> ArchiveData:
     """Imports archive data based on the given XML description and archive file.
 
     Args:
         archive_desc_xml (str): Path or URL to the XML file describing the archive.
         archive_file (str): Path to the archive file.
+        read_fwf_params: Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
+            so dont use those.
 
     Returns:
         ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
 
-    Example usage:
+    Example usage::
+
         archive_data = import_archive_data('path_to_xml.xml', 'path_to_archive_file.txt')
         print(archive_data.df)
     """
@@ -486,8 +492,24 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     codelist_df = codelist_to_df(metadata.codelists)
     codelist_dict = codelist_to_dict(codelist_df)
     names, widths, datatypes, _decimal = extract_parameters(metadata_df)
+
+    # Default historical file encoding used at SSB
+    if "encoding" not in read_fwf_params:
+        read_fwf_params["encoding"] = "latin1"
+    # Throw error if user passes in params we will overwrite
+    overwrites = ["filepath_or_buffer", "dtype", "widths", "name", "na_values"]
+    for param in overwrites:
+        if param in read_fwf_params:
+            err = f"You cannot pass {param} to pandas.fwf(), because we are overwriting it."
+            raise ValueError(err)
+
     df = pd.read_fwf(
-        archive_file, dtype=datatypes, widths=widths, names=names, na_values="."
+        archive_file,
+        dtype=datatypes,
+        widths=widths,
+        names=names,
+        na_values=".",
+        **read_fwf_params,
     )
     df, metadata_df = convert_dates(df, metadata_df)
     df, metadata_df = handle_decimals(df, metadata_df)
@@ -500,7 +522,9 @@ def import_archive_data(archive_desc_xml: str, archive_file: str) -> ArchiveData
     )
 
 
-def open_path_metapath_datadok(path: str, metapath: str) -> ArchiveData:
+def open_path_metapath_datadok(
+    path: str, metapath: str, **read_fwf_params: Any
+) -> ArchiveData:
     """If open_path_datadok doesnt work, specify the path on linux AND the path in Datadok.
 
     Args:
@@ -513,10 +537,11 @@ def open_path_metapath_datadok(path: str, metapath: str) -> ArchiveData:
     return import_archive_data(
         archive_desc_xml=f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={metapath}",
         archive_file=path,
+        **read_fwf_params,
     )
 
 
-def open_path_datadok(path: str) -> ArchiveData:
+def open_path_datadok(path: str, **read_fwf_params: Any) -> ArchiveData:
     """Get archive data only based on the path of the .dat or .txt file.
 
     This function attempts to correct and test options, to try track down the file and metadata mentioned.
@@ -559,4 +584,4 @@ def open_path_datadok(path: str) -> ArchiveData:
             logger.info(filepath)
             filepath += ".dat"
 
-    return import_archive_data(url_address, filepath)
+    return import_archive_data(url_address, filepath, **read_fwf_params)

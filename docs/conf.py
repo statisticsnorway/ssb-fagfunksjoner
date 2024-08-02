@@ -66,3 +66,6 @@ autodoc_typehints = "description"
 
 # Do not prepend module names to object names
 add_module_names = False
+
+# The code will always be Python?
+highlight_language = "python"

@@ -56,10 +56,10 @@ def set_password(password: str) -> None:
     """Pass into this function, an encrypted version of your password.
 
     Get the encrypted password in SAS EG, running the following code
-    (swap MY PASSWORD for your actual common-password):
+    (swap MY PASSWORD for your actual common-password)::
 
-    proc pwencode in='MY PASSWORD' method=sas004;
-    run;
+        proc pwencode in='MY PASSWORD' method=sas004;
+        run;
 
     In the log-window in SAS EG you should then recieve an encrypted version of your password,
     that looks something like this {SAS004}C598BA0A77F74607464634566CCD0D7BB8EBDEEA4B73C440
