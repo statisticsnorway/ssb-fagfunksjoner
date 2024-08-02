@@ -467,12 +467,15 @@ def import_archive_data(
     Args:
         archive_desc_xml (str): Path or URL to the XML file describing the archive.
         archive_file (str): Path to the archive file.
-        read_fwf_params: Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
+        read_fwf_params (Any): Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
             so dont use those.
 
     Returns:
         ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
 
+    Raises:
+        ValueError: If params are passed through read_fwf_params that we will overwrite with the import function.    
+    
     Example usage::
 
         archive_data = import_archive_data('path_to_xml.xml', 'path_to_archive_file.txt')
@@ -530,6 +533,8 @@ def open_path_metapath_datadok(
     Args:
         path (str): Path to the archive file on linux.
         metapath (str): Path described in datadok.
+        read_fwf_params (Any): Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
+            so dont use those.
 
     Returns:
         ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
@@ -548,6 +553,8 @@ def open_path_datadok(path: str, **read_fwf_params: Any) -> ArchiveData:
 
     Args:
         path (str): The path to the archive file in prodsonen to attempt to get metadata for and open.
+        read_fwf_params (Any): Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
+            so dont use those.
 
     Returns:
         ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
