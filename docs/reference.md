@@ -13,14 +13,37 @@ delete the .rst file afterwards.
 
 ```{eval-rst}
 fagfunksjoner package
-=============================================================================
+=====================
 
+Subpackages
+-----------
 
-fagfunksjoner.functions module
------------------------------------------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: fagfunksjoner.functions
+   fagfunksjoner.api
+   fagfunksjoner.dapla
+   fagfunksjoner.data
+   fagfunksjoner.paths
+   fagfunksjoner.prodsone
+
+Submodules
+----------
+
+fagfunksjoner.fagfunksjoner\_logger module
+------------------------------------------
+
+.. automodule:: fagfunksjoner.fagfunksjoner_logger
    :members:
    :undoc-members:
    :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: fagfunksjoner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ```

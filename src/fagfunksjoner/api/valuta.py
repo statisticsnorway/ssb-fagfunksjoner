@@ -141,7 +141,7 @@ class Structure:
         names (dict[str, str]): A dictionary of names in different languages.
         description (str): The description of the structure.
         descriptions (dict[str, str]): A dictionary of descriptions in different languages.
-        dimensions (dict[str, list[Dimension | Observation]]): The dimensions of the structure.
+        dimensions (dict[str, list[Dimension]]): The dimensions of the structure.
         attributes (dict[str, list[Attribute]]): The attributes of the structure.
     """
 
@@ -150,7 +150,7 @@ class Structure:
     names: dict[str, str]
     description: str
     descriptions: dict[str, str]
-    dimensions: dict[str, list[Dimension| Observation]]
+    dimensions: dict[str, list[Dimension]]
     attributes: dict[str, list[Attribute]]
 
 
@@ -250,7 +250,7 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
     # Parsing Structure
     structure = data["structure"]
     structure_links = [Link(**link) for link in structure["links"]]
-    dimensions = {
+    dimensions: dict[str, list[Dimension]] = {
         k: [Dimension(**dim) for dim in v] for k, v in structure["dimensions"].items()
     }
     attributes = {
@@ -290,11 +290,13 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
 
     # Create DataFrame
     dimension_keys = [dim.id for dim in structure_obj.dimensions.get("series", [])]
-    observation_keys = [dim.id for dim in structure_obj.dimensions.get("observation", [])]
+    observation_keys = [
+        dim.id for dim in structure_obj.dimensions.get("observation", [])
+    ]
     records = []
     for dataset_obj in data_obj.dataSets:
-        for series_key, series in dataset_obj.series.items():
-            for obs_key, obs_value in series.observations.items():
+        for series_key, series_val in dataset_obj.series.items():
+            for obs_key, obs_value in series_val.observations.items():
                 record = {
                     **{
                         dim.id: dim.values[int(series_key.split(":")[dim.keyPosition])][
@@ -326,15 +328,21 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
                 for _attr_key, attr_list in structure_obj.attributes.items():
                     for attr in attr_list:
                         attr_index = next(
-                            (i for i, dim in enumerate(structure_obj.dimensions.get("series", [])) if dim.id == attr.relationship["dimensions"][0]), 
-                            None
+                            (
+                                i
+                                for i, dim in enumerate(
+                                    structure_obj.dimensions.get("series", [])
+                                )
+                                if dim.id == attr.relationship["dimensions"][0]
+                            ),
+                            None,
                         )
                         if attr_index is not None:
-                            record[attr.id] = attr.values[series.attributes[attr_index]][
-                                "name"
-                            ]
+                            record[attr.id] = attr.values[
+                                series_val.attributes[attr_index]
+                            ]["name"]
                             record[attr.id + "_id"] = attr.values[
-                                series.attributes[attr_index]
+                                series_val.attributes[attr_index]
                             ]["id"]
                 records.append(record)
 

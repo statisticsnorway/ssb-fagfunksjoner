@@ -1,8 +1,7 @@
 """This module lets you easily navigate to the root of your local project files.
 
 One of the main uses will be importing local functions in a notebook based project.
-As notebooks run from the folder they are opened from, not root, and functions
-usually will be .py files located in other folders than the notebooks.
+As notebooks run from the folder they are opened from, not root, and functions usually will be .py files located in other folders than the notebooks.
 """
 
 import os

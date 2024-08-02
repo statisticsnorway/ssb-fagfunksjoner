@@ -41,8 +41,7 @@ def all_combos_agg(
             Removing them is default behaviour of Pandas
         grand_total (str | dict[str|str]): Fill this value, if you want a grand total in your aggregations.
             If you use a string, this will be input in the fields in the groupcol columns.
-            If you send a dict, like to the fillna_dict parameter, the values in the cells
-            in the grand_total will reflect the values in the dict.
+            If you send a dict, like to the fillna_dict parameter, the values in the cells in the grand_total will reflect the values in the dict.
 
     Returns:
         pd.DataFrame: with all the group-by columns, all the aggregation columns combined
@@ -59,13 +58,14 @@ def all_combos_agg(
     Examples:
         import pandas as pd
         from fagfunksjoner.data.pandas_combinations import all_combos_agg
-        data = {
-                'alder': [20, 60, 33, 33, 20],
+
+        data = {'alder': [20, 60, 33, 33, 20],
                 'kommune': ['0301', '3001', '0301', '5401', '0301'],
                 'kjonn': ['1', '2', '1', '2', '2'],
                 'inntekt': [1000000, 120000, 220000, 550000, 50000],
                 'formue': [25000, 50000, 33000, 44000, 90000]
-            }
+                }
+
         pers = pd.DataFrame(data)
 
         agg1 = all_combos_agg(pers, groupcols=['kjonn'], keep_empty=True, aggargs={'inntekt':['mean', 'sum']})
@@ -74,25 +74,15 @@ def all_combos_agg(
         agg2 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], aggargs={'inntekt':['mean', 'sum']})
         display(agg2)
 
-        agg3 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True,
-                                                    grand_total='Grand total',
-                                                    aggargs={'inntekt':['mean', 'sum']})
+        agg3 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True, grand_total='Grand total', aggargs={'inntekt':['mean', 'sum']})
         display(agg3)
-        agg4 = all_combos_agg(pers, groupcols=['kjonn', 'alder'],
-                            fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'},
-                            aggargs={'inntekt':['mean', 'sum'], 'formue': ['count', 'min', 'max']},
-                            grand_total="Total"
-                            )
+        agg4 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'}, aggargs={'inntekt':['mean', 'sum'], 'formue': ['count', 'min', 'max']}, grand_total="Total")
         display(agg4)
         pers['antall'] = 1
         groupcols = pers.columns[0:3].tolist()
         func_dict = {'inntekt':['mean', 'sum'], 'formue': ['sum', 'std', 'count']}
         fillna_dict = {'kjonn': 'Total kjønn', 'alder': 'Total alder', 'kommune': 'Total kommune'}
-        agg5 = all_combos_agg(pers, groupcols=groupcols,
-                            aggargs=func_dict,
-                            fillna_dict=fillna_dict,
-                            grand_total=fillna_dict
-                            )
+        agg5 = all_combos_agg(pers, groupcols=groupcols, aggargs=func_dict, fillna_dict=fillna_dict, grand_total=fillna_dict )
         display(agg5)
     """
     dataframe = df.copy()
