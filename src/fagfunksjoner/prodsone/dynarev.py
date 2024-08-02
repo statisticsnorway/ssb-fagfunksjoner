@@ -20,7 +20,7 @@ def dynarev_uttrekk(
             If True picks all columns. If None, skips getting sfu-data.
 
     Returns:
-        pd.DataFrame | tuple[pd.DataFrame]: A dataframe, or tuple of dataframes if you wanted sfu-data.
+        pd.DataFrame | tuple[pd.DataFrame]: A dataframe, or tuple of dataframes if you wanted sfu-data / dupe-check.
 
     Raises:
         ValueError: If the sfu_cols parameter does not fit expectations.
@@ -28,6 +28,7 @@ def dynarev_uttrekk(
     db_name = input("Name of Oracle Database: ")
     oracle_conn = Oracle(db=db_name)
 
+    # Use a try to guarantee that the oracle-connection is closed with a finally-clause.
     try:
         query_all_data = f"""
             SELECT *
@@ -63,6 +64,7 @@ def dynarev_uttrekk(
             result.append(dublett)
 
         if sfu_cols:
+            # Limit cols we are querying for by making a sql-select string
             if sfu_cols is True:
                 sfu_select = "b.*"
             elif isinstance(sfu_cols, str):
@@ -74,7 +76,8 @@ def dynarev_uttrekk(
             else:
                 logger.warning("Invalid sfu_cols parameter.")
                 raise ValueError("Invalid sfu_cols parameter.")
-            
+
+            # Use the select string to actually get the sfu-data.
             query_sfu = f"""
                 SELECT {sfu_select}
                 FROM dsbbase.dlr_enhet_i_delreg_skjema a, dsbbase.dlr_enhet_i_delreg b
