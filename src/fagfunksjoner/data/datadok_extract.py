@@ -474,8 +474,8 @@ def import_archive_data(
         ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
 
     Raises:
-        ValueError: If params are passed through read_fwf_params that we will overwrite with the import function.    
-    
+        ValueError: If params are passed through read_fwf_params that we will overwrite with the import function.
+
     Example usage::
 
         archive_data = import_archive_data('path_to_xml.xml', 'path_to_archive_file.txt')
