@@ -16,10 +16,11 @@ def dynarev_uttrekk(
         delreg_nr (str): Delregisternummer.
         skjema (str): Skjemanavn.
         dublettsjekk (bool) : If True, checks for and returns duplicates.
-        sfu_cols (list[str | str. | bool | None) : Specify a list of columns for SFU data
+        sfu_cols (list[str | str. | bool | None) : Specify a list of columns for SFU data, or a single column as a string.
+            If True picks all columns. If None, skips getting sfu-data.
 
     Returns:
-        pd.DataFrame | tuple[pd.DataFrame]: A dataframe or tuple of dataframes based on the input options.
+        pd.DataFrame | tuple[pd.DataFrame]: A dataframe, or tuple of dataframes if you wanted sfu-data.
 
     Raises:
         ValueError: If the sfu_cols parameter does not fit expectations.
@@ -62,8 +63,20 @@ def dynarev_uttrekk(
             result.append(dublett)
 
         if sfu_cols:
+            if sfu_cols is True:
+                sfu_select = "b.*"
+            elif isinstance(sfu_cols, str):
+                sfu_select = f"b.{sfu_cols}"
+            elif isinstance(sfu_cols, list) and all(
+                isinstance(item, str) for item in sfu_cols
+            ):
+                sfu_select = ", ".join([f"b.{col}" for col in sfu_cols])
+            else:
+                logger.warning("Invalid sfu_cols parameter.")
+                raise ValueError("Invalid sfu_cols parameter.")
+            
             query_sfu = f"""
-                SELECT b.*
+                SELECT {sfu_select}
                 FROM dsbbase.dlr_enhet_i_delreg_skjema a, dsbbase.dlr_enhet_i_delreg b
                 WHERE a.delreg_nr = b.delreg_nr
                   AND a.ident_nr = b.ident_nr
@@ -72,26 +85,14 @@ def dynarev_uttrekk(
                   AND a.delreg_nr = {delreg_nr}
                   AND a.skjema_type = '{skjema}'
             """
-            sfu = pd.DataFrame(oracle_conn.select(sql=query_sfu))
-            if isinstance(sfu_cols, str):
-                sfu = sfu[[sfu_cols]]
-            elif sfu_cols is True:
-                pass  # Return all columns
-            elif isinstance(sfu_cols, list) and all(
-                isinstance(item, str) for item in sfu_cols
-            ):
-                sfu = sfu[sfu_cols]
-            else:
-                logger.warn("Invalid sfu_cols parameter.")
-                raise ValueError("Invalid sfu_cols parameter.")
-            result.append(sfu)
+            result.append(pd.DataFrame(oracle_conn.select(sql=query_sfu)))
 
         if len(result) == 1:
             return result[0]
         else:
             return tuple(result)
     except Exception as e:
-        logger.warn(f"Failed to execute queries: {e}")
+        logger.warning(f"Failed to execute queries: {e}")
         return pd.DataFrame()
     finally:
         oracle_conn.close()
