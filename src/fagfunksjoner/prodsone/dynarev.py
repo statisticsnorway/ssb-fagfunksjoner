@@ -88,6 +88,7 @@ def dynarev_uttrekk(
                   AND a.delreg_nr = {delreg_nr}
                   AND a.skjema_type = '{skjema}'
             """
+            logger.info(query_sfu)
             result.append(pd.DataFrame(oracle_conn.select(sql=query_sfu)))
 
         if len(result) == 1:

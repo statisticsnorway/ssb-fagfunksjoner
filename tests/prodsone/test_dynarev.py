@@ -56,7 +56,6 @@ def test_dynarev_uttrekk_with_sfu_cols(mock_oracle):
             {
                 "col1": [1, 2],
                 "col2": ["val1", "val2"],
-                "col3": ["val3", "val4"],
             }
         ),
     ]
