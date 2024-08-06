@@ -18,7 +18,10 @@ Changelog = "https://github.com/statisticsnorway/ssb-fagfunksjoner/releases"
 python = ">=3.10,<3.13"
 dapla-toolbelt = ">=2.0.19"
 ipykernel = ">=6.15.3"
-numpy = ">=1.23.5,<2.0.0"  # Not having an upper limit results in a poetry error? Try removing with later versions of pandas.
+numpy = [
+    {version = ">=1.23.5,<2.0.0", markers = "python_version < '3.12'"},
+    {version = ">=2.0.1", markers = "python_version >= '3.12'"}
+] 
 pandas = ">=2.0.0"
 requests = ">=2.31.0"
 toml = ">=0.10.2"
