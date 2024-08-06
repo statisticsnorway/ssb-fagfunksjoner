@@ -1,22 +1,22 @@
 # ---
 # jupyter:
 #   jupytext:
-#     formats: py:light
+#     formats: py:percent
 #     text_representation:
 #       extension: .py
-#       format_name: light
-#       format_version: '1.5'
+#       format_name: percent
+#       format_version: '1.3'
 #       jupytext_version: 1.15.2
 #   kernelspec:
-#     display_name: ''
-#     name: ''
+#     display_name: ssb-fagfunksjoner
+#     language: python
+#     name: ssb-fagfunksjoner
 # ---
 
-# +
+# %%
 import os
-
 os.chdir("../")
-# +
+# %%
 import pandas as pd
 from IPython.display import display
 
@@ -40,8 +40,8 @@ agg2 = all_combos_agg(
     pers, groupcols=["kjonn", "alder"], aggargs={"inntekt": ["mean", "sum"]}
 )
 display(agg2)
-# -
 
+# %%
 agg3 = all_combos_agg(
     pers,
     groupcols=["kjonn", "alder"],
@@ -50,6 +50,7 @@ agg3 = all_combos_agg(
 )
 display(agg3)
 
+# %%
 fillna_dict = {"kjonn": "Total kjønn", "alder": "Total alder"}
 agg4 = all_combos_agg(
     pers,
@@ -60,6 +61,7 @@ agg4 = all_combos_agg(
 )
 display(agg4)
 
+# %%
 pers["antall"] = 1
 groupcols = pers.columns[0:3].tolist()
 func_dict = {"inntekt": ["mean", "sum"], "formue": ["sum", "std", "count"]}
@@ -78,7 +80,7 @@ agg5 = all_combos_agg(
 display(agg5)
 
 
-# +
+# %%
 def dataset1() -> pd.DataFrame:
     """Return a testdataset.
 
@@ -113,4 +115,3 @@ def test_grand_total() -> None:
 
 
 df = test_grand_total()
-# -
