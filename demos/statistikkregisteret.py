@@ -15,6 +15,7 @@
 # %%
 import os
 
+
 os.chdir("../")
 from fagfunksjoner.api import statistikkregisteret as reg
 

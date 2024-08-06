@@ -13,6 +13,7 @@ import toml
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
+
 START_DIR = None
 
 

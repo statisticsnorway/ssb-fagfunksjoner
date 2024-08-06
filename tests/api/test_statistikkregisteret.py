@@ -2,8 +2,10 @@ from xml.etree import ElementTree as ET
 
 import responses
 
-from fagfunksjoner.api.statistikkregisteret import find_stat_shortcode
-from fagfunksjoner.api.statistikkregisteret import get_statistics_register
+from fagfunksjoner.api.statistikkregisteret import (
+    find_stat_shortcode,
+    get_statistics_register,
+)
 
 
 # Helper function to load XML from a string

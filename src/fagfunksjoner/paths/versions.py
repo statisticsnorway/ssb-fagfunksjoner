@@ -5,6 +5,7 @@ The main purpose is fileversions according to Statistics Norway standards.
 """
 
 from dapla import FileClient
+
 from fagfunksjoner.fagfunksjoner_logger import logger
 
 

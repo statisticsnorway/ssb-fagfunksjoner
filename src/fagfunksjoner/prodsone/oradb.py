@@ -1,8 +1,6 @@
-from getpass import getpass
-from getpass import getuser
+from getpass import getpass, getuser
 from types import TracebackType
-from typing import Any
-from typing import cast
+from typing import Any, cast
 
 import oracledb
 

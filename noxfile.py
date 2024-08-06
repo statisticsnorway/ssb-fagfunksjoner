@@ -9,6 +9,7 @@ from textwrap import dedent
 
 import nox
 
+
 try:
     from nox_poetry import Session, session
 except ImportError:
@@ -131,6 +132,7 @@ def precommit(session: Session) -> None:
         "darglint",
         "ruff",
         "black",
+        "isort",
     )
     session.run("pre-commit", *args)
     if args and args[0] == "install":

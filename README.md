@@ -48,12 +48,16 @@ poetry add ssb-fagfunksjoner
 Check if you are on Dapla or in prodsone.
 ```python
 from fagfunksjoner import check_env
+
+
 check_env()
 ```
 
 Navigate to the root of your project and back again. Do stuff while in root, like importing local functions.
 ```python
 from fagfunksjoner import ProjectRoot
+
+
 with ProjectRoot():
     ... # Do your local imports here...
 ```
@@ -62,6 +66,8 @@ with ProjectRoot():
 Setting up password with saspy
 ```python
 from fagfunksjoner.prodsone import saspy_ssb
+
+
 saspy_ssb.set_password() # Follow the instructions to set the password
 saspy_ssb.saspy_df_from_path("path")
 ```
@@ -70,6 +76,8 @@ saspy_ssb.saspy_df_from_path("path")
 Aggregate on all combinations of codes in certain columns (maybe before sending to statbank? Like proc means?)
 ```python
 from fagfunksjoner import all_combos_agg
+
+
 ialt_koder = {
 "skolefylk": "01-99",
 "almyrk": "00",
@@ -88,6 +96,8 @@ We have "flat files", which are not comma seperated. These need metadata to corr
 
 ```python
 from fagfunksjoner import open_path_datadok
+
+
 archive_object = open_path_datadok("$TBF/project/arkiv/filename/g2022g2023")
 # The object now has several important attributes
 archive_object.df  # The Dataframe of the archived data
@@ -110,9 +120,13 @@ in our code. Possibly use python-dotenv package to make this easier.
 Example for a normal select query where we expect not too many records:
 ```python
 import os
+
 import pandas as pd
 from doteng import load_dotenv
+
 from fagfunksjoner.prodsone import Oracle
+
+
 load_dotenv()
 
 query = "select vare, pris from my_db_table"
@@ -128,9 +142,13 @@ ora.close()
 Example for a select query where possibly many records:
 ```python
 import os
+
 import pandas as pd
 from doteng import load_dotenv
+
 from fagfunksjoner.prodsone import Oracle
+
+
 load_dotenv()
 
 query = "select vare, pris from my_db_table"
@@ -147,9 +165,13 @@ Example for inserting new records into database(note that ordering of
 the columns in sql query statement and data are important):
 ```python
 import os
+
 import pandas as pd
 from doteng import load_dotenv
+
 from fagfunksjoner.prodsone import Oracle
+
+
 load_dotenv()
 
 df = pd.DataFrame(

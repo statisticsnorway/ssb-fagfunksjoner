@@ -18,6 +18,7 @@
 
 import gc
 
+
 # %%
 import os
 import xml.etree.ElementTree as ET
@@ -30,6 +31,7 @@ import pandas as pd
 import requests
 
 from fagfunksjoner.fagfunksjoner_logger import logger
+
 
 # %% [markdown]
 # ## Hente fra api til Datadok

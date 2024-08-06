@@ -29,6 +29,8 @@ ipywidgets = ">=8.1.1"
 pyarrow = ">=14.0.1"
 openpyxl = ">=3.1.5"
 oracledb = ">=2.3.0"
+chardet = ">=5.2.0"
+colorama = ">=0.4.6"
 # Stubs for Mypy
 pandas-stubs = ">=2.1.1.230928"
 types-requests = ">=2.31.0.10"
@@ -37,8 +39,7 @@ types-beautifulsoup4 = ">=4.12.0.20240511"
 types-colorama = ">=0.4.15.20240205"
 types-openpyxl = ">=3.1.5.20240719"
 pyarrow-stubs = ">=10.0.1.9"
-chardet = "^5.2.0"
-colorama = "^0.4.6"
+
 
 
 
@@ -48,6 +49,7 @@ black = { extras = ["jupyter"], version = ">=23.1.0" }
 coverage = { extras = ["toml"], version = ">=6.2" }
 darglint = ">=1.8.1"
 furo = ">=2021.11.12"
+isort = ">=5.10.1"
 mypy = ">=0.930"
 pre-commit = ">=2.16.0"
 pre-commit-hooks = ">=4.1.0"
@@ -60,7 +62,7 @@ sphinx-click = ">=3.0.2"
 typeguard = ">=2.13.3"
 xdoctest = { extras = ["colors"], version = ">=0.15.10" }
 myst-parser = { version = ">=0.16.1" }
-responses = "^0.25.3"
+responses = ">=0.25.3"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
@@ -98,6 +100,11 @@ ignore_missing_imports = true
 
 [tool.isort]
 profile = "black"
+skip_gitignore = true
+lines_after_imports = 2
+# The line below is needed for jupyter notebooks stored as .py in percent format.
+# See https://github.com/PyCQA/isort/issues/1338 for details
+treat_comments_as_code = ["# %%"]
 
 [tool.ruff]
 force-exclude = true  # Apply excludes to pre-commit
@@ -123,7 +130,6 @@ select = [
     "E",    # pycodestyle
     "F",    # pyflakes
     "ISC",  # implicit string concatenation
-    "I",    # sort imports
     "UP",   # alert you when better syntax is available in your python version
     "RUF",  # the ruff developer's own rules
 ]

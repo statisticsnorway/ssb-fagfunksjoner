@@ -51,6 +51,7 @@ jobs:
         shell: python
         run: |
           import os
+
           import pip
 
           with open(os.environ["GITHUB_ENV"], mode="a") as io:

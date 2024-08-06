@@ -3,9 +3,8 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from fagfunksjoner.api.valuta import ValutaData
-from fagfunksjoner.api.valuta import download_exchange_rates
-from fagfunksjoner.api.valuta import parse_response
+from fagfunksjoner.api.valuta import ValutaData, download_exchange_rates, parse_response
+
 
 # Mock JSON response
 mock_json = {

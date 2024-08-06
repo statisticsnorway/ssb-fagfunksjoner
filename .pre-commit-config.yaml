@@ -36,6 +36,12 @@ repos:
         language: system
         types: [text]
         stages: [commit, push, manual]
+      - id: isort
+        name: isort
+        entry: poetry run isort
+        language: system
+        types: [text]
+        stages: [commit, push, manual]
 
       # Serialization format checkers
       - id: check-yaml

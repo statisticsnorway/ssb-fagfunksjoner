@@ -3,14 +3,16 @@ from unittest import mock
 
 import pandas as pd
 
-from fagfunksjoner.data.pandas_dtypes import auto_dtype
-from fagfunksjoner.data.pandas_dtypes import categories_threshold
-from fagfunksjoner.data.pandas_dtypes import decode_bytes
-from fagfunksjoner.data.pandas_dtypes import dtype_set_from_json
-from fagfunksjoner.data.pandas_dtypes import dtype_store_json
-from fagfunksjoner.data.pandas_dtypes import object_to_strings
-from fagfunksjoner.data.pandas_dtypes import smaller_ints
-from fagfunksjoner.data.pandas_dtypes import strings_to_int
+from fagfunksjoner.data.pandas_dtypes import (
+    auto_dtype,
+    categories_threshold,
+    decode_bytes,
+    dtype_set_from_json,
+    dtype_store_json,
+    object_to_strings,
+    smaller_ints,
+    strings_to_int,
+)
 
 
 def test_dtype_set_from_json():

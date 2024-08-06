@@ -1,11 +1,11 @@
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from fagfunksjoner.prodsone.oradb import (
     Oracle,  # Replace 'fagfunksjoner.prodsone.oradb' with the actual module name
 )
+
 
 # Sample data for testing
 sample_sql = "SELECT * FROM sample_table"
