@@ -1,1 +1,1 @@
-# This file is required by pytest
+"""Test suite for the fagfunksjoner package."""

@@ -1,9 +1,9 @@
 import os
-from fagfunksjoner.paths import ProjectRoot
-import pytest
+
+from fagfunksjoner.paths.project_root import ProjectRoot
 
 
-def test_ProjectRoot_context_manager():
+def test_ProjectRoot_context_manager() -> None:
     try:
         test_folder = "test_folder_from_ProjectRoot_test"
         os.makedirs(test_folder)
@@ -15,8 +15,6 @@ def test_ProjectRoot_context_manager():
         os.chdir("../")
     finally:
         os.rmdir(os.path.join(first_path))
-    
+
     assert first_path == third_path
     assert first_path != second_path
-
-        

@@ -1,15 +1,29 @@
 {
-  "template": "https://github.com/statisticsnorway/ssb-project-template-stat",
-  "commit": "15546f2c4f8e89eaec7afce10b7b674ff35a33bc",
-  "checkout": null,
+  "template": "https://github.com/statisticsnorway/ssb-pypitemplate.git",
+  "commit": "f7f5ee76f498f10dd72f7f263516aeaff20b0b3a",
+  "checkout": "2024.4.9",
   "context": {
     "cookiecutter": {
-      "full_name": "Carl Corneil",
-      "email": "cfc@ssb.no",
       "project_name": "ssb-fagfunksjoner",
-      "description": "Fellesfunksjoner lagd av ressursgruppen for Python",
-      "license_year": "2022",
-      "_template": "https://github.com/statisticsnorway/ssb-project-template-stat"
+      "package_name": "fagfunksjoner",
+      "friendly_name": "SSB Fagfunksjoner",
+      "copyright_owner": "Statistics Norway",
+      "copyright_year": "2024",
+      "author": "Carl F. Corneil",
+      "email": "cfc@ssb.no",
+      "github_organization": "statisticsnorway",
+      "version": "0.1.10",
+      "license": "MIT",
+      "development_status": "Development Status :: 4 - Beta",
+      "code_quality_level": "Medium",
+      "_copy_without_render": [
+        "*.rst_t"
+      ],
+      "_jinja2_env_vars": {
+        "lstrip_blocks": true,
+        "trim_blocks": true
+      },
+      "_template": "https://github.com/statisticsnorway/ssb-pypitemplate.git"
     }
   },
   "directory": null
