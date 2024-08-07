@@ -10,6 +10,9 @@ import os
 def check_env(raise_err: bool = True) -> str:
     """Check if you are on Dapla or in prodsone.
 
+    Args:
+        raise_err: Set to False if you dont want the code to raise an error, on unrecognized environment.
+
     Returns:
         str: "DAPLA" if on dapla, "PROD" if you are in prodsone.
 

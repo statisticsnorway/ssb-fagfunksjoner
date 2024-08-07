@@ -116,8 +116,9 @@ def next_version_path(filepath: str) -> str:
     Returns:
         str: The new file path with an incremented version number and specified suffix.
 
-    Example:
-        >>> get_new_filename_and_path('gs://my-bucket/datasets/data_v1.parquet')
+    Example::
+
+        get_new_filename_and_path('gs://my-bucket/datasets/data_v1.parquet')
         'gs://my-bucket/datasets/data_v2.parquet'
     """
     next_version_number_int = next_version_number(filepath)

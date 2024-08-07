@@ -168,9 +168,6 @@ def extract_properties(
 
     Returns:
         tuple: A tuple containing datatype, length, start position, and precision.
-
-    Raises:
-        ValueError: If required properties are missing or have no text.
     """
     datatype = get_element_text(
         properties, "Datatype", namespace, "Datatype element missing or has no text"
@@ -253,9 +250,6 @@ def extract_context_variables(root: ET.Element) -> list[ContextVariable]:
 
     Returns:
         List[ContextVariable]: A list of ContextVariable objects.
-
-    Raises:
-        ValueError: Missing information in the XML.
     """
     namespace = "{http://www.ssb.no/ns/meta}"
     division_text = extract_contact_info(root, namespace)
@@ -267,25 +261,6 @@ def extract_context_variables(root: ET.Element) -> list[ContextVariable]:
         )
 
     return context_vars
-
-
-def get_element_text(element: ET.Element, tag: str, namespace: str) -> None | str:
-    """Retrieves the text content of a specific element.
-
-    Args:
-        element (ET.Element): The parent element to search within.
-        tag (str): The tag of the element to find.
-        namespace (str): The XML namespace.
-
-    Returns:
-        str: The text content of the found element or None if not found or empty.
-    """
-    found_elem = element.find(f"{namespace}{tag}")
-    return (
-        found_elem.text
-        if found_elem is not None and found_elem.text is not None
-        else None
-    )
 
 
 def extract_codes(
@@ -309,8 +284,10 @@ def extract_codes(
     """
     codelist_data = []
     for code in codes_element.findall(f"{namespace}Code"):
-        code_value = get_element_text(code, "CodeValue", namespace)
-        code_text = get_element_text(code, "CodeText", namespace)
+        code_value = get_element_text(
+            code, "CodeValue", namespace, "Cant find CodeValue."
+        )
+        code_text = get_element_text(code, "CodeText", namespace, "Cant find CodeText.")
         if code_value and code_text:
             codelist_data.append(
                 CodeList(context_id, title, description, code_value, code_text)
@@ -332,8 +309,10 @@ def extract_codelist_meta(
         List[CodeList]: A list of CodeList objects.
     """
     codelist_data = []
-    title = get_element_text(codelist_meta, "Title", namespace)
-    description = get_element_text(codelist_meta, "Description", namespace)
+    title = get_element_text(codelist_meta, "Title", namespace, "Cant find Title.")
+    description = get_element_text(
+        codelist_meta, "Description", namespace, "Cant find Description."
+    )
     if title and description:
         codes = codelist_meta.find(f"{namespace}Codes")
         if codes:
