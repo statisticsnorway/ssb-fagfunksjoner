@@ -30,12 +30,6 @@ class PublishingSpecifics:
 
 
 @dataclass
-class Specifics:
-    """Holds """
-    publisering: PublishingSpecifics
-
-
-@dataclass
 class StatisticPublishing:
     """Top-level metadata for a specific statistical product."""
     id: str
@@ -43,7 +37,7 @@ class StatisticPublishing:
     deskFlyt: str
     endret: datetime.datetime
     statistikkKortnavn: str
-    specifics: Specifics
+    specifics: PublishingSpecifics
 
 
 @dataclass
@@ -155,9 +149,7 @@ def single_stat_xml(stat_id: str = "4922") -> StatisticPublishing:
         deskFlyt=nested["@deskFlyt"],
         endret=dateutil.parser.parse(nested["@endret"]),
         statistikkKortnavn=nested["@statistikkKortnavn"],
-        specifics=Specifics(
-            publisering=PublishingSpecifics(**kwargs_specifics(nested["specifics"]))
-        ),
+        specifics=PublishingSpecifics(**kwargs_specifics(nested["specifics"])),
     )
 
 
@@ -196,9 +188,7 @@ def find_publishings(
                 deskFlyt=pub["@deskFlyt"],
                 endret=dateutil.parser.parse(pub["@endret"]),
                 statistikkKortnavn=pub["@statistikkKortnavn"],
-                specifics=Specifics(
-                    publisering=PublishingSpecifics(**kwargs_specifics(pub["specifics"]))
-                ),
+                specifics=PublishingSpecifics(**kwargs_specifics(pub["specifics"])),
             )
             for pub in publishings["publisering"]
         ],
@@ -245,7 +235,7 @@ def find_latest_publishing(shortname: str = "trosamf") -> PublishingSpecifics | 
 
 
 @lru_cache(maxsize=128)
-def specific_publishing(publish_id: str = "162143") -> Specifics:
+def specific_publishing(publish_id: str = "162143") -> PublishingSpecifics:
     """Get the publishing-data from a specific publishing-ID in statistikkregisteret.
 
     Args:
@@ -258,9 +248,7 @@ def specific_publishing(publish_id: str = "162143") -> Specifics:
     result = rs.get(url)
     result.raise_for_status()
     nested: dict[str, Any] = etree_to_dict(ET.fromstring(result.text))["publisering"]
-    return Specifics(
-        publisering=PublishingSpecifics(**kwargs_specifics(nested["specifics"]))
-    )
+    return PublishingSpecifics(**kwargs_specifics(nested["specifics"]))
 
 
 def etree_to_dict(t: ET.Element) -> dict[str, Any]:
