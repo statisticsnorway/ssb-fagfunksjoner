@@ -18,18 +18,23 @@ def filter_display(
         column (str): Column to base filter on.
         value (str | int | float):The value to compare filter against.
         operator (str): How to compare column against value.
-    """
 
+    Returns:
+        None: only has visual side-effects
+
+    Raises:
+        TypeError: On combinations of value and operator we can't handle.
+    """
     if operator not in ["!=", "=="]:
         if isinstance(value, str) or isinstance(value, int) or isinstance(value, float):
             value_simple: str | int | float = value
         else:
             raise TypeError("Cant handle this type of value with this operator.")
         operator_functions_simple: dict[str, Callable[[pd.DataFrame], pd.DataFrame]] = {
-        ">": lambda df: df.loc[df[column] > value_simple],
-        ">=": lambda df: df.loc[df[column] >= value_simple],
-        "<=": lambda df: df.loc[df[column] <= value_simple],
-        "<": lambda df: df.loc[df[column] < value_simple],
+            ">": lambda df: df.loc[df[column] > value_simple],
+            ">=": lambda df: df.loc[df[column] >= value_simple],
+            "<=": lambda df: df.loc[df[column] <= value_simple],
+            "<": lambda df: df.loc[df[column] < value_simple],
         }
         display(operator_functions_simple[operator](dataframe))  # type: ignore[no-untyped-call]
         return None
@@ -39,8 +44,8 @@ def filter_display(
         else:
             raise TypeError("Cant handle this type of value with this operator.")
         operator_functions_list: dict[str, Callable[[pd.DataFrame], pd.DataFrame]] = {
-        "!=": lambda df: df.loc[~df[column].isin(value_list)],
-        "==": lambda df: df.loc[df[column].isin(value_list)],
+            "!=": lambda df: df.loc[~df[column].isin(value_list)],
+            "==": lambda df: df.loc[df[column].isin(value_list)],
         }
         if operator == "==" and "NaN" in value_list:
             display(dataframe.loc[dataframe[column].isna() | dataframe[column].isin([val for val in value_list if val != "NaN"])])  # type: ignore[no-untyped-call]

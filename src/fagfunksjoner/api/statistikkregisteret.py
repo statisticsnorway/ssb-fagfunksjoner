@@ -1,16 +1,16 @@
 import datetime
 from collections import defaultdict
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 from xml.etree import ElementTree as ET
 
 import dateutil.parser
 import requests as rs
-from dataclasses import dataclass
 
 
 @dataclass
-class PublishingSpecific:
+class Publishing:
     navn: str
     id: str
     statistikk: str
@@ -28,12 +28,15 @@ class PublishingSpecific:
     revisjon: str
     tittel: str
 
-@dataclass
-class Specifics:
-    publisering: PublishingSpecific
 
 @dataclass
-class Publishing:
+class Specifics:
+    publisering: Publishing
+
+
+@dataclass
+class Statistic:
+    """Top-level metadata for a specific statistical product."""
     id: str
     variant: str
     deskFlyt: str
@@ -41,38 +44,41 @@ class Publishing:
     statistikkKortnavn: str
     specifics: Specifics
 
+
 @dataclass
-class MultiplePublishings:
-    publisering: list[Publishing]
+class MultipleStatistics:
+    """Contains multiple statisticss, like when getting all the data in the API."""
+    publisering: list[Statistic]
     antall: int
     dato: str
 
+
 def kwargs_specifics(nested: dict[str, Any]) -> dict[str, Any]:
     """Map fields in specifics to kwargs for the dataclass.
-    
+
     Args:
         nested (dict[str, Any]): The XML-datastructure to map.
 
     Returns:
-        dict[str, Any]: Cleaned up data-structure    
+        dict[str, Any]: Cleaned up data-structure
     """
     return {
-    "navn": nested["publisering"]["navn"],
-    "id": nested["publisering"]["@id"],
-    "statistikk": nested["publisering"]["@statistikk"],
-    "variant": nested["publisering"]["@variant"],
-    "status": nested["publisering"]["@status"],
-    "erPeriode": nested["publisering"]["@erPeriode"] == "true",
-    "periodeFra": dateutil.parser.parse(nested["publisering"]["@periodeFra"]),
-    "periodeTil": dateutil.parser.parse(nested["publisering"]["@periodeTil"]),
-    "presisjon": nested["publisering"]["@presisjon"],
-    "tidspunkt": dateutil.parser.parse(nested["publisering"]["@tidspunkt"]),
-    "erEndret": nested["publisering"]["@erEndret"] == "true",
-    "deskFlyt": nested["publisering"]["@deskFlyt"],
-    "endret": dateutil.parser.parse(nested["publisering"]["@endret"]),
-    "erAvlyst": nested["publisering"]["@erAvlyst"] == "true",
-    "revisjon": nested["publisering"]["@revisjon"],
-    "tittel": nested["publisering"]["@tittel"]
+        "navn": nested["publisering"]["navn"],
+        "id": nested["publisering"]["@id"],
+        "statistikk": nested["publisering"]["@statistikk"],
+        "variant": nested["publisering"]["@variant"],
+        "status": nested["publisering"]["@status"],
+        "erPeriode": nested["publisering"]["@erPeriode"] == "true",
+        "periodeFra": dateutil.parser.parse(nested["publisering"]["@periodeFra"]),
+        "periodeTil": dateutil.parser.parse(nested["publisering"]["@periodeTil"]),
+        "presisjon": nested["publisering"]["@presisjon"],
+        "tidspunkt": dateutil.parser.parse(nested["publisering"]["@tidspunkt"]),
+        "erEndret": nested["publisering"]["@erEndret"] == "true",
+        "deskFlyt": nested["publisering"]["@deskFlyt"],
+        "endret": dateutil.parser.parse(nested["publisering"]["@endret"]),
+        "erAvlyst": nested["publisering"]["@erAvlyst"] == "true",
+        "revisjon": nested["publisering"]["@revisjon"],
+        "tittel": nested["publisering"]["@tittel"],
     }
 
 
@@ -87,6 +93,7 @@ def get_statistics_register() -> list[dict[str, Any]]:
     response.raise_for_status()
     stats: list[dict[str, Any]] = response.json()["statistics"]
     return stats
+
 
 def find_stat_shortcode(
     shortcode_or_id: str = "trosamf",
@@ -126,39 +133,37 @@ def find_stat_shortcode(
             results.append(stat)
     return results
 
+
 @lru_cache(maxsize=128)
-def single_stat_xml(stat_id: str = "4922") -> Publishing:
+def single_stat_xml(stat_id: str = "4922") -> Statistic:
     """Get the metadata for specific product.
 
     Args:
         stat_id (str): The ID for the product in statistikkregisteret. Defaults to "4922".
 
     Returns:
-        Publishing: Datastructure with the found metadata.
+        Statistic: Datastructure with the found metadata.
     """
     url = f"https://i.ssb.no/statistikkregisteret/statistikk/xml/{stat_id}"
     result = rs.get(url)
     result.raise_for_status()
     nested: dict[str, Any] = etree_to_dict(ET.fromstring(result.text))["statistikk"]
-    return Publishing(
+    return Statistic(
         id=nested["@id"],
         variant=nested["@variant"],
         deskFlyt=nested["@deskFlyt"],
         endret=dateutil.parser.parse(nested["@endret"]),
         statistikkKortnavn=nested["@statistikkKortnavn"],
         specifics=Specifics(
-            publisering=PublishingSpecific(
-                **kwargs_specifics(nested["specifics"])
-            )
-        )
+            publisering=Publishing(**kwargs_specifics(nested["specifics"]))
+        ),
     )
-
 
 
 @lru_cache(maxsize=128)
 def find_publishings(
     shortname: str = "trosamf", get_publishing_specifics: bool = True
-) -> MultiplePublishings:
+) -> MultipleStatistics:
     """Get the publishings for a specific shortcode.
 
     Args:
@@ -166,12 +171,14 @@ def find_publishings(
         get_publishing_specifics (bool): Looks up more info about each of the publishings found. Defaults to True.
 
     Returns:
-        MultiplePublishings: A datastructure with the found metadata about the publishings.
+        MultipleStatistics: A datastructure with the found metadata about the statistics.
     """
     url = f"https://i.ssb.no/statistikkregisteret/publisering/listKortnavnSomXml?kortnavn={shortname}"
     result = rs.get(url)
     result.raise_for_status()
-    publishings: dict[str, Any] = etree_to_dict(ET.fromstring(result.text))["publiseringer"]
+    publishings: dict[str, Any] = etree_to_dict(ET.fromstring(result.text))[
+        "publiseringer"
+    ]
 
     if not isinstance(publishings["publisering"], list):
         publishings["publisering"] = [publishings["publisering"]]
@@ -180,25 +187,24 @@ def find_publishings(
         for publish in publishings["publisering"]:
             publish["specifics"] = specific_publishing(publish["@id"])
 
-    return MultiplePublishings(
+    return MultipleStatistics(
         publisering=[
-            Publishing(
+            Statistic(
                 id=pub["@id"],
                 variant=pub["@variant"],
                 deskFlyt=pub["@deskFlyt"],
                 endret=dateutil.parser.parse(pub["@endret"]),
                 statistikkKortnavn=pub["@statistikkKortnavn"],
                 specifics=Specifics(
-                    publisering=PublishingSpecific(
-                        **kwargs_specifics(pub["specifics"])
-                    )
-                )
+                    publisering=Publishing(**kwargs_specifics(pub["specifics"]))
+                ),
             )
             for pub in publishings["publisering"]
         ],
         antall=int(publishings["@antall"]),
-        dato=publishings["@dato"]
+        dato=publishings["@dato"],
     )
+
 
 def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta | None:
     """Calculate the time between now and the publishing.
@@ -217,6 +223,7 @@ def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta | No
         return pub.specifics.publisering.tidspunkt - datetime.datetime.now()
     return None
 
+
 def find_latest_publishing(shortname: str = "trosamf") -> Publishing | None:
     """Find the date of the latest publishing of the statistical product.
 
@@ -227,13 +234,14 @@ def find_latest_publishing(shortname: str = "trosamf") -> Publishing | None:
         Publishing | None: data about the specific publishing. Or None if nothing is found.
     """
     max_date = dateutil.parser.parse("2000-01-01")
-    max_publ: Publishing | None = None
+    max_publ: Statistic | None = None
     for pub in find_publishings(shortname).publisering:
         current_date = pub.specifics.publisering.tidspunkt
         if current_date > max_date:
             max_publ = pub
             max_date = current_date
     return max_publ
+
 
 @lru_cache(maxsize=128)
 def specific_publishing(publish_id: str = "162143") -> Specifics:
@@ -250,8 +258,7 @@ def specific_publishing(publish_id: str = "162143") -> Specifics:
     result.raise_for_status()
     nested: dict[str, Any] = etree_to_dict(ET.fromstring(result.text))["publisering"]
     return Specifics(
-        publisering=PublishingSpecific(**kwargs_specifics(nested["specifics"])
-        )
+        publisering=Publishing(**kwargs_specifics(nested["specifics"]))
     )
 
 
