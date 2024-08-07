@@ -7,7 +7,7 @@ and can help differentiate between the different places we develop code.
 import os
 
 
-def check_env() -> str:
+def check_env(raise_err: bool = True) -> str:
     """Check if you are on Dapla or in prodsone.
 
     Returns:
@@ -22,8 +22,9 @@ def check_env() -> str:
         return "DAPLA"
     elif os.path.isdir("/ssb/bruker"):
         return "PROD"
-    else:
-        raise OSError("Ikke i prodsonen, eller på Dapla? Må funksjonen skrives om?")
+    elif raise_err:
+        raise OSError("Not on Dapla or in Prodsone, where are we dude?")
+    return "UNKNOWN"
 
 
 def linux_shortcuts(insert_environ: bool = False) -> dict[str, str]:

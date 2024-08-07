@@ -4,11 +4,12 @@ But it works locally as well if standard for versionizing datafiles are implemen
 The main purpose is fileversions according to Statistics Norway standards.
 """
 
-from dapla import FileClient
 import glob
 
-from fagfunksjoner.prodsone import check_env
+from dapla import FileClient
+
 from fagfunksjoner.fagfunksjoner_logger import logger
+from fagfunksjoner.prodsone.check_env import check_env
 
 
 def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
@@ -51,23 +52,40 @@ def latest_version_number(filepath: str) -> int:
             or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
 
     Returns:
-        next_version_number (int): The latest version number for the file.
+        int: The latest version number for the file.
     """
     if filepath.startswith("gs://"):
         filepath = filepath[5:]
-    
-    file_no_version, _old_version, file_ext = split_path(filepath)
-    glob_pattern = f"{file_no_version}_v*{file_ext}"
 
-    if check_env() == "DAPLA":
+    file_no_version, old_version, file_ext = split_path(filepath)
+    glob_pattern = f"{file_no_version}v*{file_ext}"
+
+    if check_env(raise_err=False) == "DAPLA":
         fs = FileClient.get_gcs_file_system()
-        latest_file = sorted(fs.glob(glob_pattern))[0]
+        files = fs.glob(glob_pattern)
     else:
-        latest_file = sorted(glob.glob(glob_pattern))[0]
-    
+        files = glob.glob(glob_pattern)
+    if files:
+        logger.info(f"Found this list of files: {files}")
+        latest_file = sorted(files)[-1]
+    else:
+        logger.info(
+            f"""Cant find any files with this name, setting existing version to v0 (should not exist, go straight to v1.
+                        Glob-pattern: {glob_pattern} Found files: {files}"""
+        )
+        latest_file = f"{file_no_version}v0{file_ext}"
+
     _file_no_version, latest_version, _file_ext = split_path(latest_file)
     latest_version_int = int("".join([c for c in latest_version if c.isdigit()]))
+
+    if latest_version_int - int(old_version[1:]) > 0:
+        logger.warning(
+            f"""You specified a path with version {old_version}, but we found a version {latest_version_int}.
+                       Are you sure you are working from the latest version?"""
+        )
+
     return latest_version_int
+
 
 def next_version_number(filepath: str) -> int:
     """Function for finding next version for a new file.
@@ -78,7 +96,7 @@ def next_version_number(filepath: str) -> int:
             or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
 
     Returns:
-        next_version_number (int): The next version number for the file.
+        int: The next version number for the file.
     """
     next_version_int = 1 + latest_version_number(filepath)
     return next_version_int
@@ -87,8 +105,8 @@ def next_version_number(filepath: str) -> int:
 def next_version_path(filepath: str) -> str:
     """Generates a new file path with an incremented version number.
 
-    Constructs a filepath for a new version of a file, 
-    based on the latest existing version found in a specified folder. 
+    Constructs a filepath for a new version of a file,
+    based on the latest existing version found in a specified folder.
     Meaning it skips to "one after the highest version it finds".
     It increments the version number by one, to ensure the new file path is unique.
 
@@ -98,18 +116,15 @@ def next_version_path(filepath: str) -> str:
     Returns:
         str: The new file path with an incremented version number and specified suffix.
 
-    Raises:
-        ValueError: If the file list is empty or inputs are invalid.
-
     Example:
         >>> get_new_filename_and_path('gs://my-bucket/datasets/data_v1.parquet')
         'gs://my-bucket/datasets/data_v2.parquet'
     """
-
-    next_version_number = next_version_number(filepath)
-    file_no_version, old_version, file_ext = split_path(filepath)
-    new_path = f'{file_no_version}v{next_version_number}{file_ext}'
+    next_version_number_int = next_version_number(filepath)
+    file_no_version, _old_version, file_ext = split_path(filepath)
+    new_path = f"{file_no_version}v{next_version_number_int}{file_ext}"
     return new_path
+
 
 def split_path(filepath: str) -> tuple[str, str, str]:
     """Split the filepath into three pieces, version, file-extension and the rest.
@@ -129,8 +144,8 @@ def split_path(filepath: str) -> tuple[str, str, str]:
     if version[0] != "v" or not version[1:].isdigit():
         err = f"Version not following standard: '{version}', should start with v and the rest should be digits. "
         raise ValueError(err)
-    
+
     file_no_version = f"{file_no_version}_"
     file_ext = f".{file_ext}"
-    
+
     return file_no_version, version, file_ext
