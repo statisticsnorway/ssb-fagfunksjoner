@@ -5,7 +5,9 @@ The main purpose is fileversions according to Statistics Norway standards.
 """
 
 from dapla import FileClient
+import glob
 
+from fagfunksjoner.prodsone import check_env
 from fagfunksjoner.fagfunksjoner_logger import logger
 
 
@@ -40,37 +42,95 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
     ]
 
 
-def get_next_version_number(filepath: str) -> int:
+def latest_version_number(filepath: str) -> int:
+    """Function for finding latest version in use for a file.
+
+    Args:
+        filepath (str): GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
+            eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet
+            or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
+
+    Returns:
+        next_version_number (int): The latest version number for the file.
+    """
+    if filepath.startswith("gs://"):
+        filepath = filepath[5:]
+    
+    file_no_version, _old_version, file_ext = split_path(filepath)
+    glob_pattern = f"{file_no_version}_v*{file_ext}"
+
+    if check_env() == "DAPLA":
+        fs = FileClient.get_gcs_file_system()
+        latest_file = sorted(fs.glob(glob_pattern))[0]
+    else:
+        latest_file = sorted(glob.glob(glob_pattern))[0]
+    
+    _file_no_version, latest_version, _file_ext = split_path(latest_file)
+    latest_version_int = int("".join([c for c in latest_version if c.isdigit()]))
+    return latest_version_int
+
+def next_version_number(filepath: str) -> int:
     """Function for finding next version for a new file.
 
     Args:
-        filepath (str): GCS filepath. Must not include version suffix.
-            eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01.parquet
+        filepath (str): GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
+            eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet
+            or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
 
     Returns:
         next_version_number (int): The next version number for the file.
     """
-    if filepath.startswith("gs://"):
-        filepath = filepath[5:]
-    fs = FileClient.get_gcs_file_system()
-    folder_path = filepath.rsplit("/", 1)[0] + "/"
-    file_name = filepath.rsplit("/", 1)[1].split(".")[0]
-    base_name = file_name.split("_v")[0]
+    next_version_int = 1 + latest_version_number(filepath)
+    return next_version_int
 
-    try:
-        files = fs.ls(folder_path)
-    except Exception as e:
-        # Log the exception if needed
-        logger.warning(f"Error accessing file system: {e}")
-        return 1
 
-    version_numbers = []
-    for path in files:
-        if path.startswith(folder_path + base_name):
-            parts = path.rsplit("_v", 1)
-            if len(parts) == 2 and parts[1].split(".")[0].isdigit():
-                version_numbers.append(int(parts[1].split(".")[0]))
+def next_version_path(filepath: str) -> str:
+    """Generates a new file path with an incremented version number.
 
-    next_version_number = max(version_numbers, default=0) + 1
+    Constructs a filepath for a new version of a file, 
+    based on the latest existing version found in a specified folder. 
+    Meaning it skips to "one after the highest version it finds".
+    It increments the version number by one, to ensure the new file path is unique.
 
-    return next_version_number
+    Args:
+        filepath (str): The address for the file.
+
+    Returns:
+        str: The new file path with an incremented version number and specified suffix.
+
+    Raises:
+        ValueError: If the file list is empty or inputs are invalid.
+
+    Example:
+        >>> get_new_filename_and_path('gs://my-bucket/datasets/data_v1.parquet')
+        'gs://my-bucket/datasets/data_v2.parquet'
+    """
+
+    next_version_number = next_version_number(filepath)
+    file_no_version, old_version, file_ext = split_path(filepath)
+    new_path = f'{file_no_version}v{next_version_number}{file_ext}'
+    return new_path
+
+def split_path(filepath: str) -> tuple[str, str, str]:
+    """Split the filepath into three pieces, version, file-extension and the rest.
+
+    Args:
+        filepath (str): The path you want split into pieces.
+
+    Raises:
+        ValueError: If the version-part doesnt follow the naming standard.
+
+    Returns:
+        tuple[str, str, str]: The parts of the path, for easy unpacking.
+    """
+    file_no_ext, file_ext = filepath.rsplit(".", 1)
+    file_no_version, version = file_no_ext.rsplit("_", 1)
+
+    if version[0] != "v" or not version[1:].isdigit():
+        err = f"Version not following standard: '{version}', should start with v and the rest should be digits. "
+        raise ValueError(err)
+    
+    file_no_version = f"{file_no_version}_"
+    file_ext = f".{file_ext}"
+    
+    return file_no_version, version, file_ext
