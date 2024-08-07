@@ -17,7 +17,6 @@
 # This is a demo of the function view_dataframe. view_dataframe views a dataframe in a dynamically way using ipywidgets
 
 # %%
-import ipywidgets
 import numpy as np
 import pandas as pd
 from IPython.display import display

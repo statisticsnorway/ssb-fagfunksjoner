@@ -4,7 +4,6 @@ import ipywidgets as widgets
 import pandas as pd
 from IPython.display import display
 
-from fagfunksjoner.fagfunksjoner_logger import logger
 
 def filter_display(
     dataframe: pd.DataFrame,

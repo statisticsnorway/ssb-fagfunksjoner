@@ -24,7 +24,10 @@ reg.time_until_publishing("vgu")
 
 # %%
 import datetime
+
 from fagfunksjoner.api import statistikkregisteret as reg
+
+
 kortkode = "vgu"
 
 if not datetime.timedelta(0) < reg.time_until_publishing(kortkode):
