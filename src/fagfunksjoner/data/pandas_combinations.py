@@ -167,9 +167,6 @@ def finalize_dataframe(
 
     Returns:
         pd.DataFrame: The finalized dataframe.
-
-    Raises:
-        ValueError: On sending in a grand_total-parameter we dont understand, not a string or a dict
     """
     all_levels = flatten_col_multiindex(all_levels)
 
@@ -192,9 +189,6 @@ def finalize_dataframe(
         elif isinstance(grand_total, dict):
             for col, val in grand_total.items():
                 gt_df[col] = val
-        else:
-            err = "Invalid grand_total argument"
-            raise ValueError(err)
 
         gt_df = gt_df[all_levels.columns]
         all_levels = pd.concat([all_levels, gt_df], ignore_index=True)
