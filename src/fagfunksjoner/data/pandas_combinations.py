@@ -44,10 +44,7 @@ def all_combos_agg(
         pd.DataFrame: with all the group-by columns, all the aggregation columns combined
             with the aggregation functions, a column called aggregation_level which
             separates the different aggregation levels, and a column called aggregation_ways which
-            counts the number of group columns used for the aggregation.
-
-    Raises:
-        ValueError: On sending in a grand_total-parameter we dont understand, not a string or a dict.
+            counts the number of group columns used for the aggregation..
 
     Known problems:
         You should not use dataframes with multi-index columns as they cause trouble.
@@ -170,6 +167,9 @@ def finalize_dataframe(
 
     Returns:
         pd.DataFrame: The finalized dataframe.
+
+    Raises:
+        ValueError: On sending in a grand_total-parameter we dont understand, not a string or a dict
     """
     all_levels = flatten_col_multiindex(all_levels)
 
