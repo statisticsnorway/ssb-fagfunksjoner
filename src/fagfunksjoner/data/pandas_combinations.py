@@ -90,7 +90,7 @@ def all_combos_agg(
 
 def prepare_combinations(
     df: pd.DataFrame, groupcols: list[str], keep_empty: bool
-) -> tuple[pd.DataFrame, list[tuple[str]]]:
+) -> tuple[pd.DataFrame, list[tuple[str, ...]]]:
     """Prepare the dataframe and generate all possible combinations of group columns.
 
     Args:
@@ -105,16 +105,16 @@ def prepare_combinations(
     if keep_empty:
         dataframe = dataframe.astype({col: "category" for col in groupcols})
 
-    combos: list[tuple[str]] = []
+    combos: list[tuple[str, ...]] = []
     for r in range(len(groupcols) + 1, 0, -1):
-        combos += [combinations(groupcols, r)]
+        combos += [tuple(combo) for combo in combinations(groupcols, r)]
 
     return dataframe, combos
 
 
 def calculate_aggregates(
     df: pd.DataFrame,
-    combos: list[tuple[str]],
+    combos: list[tuple[str, ...]],
     aggargs: AggFuncTypeBase | AggFuncTypeDictSeries[str] | dict[str, list[str]],
     keep_empty: bool,
 ) -> pd.DataFrame:
@@ -193,7 +193,8 @@ def finalize_dataframe(
             for col, val in grand_total.items():
                 gt_df[col] = val
         else:
-            raise ValueError("Invalid grand_total argument")
+            err = "Invalid grand_total argument"
+            raise ValueError(err)
 
         gt_df = gt_df[all_levels.columns]
         all_levels = pd.concat([all_levels, gt_df], ignore_index=True)
