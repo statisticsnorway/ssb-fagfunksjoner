@@ -10,7 +10,7 @@ import requests as rs
 
 
 @dataclass
-class Publishing:
+class PublishingSpecifics:
     navn: str
     id: str
     statistikk: str
@@ -31,11 +31,12 @@ class Publishing:
 
 @dataclass
 class Specifics:
-    publisering: Publishing
+    """Holds """
+    publisering: PublishingSpecifics
 
 
 @dataclass
-class Statistic:
+class StatisticPublishing:
     """Top-level metadata for a specific statistical product."""
     id: str
     variant: str
@@ -46,9 +47,9 @@ class Statistic:
 
 
 @dataclass
-class MultipleStatistics:
+class MultiplePublishings:
     """Contains multiple statisticss, like when getting all the data in the API."""
-    publisering: list[Statistic]
+    publisering: list[StatisticPublishing]
     antall: int
     dato: str
 
@@ -135,27 +136,27 @@ def find_stat_shortcode(
 
 
 @lru_cache(maxsize=128)
-def single_stat_xml(stat_id: str = "4922") -> Statistic:
+def single_stat_xml(stat_id: str = "4922") -> StatisticPublishing:
     """Get the metadata for specific product.
 
     Args:
         stat_id (str): The ID for the product in statistikkregisteret. Defaults to "4922".
 
     Returns:
-        Statistic: Datastructure with the found metadata.
+        StatisticPublishing: Datastructure with the found metadata.
     """
     url = f"https://i.ssb.no/statistikkregisteret/statistikk/xml/{stat_id}"
     result = rs.get(url)
     result.raise_for_status()
     nested: dict[str, Any] = etree_to_dict(ET.fromstring(result.text))["statistikk"]
-    return Statistic(
+    return StatisticPublishing(
         id=nested["@id"],
         variant=nested["@variant"],
         deskFlyt=nested["@deskFlyt"],
         endret=dateutil.parser.parse(nested["@endret"]),
         statistikkKortnavn=nested["@statistikkKortnavn"],
         specifics=Specifics(
-            publisering=Publishing(**kwargs_specifics(nested["specifics"]))
+            publisering=PublishingSpecifics(**kwargs_specifics(nested["specifics"]))
         ),
     )
 
@@ -163,7 +164,7 @@ def single_stat_xml(stat_id: str = "4922") -> Statistic:
 @lru_cache(maxsize=128)
 def find_publishings(
     shortname: str = "trosamf", get_publishing_specifics: bool = True
-) -> MultipleStatistics:
+) -> MultiplePublishings:
     """Get the publishings for a specific shortcode.
 
     Args:
@@ -171,7 +172,7 @@ def find_publishings(
         get_publishing_specifics (bool): Looks up more info about each of the publishings found. Defaults to True.
 
     Returns:
-        MultipleStatistics: A datastructure with the found metadata about the statistics.
+        MultiplePublishings: A datastructure with the found metadata about the statistics.
     """
     url = f"https://i.ssb.no/statistikkregisteret/publisering/listKortnavnSomXml?kortnavn={shortname}"
     result = rs.get(url)
@@ -187,16 +188,16 @@ def find_publishings(
         for publish in publishings["publisering"]:
             publish["specifics"] = specific_publishing(publish["@id"])
 
-    return MultipleStatistics(
+    return MultiplePublishings(
         publisering=[
-            Statistic(
+            StatisticPublishing(
                 id=pub["@id"],
                 variant=pub["@variant"],
                 deskFlyt=pub["@deskFlyt"],
                 endret=dateutil.parser.parse(pub["@endret"]),
                 statistikkKortnavn=pub["@statistikkKortnavn"],
                 specifics=Specifics(
-                    publisering=Publishing(**kwargs_specifics(pub["specifics"]))
+                    publisering=PublishingSpecifics(**kwargs_specifics(pub["specifics"]))
                 ),
             )
             for pub in publishings["publisering"]
@@ -224,17 +225,17 @@ def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta | No
     return None
 
 
-def find_latest_publishing(shortname: str = "trosamf") -> Publishing | None:
+def find_latest_publishing(shortname: str = "trosamf") -> PublishingSpecifics | None:
     """Find the date of the latest publishing of the statistical product.
 
     Args:
         shortname (str): The shortname to find the latest publishing for. Defaults to "trosamf".
 
     Returns:
-        Publishing | None: data about the specific publishing. Or None if nothing is found.
+        PublishingSpecifics | None: data about the specific publishing. Or None if nothing is found.
     """
     max_date = dateutil.parser.parse("2000-01-01")
-    max_publ: Statistic | None = None
+    max_publ: StatisticPublishing | None = None
     for pub in find_publishings(shortname).publisering:
         current_date = pub.specifics.publisering.tidspunkt
         if current_date > max_date:
@@ -258,7 +259,7 @@ def specific_publishing(publish_id: str = "162143") -> Specifics:
     result.raise_for_status()
     nested: dict[str, Any] = etree_to_dict(ET.fromstring(result.text))["publisering"]
     return Specifics(
-        publisering=Publishing(**kwargs_specifics(nested["specifics"]))
+        publisering=PublishingSpecifics(**kwargs_specifics(nested["specifics"]))
     )
 
 
