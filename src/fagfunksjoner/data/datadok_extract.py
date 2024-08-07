@@ -33,6 +33,8 @@ import requests
 from fagfunksjoner.fagfunksjoner_logger import logger
 
 
+STRING_DTYPE = "string[pyarrow]"
+
 # %% [markdown]
 # ## Hente fra api til Datadok
 # Vi har et api til datadok og det returnerer filbeskrivelse som en html-fil. Det kan f.eks. kalles slik
@@ -108,6 +110,141 @@ class ArchiveData:
 
 
 # %%
+def get_element_text(
+    element: ET.Element, tag: str, namespace: str, error_msg: str
+) -> str:
+    """Retrieves the text content of a specific element and raises an error if not found or empty.
+
+    Args:
+        element (ET.Element): The parent element to search within.
+        tag (str): The tag of the element to find.
+        namespace (str): The XML namespace.
+        error_msg (str): The error message to raise if the element is not found or has no text.
+
+    Returns:
+        str: The text content of the found element.
+
+    Raises:
+        ValueError: If the element is not found or has no text.
+    """
+    found_elem = element.find(f"{namespace}{tag}")
+    if found_elem is None or found_elem.text is None:
+        raise ValueError(error_msg)
+    return found_elem.text
+
+
+def extract_contact_info(root: ET.Element, namespace: str) -> str:
+    """Extracts division text from the contact information in the XML root element.
+
+    Args:
+        root (ET.Element): The root element of the XML tree.
+        namespace (str): The XML namespace for the contact information.
+
+    Returns:
+        str: The division text.
+
+    Raises:
+        ValueError: If contact information or division is missing.
+    """
+    contact_info = root.find(f"{namespace}ContactInformation")
+    if contact_info is None:
+        raise ValueError("ContactInformation not found in the XML")
+    return get_element_text(
+        contact_info,
+        "Division",
+        f"{namespace}common",
+        "Division not found in the XML or has no text",
+    )
+
+
+def extract_properties(
+    properties: ET.Element, namespace: str
+) -> tuple[str, int, int, None | int]:
+    """Extracts properties of a context variable from the properties element.
+
+    Args:
+        properties (ET.Element): The properties element to extract data from.
+        namespace (str): The XML namespace for the properties.
+
+    Returns:
+        tuple: A tuple containing datatype, length, start position, and precision.
+
+    Raises:
+        ValueError: If required properties are missing or have no text.
+    """
+    datatype = get_element_text(
+        properties, "Datatype", namespace, "Datatype element missing or has no text"
+    )
+    length = int(
+        get_element_text(
+            properties, "Length", namespace, "Length element missing or has no text"
+        )
+    )
+    start_position = int(
+        get_element_text(
+            properties,
+            "StartPosition",
+            namespace,
+            "StartPosition element missing or has no text",
+        )
+    )
+
+    precision_elem = properties.find(f"{namespace}Precision")
+    precision = (
+        int(precision_elem.text)
+        if precision_elem is not None and precision_elem.text is not None
+        else None
+    )
+
+    return datatype, length, start_position, precision
+
+
+def extract_context_variable(
+    context_var: ET.Element, namespace: str, division_text: str
+) -> ContextVariable:
+    """Extracts a ContextVariable object from a context variable element.
+
+    Args:
+        context_var (ET.Element): The context variable element to extract data from.
+        namespace (str): The XML namespace for the context variables.
+        division_text (str): The division text extracted from contact information.
+
+    Returns:
+        ContextVariable: The extracted ContextVariable object.
+
+    Raises:
+        ValueError: If required elements are missing or have no text.
+    """
+    context_id = context_var.get("id", "")
+    title = get_element_text(
+        context_var, "Title", namespace, "Title element missing or has no text"
+    )
+    description = get_element_text(
+        context_var,
+        "Description",
+        namespace,
+        "Description element missing or has no text",
+    )
+    properties = context_var.find(f"{namespace}Properties")
+    if properties is None:
+        raise ValueError("Properties element missing")
+
+    datatype, length, start_position, precision = extract_properties(
+        properties, namespace
+    )
+
+    return ContextVariable(
+        context_id,
+        title,
+        description,
+        datatype,
+        length,
+        start_position,
+        precision,
+        division_text,
+    )
+
+
 def extract_context_variables(root: ET.Element) -> list[ContextVariable]:
     """Extracts context variables from the XML root element and returns a list of ContextVariable objects.
 
@@ -115,67 +252,119 @@ def extract_context_variables(root: ET.Element) -> list[ContextVariable]:
         root (ET.Element): The root element of the XML tree to parse.
 
     Returns:
-        list: A list of ContextVariable objects.
+        List[ContextVariable]: A list of ContextVariable objects.
 
     Raises:
         ValueError: Missing information in the XML.
     """
-    data = []
-    contact_info = root.find("{http://www.ssb.no/ns/meta}ContactInformation")
-    if contact_info is None:
-        raise ValueError("ContactInformation not found in the XML")
-    division = contact_info.find("{http://www.ssb.no/ns/meta/common}Division")
-    if division is None or division.text is None:
-        raise ValueError("Division not found in the XML or has no text")
+    namespace = "{http://www.ssb.no/ns/meta}"
+    division_text = extract_contact_info(root, namespace)
+    context_vars = []
 
-    division_text = division.text
-
-    for context_var in root.findall("{http://www.ssb.no/ns/meta}ContextVariable"):
-        context_id = context_var.get("id")
-        title_elem = context_var.find("{http://www.ssb.no/ns/meta}Title")
-        description_elem = context_var.find("{http://www.ssb.no/ns/meta}Description")
-        properties = context_var.find("{http://www.ssb.no/ns/meta}Properties")
-
-        if title_elem is None or title_elem.text is None:
-            raise ValueError("Title element missing or has no text")
-        if description_elem is None or description_elem.text is None:
-            raise ValueError("Description element missing or has no text")
-        if properties is None:
-            raise ValueError("Properties element missing")
-
-        datatype_elem = properties.find("{http://www.ssb.no/ns/meta}Datatype")
-        length_elem = properties.find("{http://www.ssb.no/ns/meta}Length")
-        start_position_elem = properties.find(
-            "{http://www.ssb.no/ns/meta}StartPosition"
-        )
-        precision_elem = properties.find("{http://www.ssb.no/ns/meta}Precision")
-
-        if datatype_elem is None or datatype_elem.text is None:
-            raise ValueError("Datatype element missing or has no text")
-        if length_elem is None or length_elem.text is None:
-            raise ValueError("Length element missing or has no text")
-        if start_position_elem is None or start_position_elem.text is None:
-            raise ValueError("StartPosition element missing or has no text")
-
-        precision = (
-            int(precision_elem.text)
-            if precision_elem is not None and precision_elem.text is not None
-            else None
+    for context_var in root.findall(f"{namespace}ContextVariable"):
+        context_vars.append(
+            extract_context_variable(context_var, namespace, division_text)
         )
 
-        data.append(
-            ContextVariable(
-                context_id if context_id is not None else "",
-                title_elem.text,
-                description_elem.text,
-                datatype_elem.text,
-                int(length_elem.text),
-                int(start_position_elem.text),
-                precision,
-                division_text,
+    return context_vars
+
+
+def get_element_text(element: ET.Element, tag: str, namespace: str) -> None | str:
+    """Retrieves the text content of a specific element.
+
+    Args:
+        element (ET.Element): The parent element to search within.
+        tag (str): The tag of the element to find.
+        namespace (str): The XML namespace.
+
+    Returns:
+        str: The text content of the found element or None if not found or empty.
+    """
+    found_elem = element.find(f"{namespace}{tag}")
+    return (
+        found_elem.text
+        if found_elem is not None and found_elem.text is not None
+        else None
+    )
+
+
+def extract_codes(
+    codes_element: ET.Element,
+    context_id: str,
+    title: str,
+    description: str,
+    namespace: str,
+) -> list[CodeList]:
+    """Extracts codes from the codes element.
+
+    Args:
+        codes_element (ET.Element): The codes element to extract data from.
+        context_id (str): The context ID.
+        title (str): The title of the codelist.
+        description (str): The description of the codelist.
+        namespace (str): The XML namespace for the codelist.
+
+    Returns:
+        List[CodeList]: A list of CodeList objects.
+    """
+    codelist_data = []
+    for code in codes_element.findall(f"{namespace}Code"):
+        code_value = get_element_text(code, "CodeValue", namespace)
+        code_text = get_element_text(code, "CodeText", namespace)
+        if code_value and code_text:
+            codelist_data.append(
+                CodeList(context_id, title, description, code_value, code_text)
             )
-        )
-    return data
+    return codelist_data
+
+
+def extract_codelist_meta(
+    codelist_meta: ET.Element, context_id: str, namespace: str
+) -> list[CodeList]:
+    """Extracts codelist meta information and associated codes.
+
+    Args:
+        codelist_meta (ET.Element): The codelist meta element to extract data from.
+        context_id (str): The context ID.
+        namespace (str): The XML namespace for the codelist.
+
+    Returns:
+        List[CodeList]: A list of CodeList objects.
+    """
+    codelist_data = []
+    title = get_element_text(codelist_meta, "Title", namespace)
+    description = get_element_text(codelist_meta, "Description", namespace)
+    if title and description:
+        codes = codelist_meta.find(f"{namespace}Codes")
+        if codes:
+            codelist_data.extend(
+                extract_codes(codes, context_id, title, description, namespace)
+            )
+    return codelist_data
+
+
+def extract_context_variable_codelist(
+    context_var: ET.Element, namespace: str
+) -> list[CodeList]:
+    """Extracts codelist data from a context variable element.
+
+    Args:
+        context_var (ET.Element): The context variable element to extract data from.
+        namespace (str): The XML namespace for the codelist.
+
+    Returns:
+        List[CodeList]: A list of CodeList objects.
+    """
+    codelist_data = []
+    codelist = context_var.find(f"{namespace}Codelist")
+    if codelist:
+        codelist_meta = codelist.find(f"{namespace}CodelistMeta")
+        if codelist_meta:
+            context_id = context_var.get("id", "")
+            codelist_data.extend(
+                extract_codelist_meta(codelist_meta, context_id, namespace)
+            )
+    return codelist_data
 
 
 def extract_codelist(root: ET.Element) -> list[CodeList]:
@@ -185,63 +374,12 @@ def extract_codelist(root: ET.Element) -> list[CodeList]:
         root (ET.Element): The root element of the XML tree to parse.
 
     Returns:
-        list[Codelist]: A list of CodeList objects.
+        List[CodeList]: A list of CodeList objects.
     """
+    namespace = "{http://www.ssb.no/ns/meta/codelist}"
     codelist_data = []
     for context_var in root.findall("{http://www.ssb.no/ns/meta}ContextVariable"):
-        codelist = context_var.find("{http://www.ssb.no/ns/meta/codelist}Codelist")
-        if codelist is not None:
-            codelist_meta = codelist.find(
-                "{http://www.ssb.no/ns/meta/codelist}CodelistMeta"
-            )
-            if codelist_meta is None:
-                continue
-
-            codelist_title_elem = codelist_meta.find(
-                "{http://www.ssb.no/ns/meta/codelist}Title"
-            )
-            codelist_description_elem = codelist_meta.find(
-                "{http://www.ssb.no/ns/meta/codelist}Description"
-            )
-
-            if codelist_title_elem is None or codelist_title_elem.text is None:
-                continue
-            if (
-                codelist_description_elem is None
-                or codelist_description_elem.text is None
-            ):
-                continue
-
-            codelist_title = codelist_title_elem.text
-            codelist_description = codelist_description_elem.text
-
-            codes = codelist.find("{http://www.ssb.no/ns/meta/codelist}Codes")
-            if codes is not None:
-                for code in codes.findall("{http://www.ssb.no/ns/meta/codelist}Code"):
-                    code_value_elem = code.find(
-                        "{http://www.ssb.no/ns/meta/codelist}CodeValue"
-                    )
-                    code_text_elem = code.find(
-                        "{http://www.ssb.no/ns/meta/codelist}CodeText"
-                    )
-
-                    if code_value_elem is None or code_value_elem.text is None:
-                        continue
-                    if code_text_elem is None or code_text_elem.text is None:
-                        continue
-
-                    # Ensuring type for mypy
-                    context_id: str = context_var.get("id", "")
-
-                    codelist_data.append(
-                        CodeList(
-                            context_id,
-                            codelist_title,
-                            codelist_description,
-                            code_value_elem.text,
-                            code_text_elem.text,
-                        )
-                    )
+        codelist_data.extend(extract_context_variable_codelist(context_var, namespace))
     return codelist_data
 
 
@@ -269,13 +407,13 @@ def metadata_to_df(context_variables: list[ContextVariable]) -> pd.DataFrame:
     df = pd.DataFrame([vars(cv) for cv in context_variables])
     df["type"] = (
         df["datatype"]
-        .str.replace("Tekst", "string[pyarrow]", regex=False)
+        .str.replace("Tekst", STRING_DTYPE, regex=False)
         .str.replace("Heltall", "Int64", regex=False)
-        .str.replace("Desimaltall", "string[pyarrow]", regex=False)
-        .str.replace("Desim. (K)", "string[pyarrow]", regex=False)
-        .str.replace("Desim. (P)", "string[pyarrow]", regex=False)
-        .str.replace("Dato1", "string[pyarrow]", regex=False)
-        .str.replace("Dato2", "string[pyarrow]", regex=False)
+        .str.replace("Desimaltall", STRING_DTYPE, regex=False)
+        .str.replace("Desim. (K)", STRING_DTYPE, regex=False)
+        .str.replace("Desim. (P)", STRING_DTYPE, regex=False)
+        .str.replace("Dato1", STRING_DTYPE, regex=False)
+        .str.replace("Dato2", STRING_DTYPE, regex=False)
     )
     return df
 
