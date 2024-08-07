@@ -13,12 +13,19 @@
 # ---
 
 # %%
-import os
-
-
-os.chdir("../")
 from fagfunksjoner.api import statistikkregisteret as reg
 
 
 # %%
 reg.find_latest_publishing("vgu")
+
+# %%
+reg.time_until_publishing("vgu")
+
+# %%
+import datetime
+from fagfunksjoner.api import statistikkregisteret as reg
+kortkode = "vgu"
+
+if not datetime.timedelta(0) < reg.time_until_publishing(kortkode):
+    raise ValueError("HAR DU IKKE MELDT PUBLISERING!?!?!?")

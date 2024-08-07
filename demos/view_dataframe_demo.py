@@ -27,10 +27,6 @@ from IPython.display import display
 from fagfunksjoner import view_dataframe
 
 
-# %%
-ipywidgets.interactive()
-
-
 # %% [markdown]
 # ## Generate test data
 # Here is a function that generates some test data. We can choose the share of missing values we shall have on the column 'value'

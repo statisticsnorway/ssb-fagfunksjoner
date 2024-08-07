@@ -4,6 +4,7 @@ from typing import Any
 from xml.etree import ElementTree as ET
 
 import dateutil.parser
+import datetime
 import requests as rs
 
 
@@ -108,7 +109,20 @@ def find_publishings(
 
     return publishings
 
+def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta:
+    """Check how long until the statistical product should be published.
+    
+    Args:
+        shortname (str): The shortname to find the latest publishing for. Defaults to "trosamf".
 
+    Returns:
+        datetime: The date the shortcode will have its latest publishing.
+    """
+    pubtime_str = find_latest_publishing(shortname)["specifics"]["publisering"]["@tidspunkt"]
+    pubtime = dateutil.parser.parse(pubtime_str)
+    return pubtime - datetime.datetime.now()
+    
+    
 def find_latest_publishing(shortname: str = "trosamf") -> dict[str, Any] | None:
     """Find the date of the latest publishing of the statistical product.
 
@@ -116,12 +130,12 @@ def find_latest_publishing(shortname: str = "trosamf") -> dict[str, Any] | None:
         shortname (str): The shortname to find the latest publishing for. Defaults to "trosamf".
 
     Returns:
-        datetime: The date the shortcode will have its latest publishing.
+        dict[str, Any]: Datastructure containing the information about the latest publishing.
     """
     max_date = dateutil.parser.parse("2000-01-01")
     max_publ: dict[str, Any] | None = None
     for pub in find_publishings(shortname)["publisering"]:
-        current_date = dateutil.parser.parse(pub["tidspunkt"])
+        current_date = dateutil.parser.parse(pub["specifics"]["publisering"]["@tidspunkt"])
         if current_date > max_date:
             max_publ = pub
             max_date = current_date
