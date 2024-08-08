@@ -11,6 +11,8 @@ import requests as rs
 
 @dataclass
 class PublishingSpecifics:
+    """Hold specific information about each publishing."""
+
     navn: str
     id: str
     statistikk: str
@@ -32,6 +34,7 @@ class PublishingSpecifics:
 @dataclass
 class StatisticPublishing:
     """Top-level metadata for a specific statistical product."""
+
     id: str
     variant: str
     deskFlyt: str
@@ -43,7 +46,8 @@ class StatisticPublishing:
 @dataclass
 class MultiplePublishings:
     """Contains multiple statisticss, like when getting all the data in the API."""
-    publisering: list[StatisticPublishing]
+
+    publiseringer: list[StatisticPublishing]
     antall: int
     dato: str
 
@@ -181,7 +185,7 @@ def find_publishings(
             publish["specifics"] = specific_publishing(publish["@id"])
 
     return MultiplePublishings(
-        publisering=[
+        publiseringer=[
             StatisticPublishing(
                 id=pub["@id"],
                 variant=pub["@variant"],
@@ -211,7 +215,9 @@ def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta | No
     """
     pub = find_latest_publishing(shortname)
     if pub is not None:
-        return pub.specifics.publisering.tidspunkt - datetime.datetime.now()
+        pub_time: datetime.datetime = pub.tidspunkt
+        diff_time: datetime.timedelta = pub_time - datetime.datetime.now()
+        return diff_time
     return None
 
 
@@ -225,9 +231,9 @@ def find_latest_publishing(shortname: str = "trosamf") -> PublishingSpecifics | 
         PublishingSpecifics | None: data about the specific publishing. Or None if nothing is found.
     """
     max_date = dateutil.parser.parse("2000-01-01")
-    max_publ: StatisticPublishing | None = None
-    for pub in find_publishings(shortname).publisering:
-        current_date = pub.specifics.publisering.tidspunkt
+    max_publ: PublishingSpecifics | None = None
+    for pub in find_publishings(shortname).publiseringer:
+        current_date = pub.tidspunkt
         if current_date > max_date:
             max_publ = pub
             max_date = current_date
@@ -242,7 +248,7 @@ def specific_publishing(publish_id: str = "162143") -> PublishingSpecifics:
         publish_id (str): The API-ID for the publishing. Defaults to "162143".
 
     Returns:
-        Specifics: The metadata found for the specific publishing.
+        PublishingSpecifics: The metadata found for the specific publishing.
     """
     url = f"https://i.ssb.no/statistikkregisteret/publisering/xml/{publish_id}"
     result = rs.get(url)
