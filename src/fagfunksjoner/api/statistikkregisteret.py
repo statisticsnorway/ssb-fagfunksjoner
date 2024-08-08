@@ -8,8 +8,6 @@ from xml.etree import ElementTree as ET
 import dateutil.parser
 import requests as rs
 
-from fagfunksjoner.fagfunksjoner_logger import logger
-
 
 @dataclass
 class PublishingSpecifics:
@@ -113,7 +111,6 @@ class Eierseksjon:
 
     navn: list[LangText]
     statid: str
-    navn_attr: str
 
 
 @dataclass
@@ -240,7 +237,7 @@ def parse_eierseksjon_single(entry: dict[str, Any]) -> Eierseksjon:
         Eierseksjon: The parsed Eierseksjon object.
     """
     navn = [parse_lang_text_single(e) for e in entry["navn"]]
-    return Eierseksjon(navn=navn, statid=entry["@id"], navn_attr=entry["@navn"])
+    return Eierseksjon(navn=navn, statid=entry["@id"])
 
 
 def parse_triggerord_single(entry: dict[str, Any]) -> dict[str, str]:
@@ -298,7 +295,10 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
     status = root["status"]["@kode"]
     eierseksjon = parse_eierseksjon_single(root["eierseksjon"])
     kontakter = [parse_kontakt_single(e) for e in root["kontakter"]["kontakt"]]
-    triggerord = {k: [parse_triggerord_single(e) for e in v] for k, v in root["triggerord"].items()}
+    triggerord = {
+        k: [parse_triggerord_single(e) for e in v]
+        for k, v in root["triggerord"].items()
+    }
     # Some times single variants are not in a list already?
     if not isinstance(root["varianter"]["variant"], list):
         root["varianter"]["variant"] = [root["varianter"]["variant"]]
@@ -306,7 +306,9 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
         parse_variant_single(variant) for variant in root["varianter"]["variant"]
     ]
     regionaleNivaer = root["regionaleNivaer"]["kode"]
-    videreforing = {k.replace("@",""): v == "true" for k, v in root["videreforing"].items()}
+    videreforing = {
+        k.replace("@", ""): v == "true" for k, v in root["videreforing"].items()
+    }
     statid = root["@id"]
     defaultLang = root["@defaultLang"]
     godkjent = root["@godkjent"]
@@ -496,10 +498,12 @@ def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta | No
             If no publishingdata is found, returns None.
     """
     pub = find_latest_publishing(shortname)
-    if (isinstance(pub, StatisticPublishingShort) 
-        and pub.specifics is not None 
-        and hasattr(pub.specifics, "tidspunkt")):
-        
+    if (
+        isinstance(pub, StatisticPublishingShort)
+        and pub.specifics is not None
+        and hasattr(pub.specifics, "tidspunkt")
+    ):
+
         pub_time: datetime.datetime = pub.specifics.tidspunkt
         diff_time: datetime.timedelta = pub_time - datetime.datetime.now()
         return diff_time
@@ -521,12 +525,16 @@ def find_latest_publishing(
     max_publ: StatisticPublishingShort | None = None
     # Loop over publishings to find the one with the highest date (latest)
     for pub in find_publishings(shortname).publiseringer:
-        if (isinstance(pub, StatisticPublishingShort) 
-            and pub.specifics is not None 
-            and hasattr(pub.specifics, "tidspunkt")):
+        if (
+            isinstance(pub, StatisticPublishingShort)
+            and pub.specifics is not None
+            and hasattr(pub.specifics, "tidspunkt")
+        ):
             current_date = pub.specifics.tidspunkt
             if current_date > max_date:
-                max_publ = pub  # Overwrites variable with the whole StatisticPublishingShort
+                max_publ = (
+                    pub  # Overwrites variable with the whole StatisticPublishingShort
+                )
                 max_date = current_date
     return max_publ
 

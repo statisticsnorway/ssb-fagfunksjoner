@@ -21,7 +21,6 @@ shortcode = "vgu"
 
 # %%
 single = reg.single_stat()
-single
 
 # %%
 print(single.navn.navn[0].text)
