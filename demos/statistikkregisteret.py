@@ -20,7 +20,11 @@ from fagfunksjoner.api import statistikkregisteret as reg
 shortcode = "vgu"
 
 # %%
-reg.single_stat()
+single = reg.single_stat()
+single
+
+# %%
+single.triggerord
 
 # %%
 reg.find_stat_shortcode(shortcode)

@@ -173,7 +173,7 @@ class SinglePublishing:
     triggerord: dict[str, list[dict[str, str]]]
     varianter: list[Variant]
     regionaleNivaer: list[str]
-    videreforing: dict
+    videreforing: dict[str, bool]
     statid: str
     defaultLang: str
     godkjent: str
@@ -299,7 +299,7 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
     status = root["status"]["@kode"]
     eierseksjon = parse_eierseksjon_single(root["eierseksjon"])
     kontakter = [parse_kontakt_single(e) for e in root["kontakter"]["kontakt"]]
-    triggerord = [parse_triggerord_single(e) for e in root["triggerord"]["triggerord"]]
+    triggerord = {k: [parse_triggerord_single(e) for e in v] for k, v in root["triggerord"].items()}
     # Some times single variants are not in a list already?
     if not isinstance(root["varianter"]["variant"], list):
         root["varianter"]["variant"] = [root["varianter"]["variant"]]
@@ -307,7 +307,7 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
         parse_variant_single(variant) for variant in root["varianter"]["variant"]
     ]
     regionaleNivaer = root["regionaleNivaer"]["kode"]
-    videreforing = root["videreforing"]
+    videreforing = {k.replace("@",""): v == "true" for k, v in root["videreforing"].items()}
     statid = root["@id"]
     defaultLang = root["@defaultLang"]
     godkjent = root["@godkjent"]
