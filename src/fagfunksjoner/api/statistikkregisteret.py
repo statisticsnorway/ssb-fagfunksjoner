@@ -1,4 +1,6 @@
+import datetime
 from collections import defaultdict
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 from xml.etree import ElementTree as ET
@@ -7,7 +9,373 @@ import dateutil.parser
 import requests as rs
 
 
-@lru_cache(maxsize=1)  # Will be slow first time, but then caches result
+TEXT = "#text"
+ENDRET = "@endret"
+DESKFLYT = "@deskFlyt"
+
+
+@dataclass
+class PublishingSpecifics:
+    """Hold specific information about each publishing."""
+
+    navn: str
+    statid: str
+    statistikk: str
+    variant: str
+    status: str
+    er_periode: bool
+    periode_fra: datetime.datetime
+    periode_til: datetime.datetime
+    presisjon: str
+    tidspunkt: datetime.datetime
+    er_endret: bool
+    desk_flyt: str
+    endret: datetime.datetime
+    er_avlyst: bool
+    revisjon: str
+    tittel: str
+
+
+@dataclass
+class StatisticPublishingShort:
+    """Top-level metadata for a specific statistical product."""
+
+    statid: str
+    variant: str
+    desk_flyt: str
+    endret: datetime.datetime
+    statistikk_kortnavn: str
+    specifics: None | PublishingSpecifics
+
+
+@dataclass
+class MultiplePublishings:
+    """Contains multiple statisticss, like when getting all the data in the API."""
+
+    publiseringer: list[StatisticPublishingShort]
+    antall: int
+    dato: str
+
+
+@dataclass
+class LangText:
+    """Represents a text with a language attribute.
+
+    Attributes:
+        lang (str): The language code.
+        text (None | str): The text in the specified language.
+        navn (None): Unused attribute, kept for compatibility.
+    """
+
+    lang: str
+    text: None | str
+    navn: None
+
+
+@dataclass
+class Navn:
+    """Represents a list of LangText objects.
+
+    Attributes:
+        navn_lang (list[LangText]): A list of LangText objects.
+    """
+
+    navn_lang: list[LangText]
+
+
+@dataclass
+class Kontakt:
+    """Represents a contact with various attributes.
+
+    Attributes:
+        navn (list[LangText]): A list of LangText objects representing names.
+        statid (str): The contact ID.
+        telefon (str): The contact's phone number.
+        mobil (str): The contact's mobile number.
+        epost (str): The contact's email address.
+        initialer (str): The contact's initials.
+    """
+
+    navn: list[LangText]
+    statid: str
+    telefon: str
+    mobil: str
+    epost: str
+    initialer: str
+
+
+@dataclass
+class Eierseksjon:
+    """Represents an ownership section with various attributes.
+
+    Attributes:
+        navn (list[LangText]): A list of LangText objects representing names.
+        statid (str): The section ID.
+        navn_attr (str): The section name.
+    """
+
+    navn: list[LangText]
+    statid: str
+
+
+@dataclass
+class Variant:
+    """Represents a variant with various attributes.
+
+    Attributes:
+        navn (str): The name of the variant.
+        statid (str): The variant ID.
+        revisjon (str): The revision of the variant.
+        opphort (str): Whether the variant is discontinued.
+        detaljniva (str): Detailed level information.
+        detaljniva_EN (str): Detailed level information in English.
+        frekvens (str): The frequency of the variant.
+    """
+
+    navn: str
+    statid: str
+    revisjon: str
+    opphort: str
+    detaljniva: str
+    detaljniva_en: str
+    frekvens: str
+
+
+@dataclass
+class SinglePublishing:
+    """Represents a single publishing entry with various attributes.
+
+    Attributes:
+        navn (Navn): The name details.
+        kortnavn (str): The short name.
+        gamleEmnekoder (str): The old subject codes.
+        forstegangspublisering (str): The first publication date.
+        status (str): The status code.
+        eierseksjon (Eierseksjon): The ownership section details.
+        kontakter (list[Kontakt]): A list of contacts.
+        triggerord (dict[str, list[dict[str, str]]]): A dictionary of trigger words.
+        varianter (list[Variant]): A list of variants.
+        regionaleNivaer (list[str]): A list of regional levels.
+        videreforing (dict): A dictionary of continuation information.
+        statid (str): The ID of the publishing entry.
+        defaultLang (str): The default language code.
+        godkjent (str): Approval status.
+        endret (str): The last modified date.
+        deskFlyt (str): Desk flow status.
+        dirFlyt (str): Directory flow status.
+    """
+
+    navn: Navn
+    kortnavn: str
+    gamle_emnekoder: str
+    forstegangspublisering: str
+    status: str
+    eierseksjon: Eierseksjon
+    kontakter: list[Kontakt]
+    triggerord: dict[str, list[dict[str, str]]]
+    varianter: list[Variant]
+    regionale_nivaer: list[str]
+    videreforing: dict[str, bool]
+    statid: str
+    default_lang: str
+    godkjent: str
+    endret: str
+    desk_flyt: str
+    dir_flyt: str
+
+
+def parse_lang_text_single(entry: dict[str, Any]) -> LangText:
+    """Parses a dictionary entry into a LangText object.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        LangText: The parsed LangText object.
+    """
+    return LangText(
+        lang=entry["@{http://www.w3.org/XML/1998/namespace}lang"],
+        text=entry.get(TEXT, None),
+        navn=entry.get("@navn", None),
+    )
+
+
+def parse_navn_single(entry: dict[str, Any]) -> Navn:
+    """Parses a dictionary entry into a Navn object.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        Navn: The parsed Navn object.
+    """
+    return Navn(navn_lang=[parse_lang_text_single(e) for e in entry["navn"]])
+
+
+def parse_kontakt_single(entry: dict[str, Any]) -> Kontakt:
+    """Parses a dictionary entry into a Kontakt object.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        Kontakt: The parsed Kontakt object.
+    """
+    navn = [parse_lang_text_single(e) for e in entry["navn"]]
+    return Kontakt(
+        navn=navn,
+        statid=entry["@id"],
+        telefon=entry["@telefon"],
+        mobil=entry["@mobil"],
+        epost=entry["@epost"],
+        initialer=entry["@initialer"],
+    )
+
+
+def parse_eierseksjon_single(entry: dict[str, Any]) -> Eierseksjon:
+    """Parses a dictionary entry into an Eierseksjon object.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        Eierseksjon: The parsed Eierseksjon object.
+    """
+    navn = [parse_lang_text_single(e) for e in entry["navn"]]
+    return Eierseksjon(navn=navn, statid=entry["@id"])
+
+
+def parse_triggerord_single(entry: dict[str, Any]) -> dict[str, str]:
+    """Parses a dictionary entry into a trigger word dictionary.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        dict: The parsed trigger word dictionary.
+    """
+    return {
+        "lang": entry["@{http://www.w3.org/XML/1998/namespace}lang"],
+        "text": entry[TEXT],
+    }
+
+
+def parse_variant_single(entry: dict[str, Any]) -> Variant:
+    """Parses a dictionary entry into a Variant object.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        Variant: The parsed Variant object.
+    """
+    return Variant(
+        navn=entry["navn"],
+        statid=entry["@id"],
+        revisjon=entry["@revisjon"],
+        opphort=entry["@opphort"],
+        detaljniva=entry["@detaljniva"],
+        detaljniva_en=entry["@detaljniva_EN"],
+        frekvens=entry["@frekvens"],
+    )
+
+
+def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
+    """Parses the root dictionary into a SinglePublishing object.
+
+    Args:
+        root (dict[str, Any]): The root dictionary to parse.
+
+    Returns:
+        SinglePublishing: The parsed SinglePublishing object.
+    """
+    navn = parse_navn_single(root["navn"])
+    kortnavn = root["kortnavn"][TEXT]
+    gamle_emnekoder = root["gamleEmnekoder"]
+    forstegangspublisering = root["forstegangspublisering"]
+    try:
+        forstegangspublisering = dateutil.parser.parse(forstegangspublisering).date()
+    except ValueError:
+        pass
+    status = root["status"]["@kode"]
+    eierseksjon = parse_eierseksjon_single(root["eierseksjon"])
+    kontakter = [parse_kontakt_single(e) for e in root["kontakter"]["kontakt"]]
+    triggerord = {
+        k: [parse_triggerord_single(e) for e in v]
+        for k, v in root["triggerord"].items()
+    }
+    # Some times single variants are not in a list already?
+    if not isinstance(root["varianter"]["variant"], list):
+        root["varianter"]["variant"] = [root["varianter"]["variant"]]
+    varianter = [
+        parse_variant_single(variant) for variant in root["varianter"]["variant"]
+    ]
+    regionale_nivaer = root["regionaleNivaer"]["kode"]
+    videreforing = {
+        k.replace("@", ""): v == "true" for k, v in root["videreforing"].items()
+    }
+    statid = root["@id"]
+    default_lang = root["@defaultLang"]
+    godkjent = root["@godkjent"]
+    endret = root[ENDRET]
+    try:
+        endret = dateutil.parser.parse(endret)
+    except ValueError:
+        pass
+    desk_flyt = root[DESKFLYT]
+    dir_flyt = root["@dirFlyt"]
+
+    return SinglePublishing(
+        navn=navn,
+        kortnavn=kortnavn,
+        gamle_emnekoder=gamle_emnekoder,
+        forstegangspublisering=forstegangspublisering,
+        status=status,
+        eierseksjon=eierseksjon,
+        kontakter=kontakter,
+        triggerord=triggerord,
+        varianter=varianter,
+        regionale_nivaer=regionale_nivaer,
+        videreforing=videreforing,
+        statid=statid,
+        default_lang=default_lang,
+        godkjent=godkjent,
+        endret=endret,
+        desk_flyt=desk_flyt,
+        dir_flyt=dir_flyt,
+    )
+
+
+def kwargs_specifics(nested: dict[str, Any]) -> dict[str, Any]:
+    """Map fields in specifics to kwargs for the dataclass.
+
+    Args:
+        nested (dict[str, Any]): The XML-datastructure to map.
+
+    Returns:
+        dict[str, Any]: Cleaned up data-structure
+    """
+    return {
+        "navn": nested["publisering"]["navn"],
+        "statid": nested["publisering"]["@id"],
+        "statistikk": nested["publisering"]["@statistikk"],
+        "variant": nested["publisering"]["@variant"],
+        "status": nested["publisering"]["@status"],
+        "er_periode": nested["publisering"]["@erPeriode"] == "true",
+        "periode_fra": dateutil.parser.parse(nested["publisering"]["@periodeFra"]),
+        "periode_til": dateutil.parser.parse(nested["publisering"]["@periodeTil"]),
+        "presisjon": nested["publisering"]["@presisjon"],
+        "tidspunkt": dateutil.parser.parse(nested["publisering"]["@tidspunkt"]),
+        "er_endret": nested["publisering"]["@erEndret"] == "true",
+        "desk_flyt": nested["publisering"][DESKFLYT],
+        "endret": dateutil.parser.parse(nested["publisering"][ENDRET]),
+        "er_avlyst": nested["publisering"]["@erAvlyst"] == "true",
+        "revisjon": nested["publisering"]["@revisjon"],
+        "tittel": nested["publisering"]["@tittel"],
+    }
+
+
+@lru_cache(maxsize=1)
 def get_statistics_register() -> list[dict[str, Any]]:
     """Get the overview of all the statistical products from the API.
 
@@ -40,48 +408,46 @@ def find_stat_shortcode(
     register = get_statistics_register()
     results = []
     for stat in register:
-        # Allow for sending in ID
         if shortcode_or_id.isdigit() and shortcode_or_id == stat["id"]:
             if get_singles:
-                stat["product_info"] = single_stat_xml(shortcode_or_id)
+                stat["product_info"] = single_stat(shortcode_or_id)
             if get_publishings:
                 stat["publishings"] = find_publishings(
                     stat["shortName"], get_publishing_specifics
                 )
             return stat
-        # If not ID, expect to be part of shortname
         elif shortcode_or_id in stat["shortName"]:
             if get_singles:
-                stat["product_info"] = single_stat_xml(stat["id"])
+                stat["product_info"] = single_stat(stat["id"])
             if get_publishings:
                 stat["publishings"] = find_publishings(
                     stat["shortName"], get_publishing_specifics
                 )
-            results += [stat]
+            results.append(stat)
     return results
 
 
 @lru_cache(maxsize=128)
-def single_stat_xml(stat_id: str = "4922") -> dict[str, Any]:
+def single_stat(stat_id: str = "4922") -> SinglePublishing:
     """Get the metadata for specific product.
 
     Args:
         stat_id (str): The ID for the product in statistikkregisteret. Defaults to "4922".
 
     Returns:
-        dict[str, Any]: Datastructure with the found metadata.
+        SinglePublishing: Datastructure with the found metadata.
     """
     url = f"https://i.ssb.no/statistikkregisteret/statistikk/xml/{stat_id}"
     result = rs.get(url)
     result.raise_for_status()
     nested: dict[str, Any] = etree_to_dict(ET.fromstring(result.text))["statistikk"]
-    return nested
+    return parse_data_single(nested)
 
 
 @lru_cache(maxsize=128)
 def find_publishings(
     shortname: str = "trosamf", get_publishing_specifics: bool = True
-) -> dict[str, Any]:
+) -> MultiplePublishings:
     """Get the publishings for a specific shortcode.
 
     Args:
@@ -89,7 +455,7 @@ def find_publishings(
         get_publishing_specifics (bool): Looks up more info about each of the publishings found. Defaults to True.
 
     Returns:
-        dict[str, Any]: A datastructure with the found metadata about the publishings.
+        MultiplePublishings: A datastructure with the found metadata about the statistics.
     """
     url = f"https://i.ssb.no/statistikkregisteret/publisering/listKortnavnSomXml?kortnavn={shortname}"
     result = rs.get(url)
@@ -98,7 +464,6 @@ def find_publishings(
         "publiseringer"
     ]
 
-    # Ensure publishings["publisering"] is always a list
     if not isinstance(publishings["publisering"], list):
         publishings["publisering"] = [publishings["publisering"]]
 
@@ -106,42 +471,94 @@ def find_publishings(
         for publish in publishings["publisering"]:
             publish["specifics"] = specific_publishing(publish["@id"])
 
-    return publishings
+    return MultiplePublishings(
+        publiseringer=[
+            StatisticPublishingShort(
+                statid=pub["@id"],
+                variant=pub["@variant"],
+                desk_flyt=pub[DESKFLYT],
+                endret=dateutil.parser.parse(pub[ENDRET]),
+                statistikk_kortnavn=pub["@statistikkKortnavn"],
+                specifics=pub[
+                    "specifics"
+                ],  # Already in the correct class from specific_p
+            )
+            for pub in publishings["publisering"]
+        ],
+        antall=int(publishings["@antall"]),
+        dato=publishings["@dato"],
+    )
 
 
-def find_latest_publishing(shortname: str = "trosamf") -> dict[str, Any] | None:
+def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta | None:
+    """Calculate the time between now and the publishing.
+
+    Returns a negative timedelta, if there is no future publishing recorded.
+
+    Args:
+        shortname (str): The shortcode to look for in the API among the publishings. Defaults to "trosamf".
+
+    Returns:
+        datetime.timedelta | None : The time difference between now, and the latest publishing date.
+            If no publishingdata is found, returns None.
+    """
+    pub = find_latest_publishing(shortname)
+    if (
+        isinstance(pub, StatisticPublishingShort)
+        and pub.specifics is not None
+        and hasattr(pub.specifics, "tidspunkt")
+    ):
+
+        pub_time: datetime.datetime = pub.specifics.tidspunkt
+        diff_time: datetime.timedelta = pub_time - datetime.datetime.now()
+        return diff_time
+    return None
+
+
+def find_latest_publishing(
+    shortname: str = "trosamf",
+) -> StatisticPublishingShort | None:
     """Find the date of the latest publishing of the statistical product.
 
     Args:
         shortname (str): The shortname to find the latest publishing for. Defaults to "trosamf".
 
     Returns:
-        datetime: The date the shortcode will have its latest publishing.
+        StatisticPublishingShort | None: data about the specific publishing. Or None if nothing is found.
     """
     max_date = dateutil.parser.parse("2000-01-01")
-    max_publ: dict[str, Any] | None = None
-    for pub in find_publishings(shortname)["publisering"]:
-        current_date = dateutil.parser.parse(pub["tidspunkt"])
-        if current_date > max_date:
-            max_publ = pub
-            max_date = current_date
+    max_publ: StatisticPublishingShort | None = None
+    # Loop over publishings to find the one with the highest date (latest)
+    for pub in find_publishings(shortname).publiseringer:
+        if (
+            isinstance(pub, StatisticPublishingShort)
+            and pub.specifics is not None
+            and hasattr(pub.specifics, "tidspunkt")
+        ):
+            current_date = pub.specifics.tidspunkt
+            if current_date > max_date:
+                max_publ = (
+                    pub  # Overwrites variable with the whole StatisticPublishingShort
+                )
+                max_date = current_date
     return max_publ
 
 
 @lru_cache(maxsize=128)
-def specific_publishing(publish_id: str = "162143") -> dict[str, Any]:
+def specific_publishing(publish_id: str = "162143") -> PublishingSpecifics:
     """Get the publishing-data from a specific publishing-ID in statistikkregisteret.
 
     Args:
         publish_id (str): The API-ID for the publishing. Defaults to "162143".
 
     Returns:
-        dict[str, Any]: The metadata found for the specific publishing.
+        PublishingSpecifics: The metadata found for the specific publishing.
     """
     url = f"https://i.ssb.no/statistikkregisteret/publisering/xml/{publish_id}"
     result = rs.get(url)
     result.raise_for_status()
-    return etree_to_dict(ET.fromstring(result.text))
+    nested: dict[str, Any] = etree_to_dict(ET.fromstring(result.text))
+    return PublishingSpecifics(**kwargs_specifics(nested))
 
 
 def etree_to_dict(t: ET.Element) -> dict[str, Any]:
@@ -167,7 +584,7 @@ def etree_to_dict(t: ET.Element) -> dict[str, Any]:
         text = t.text.strip()
         if children or t.attrib:
             if text:
-                d[t.tag]["#text"] = text
+                d[t.tag][TEXT] = text
         else:
             d[t.tag] = text
     return d

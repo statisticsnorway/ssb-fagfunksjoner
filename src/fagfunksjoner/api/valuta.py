@@ -221,42 +221,24 @@ URL_NORGES_BANK = (
 )
 
 
-def parse_response(json_data: dict[str, Any]) -> ValutaData:
-    """Convert the json response to a ValutaData object with nested dataclasses.
+def parse_structure(structure: dict[str, Any]) -> Structure:
+    """Parse the structure section from data.
 
     Args:
-        json_data (dict[str, Any]): The response from the Norske Bank API.
+        structure (dict[str, Any]): Data containing the structure information.
 
     Returns:
-        ValutaData: An instance of the dataclass ValutaData.
+        Structure: An instance of the Structure dataclass.
     """
-    meta = json_data["meta"]
-    data = json_data["data"]
-
-    # Parsing ValutaMeta
-    sender = Sender(**meta["sender"])
-    receiver = Receiver(**meta["receiver"])
-    links_meta = [Link(**link) for link in meta["links"]]
-    valuta_meta = ValutaMeta(
-        id=meta["id"],
-        prepared=meta["prepared"],
-        test=meta["test"],
-        datasetId=meta["datasetId"],
-        sender=sender,
-        receiver=receiver,
-        links=links_meta,
-    )
-
-    # Parsing Structure
-    structure = data["structure"]
     structure_links = [Link(**link) for link in structure["links"]]
-    dimensions: dict[str, list[Dimension]] = {
+    dimensions = {
         k: [Dimension(**dim) for dim in v] for k, v in structure["dimensions"].items()
     }
     attributes = {
         k: [Attribute(**attr) for attr in v] for k, v in structure["attributes"].items()
     }
-    structure_obj = Structure(
+
+    return Structure(
         links=structure_links,
         name=structure["name"],
         names=structure["names"],
@@ -266,9 +248,18 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
         attributes=attributes,
     )
 
-    # Parsing DataSets
+
+def parse_datasets(datasets_data: list[dict[str, Any]]) -> list[DataSet]:
+    """Parse the datasets section from data.
+
+    Args:
+        datasets_data (list[dict[str, Any]]): Data containing datasets information.
+
+    Returns:
+        list[DataSet]: A list of DataSet dataclass instances.
+    """
     datasets = []
-    for dataset in data["dataSets"]:
+    for dataset in datasets_data:
         dataset_links = [Link(**link) for link in dataset["links"]]
         series = {
             k: Series(attributes=v["attributes"], observations=v["observations"])
@@ -283,17 +274,25 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
                 series=series,
             )
         )
+    return datasets
 
-    data_obj = Data(dataSets=datasets, structure=structure_obj)
 
-    valuta_data = ValutaData(meta=valuta_meta, data=data_obj)
+def create_dataframe(data_obj: Data, structure_obj: Structure) -> pd.DataFrame:
+    """Create a DataFrame from data and structure objects.
 
-    # Create DataFrame
+    Args:
+        data_obj (Data): The data object containing datasets.
+        structure_obj (Structure): The structure object containing dimensions and attributes.
+
+    Returns:
+        pd.DataFrame: A pandas DataFrame created from the data and structure objects.
+    """
     dimension_keys = [dim.id for dim in structure_obj.dimensions.get("series", [])]
     observation_keys = [
         dim.id for dim in structure_obj.dimensions.get("observation", [])
     ]
     records = []
+
     for dataset_obj in data_obj.dataSets:
         for series_key, series_val in dataset_obj.series.items():
             for obs_key, obs_value in series_val.observations.items():
@@ -324,7 +323,6 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
                     },
                     "Observation": obs_value[0],
                 }
-                # Add attribute information
                 for _attr_key, attr_list in structure_obj.attributes.items():
                     for attr in attr_list:
                         attr_index = next(
@@ -346,7 +344,7 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
                             ]["id"]
                 records.append(record)
 
-    df = pd.DataFrame(
+    return pd.DataFrame(
         records,
         columns=dimension_keys
         + [dim.id + "_id" for dim in structure_obj.dimensions.get("series", [])]
@@ -364,7 +362,44 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
             for attr in attr_list
         ],
     )
-    valuta_data.df = df
+
+
+def parse_response(json_data: dict[str, Any]) -> ValutaData:
+    """Convert the json response to a ValutaData object with nested dataclasses.
+
+    Args:
+        json_data (dict[str, Any]): The response from the Norske Bank API.
+
+    Returns:
+        ValutaData: An instance of the dataclass ValutaData.
+    """
+    meta = json_data["meta"]
+    data = json_data["data"]
+
+    # Parsing ValutaMeta
+    sender = Sender(**meta["sender"])
+    receiver = Receiver(**meta["receiver"])
+    links_meta = [Link(**link) for link in meta["links"]]
+    valuta_meta = ValutaMeta(
+        id=meta["id"],
+        prepared=meta["prepared"],
+        test=meta["test"],
+        datasetId=meta["datasetId"],
+        sender=sender,
+        receiver=receiver,
+        links=links_meta,
+    )
+
+    # Parsing Structure
+    structure_obj = parse_structure(data["structure"])
+
+    # Parsing DataSets
+    datasets = parse_datasets(data["dataSets"])
+    data_obj = Data(dataSets=datasets, structure=structure_obj)
+
+    # Create DataFrame
+    df = create_dataframe(data_obj, structure_obj)
+    valuta_data = ValutaData(meta=valuta_meta, data=data_obj, df=df)
 
     return valuta_data
 

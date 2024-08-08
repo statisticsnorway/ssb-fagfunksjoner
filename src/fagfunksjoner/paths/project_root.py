@@ -41,8 +41,8 @@ class ProjectRoot:
         """Entering the context manager navigates to the project root."""
         navigate_root()
 
-    @staticmethod
     def __exit__(
+        self,
         exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
         traceback: TracebackType | None,

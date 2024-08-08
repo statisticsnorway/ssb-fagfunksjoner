@@ -8,36 +8,54 @@ from IPython.display import display
 def filter_display(
     dataframe: pd.DataFrame,
     column: str,
-    value: widgets.Widget,
-    operator: widgets.Dropdown,
+    value: str | int | float | tuple[str | int | float, ...],
+    operator: str,
 ) -> None:
     """Filter data based on args, and display the result.
 
     Args:
         dataframe (pd.DataFrame): The DataFrame to filter.
         column (str): Column to base filter on.
-        value (widgets.Widget): Widget containing the value to compare filter against.
-        operator (widgets.Dropdown): Widget containing how to compare column against value.
+        value (str | int | float):The value to compare filter against.
+        operator (str): How to compare column against value.
+
+    Returns:
+        None: only has visual side-effects
+
+    Raises:
+        TypeError: On combinations of value and operator we can't handle.
     """
-    # Extract the actual value from the widgets
-    filter_value = value.value
-    filter_operator = operator.value
-
-    operator_functions: dict[str, Callable[[pd.DataFrame], pd.DataFrame]] = {
-        ">": lambda df: df.loc[df[column] > filter_value],
-        ">=": lambda df: df.loc[df[column] >= filter_value],
-        "<=": lambda df: df.loc[df[column] <= filter_value],
-        "<": lambda df: df.loc[df[column] < filter_value],
-        "!=": lambda df: df.loc[~df[column].isin(filter_value)],
-        "==": lambda df: df.loc[df[column].isin(filter_value)],
-    }
-
-    if filter_operator == "==" and "NaN" in filter_value:
-        display(dataframe.loc[dataframe[column].isna() | dataframe[column].isin([val for val in filter_value if val != "NaN"])])  # type: ignore[no-untyped-call]
-    elif filter_operator == "!=" and "NaN" in filter_value:
-        display(dataframe.loc[~dataframe[column].isna() & ~dataframe[column].isin([val for val in filter_value if val != "NaN"])])  # type: ignore[no-untyped-call]
-    else:
-        display(operator_functions[filter_operator](dataframe))  # type: ignore[no-untyped-call]
+    if operator not in ["!=", "=="]:
+        if isinstance(value, str) or isinstance(value, int) or isinstance(value, float):
+            value_simple: str | int | float = value
+        else:
+            raise TypeError("Cant handle this type of value with this operator.")
+        operator_functions_simple: dict[str, Callable[[pd.DataFrame], pd.DataFrame]] = {
+            ">": lambda df: df.loc[df[column] > value_simple],
+            ">=": lambda df: df.loc[df[column] >= value_simple],
+            "<=": lambda df: df.loc[df[column] <= value_simple],
+            "<": lambda df: df.loc[df[column] < value_simple],
+        }
+        display(operator_functions_simple[operator](dataframe))  # type: ignore[no-untyped-call]
+        return None
+    elif operator in ["!=", "=="]:
+        if isinstance(value, tuple):
+            value_list: tuple[str | int | float, ...] = value
+        else:
+            raise TypeError(
+                f"Cant handle this type of value {value} {type(value)} with this operator {operator}."
+            )
+        operator_functions_list: dict[str, Callable[[pd.DataFrame], pd.DataFrame]] = {
+            "!=": lambda df: df.loc[~df[column].isin(value_list)],
+            "==": lambda df: df.loc[df[column].isin(value_list)],
+        }
+        if operator == "==" and "NaN" in value_list:
+            display(dataframe.loc[dataframe[column].isna() | dataframe[column].isin([val for val in value_list if val != "NaN"])])  # type: ignore[no-untyped-call]
+        elif operator == "!=" and "NaN" in value_list:
+            display(dataframe.loc[~dataframe[column].isna() & ~dataframe[column].isin([val for val in value_list if val != "NaN"])])  # type: ignore[no-untyped-call]
+        else:
+            display(operator_functions_list[operator](dataframe))  # type: ignore[no-untyped-call]
+        return None
 
 
 def view_dataframe(
