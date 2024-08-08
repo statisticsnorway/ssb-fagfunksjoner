@@ -497,7 +497,10 @@ def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta | No
             If no publishingdata is found, returns None.
     """
     pub = find_latest_publishing(shortname)
-    if pub is not None:
+    if (isinstance(pub, StatisticPublishingShort) 
+        and pub.specifics is not None 
+        and hasattr(pub.specifics, "tidspunkt")):
+        
         pub_time: datetime.datetime = pub.specifics.tidspunkt
         diff_time: datetime.timedelta = pub_time - datetime.datetime.now()
         return diff_time
@@ -517,11 +520,15 @@ def find_latest_publishing(
     """
     max_date = dateutil.parser.parse("2000-01-01")
     max_publ: StatisticPublishingShort | None = None
+    # Loop over publishings to find the one with the highest date (latest)
     for pub in find_publishings(shortname).publiseringer:
-        current_date = pub.specifics.tidspunkt
-        if current_date > max_date:
-            max_publ = pub
-            max_date = current_date
+        if (isinstance(pub, StatisticPublishingShort) 
+            and pub.specifics is not None 
+            and hasattr(pub.specifics, "tidspunkt")):
+            current_date = pub.specifics.tidspunkt
+            if current_date > max_date:
+                max_publ = pub  # Overwrites variable with the whole StatisticPublishingShort
+                max_date = current_date
     return max_publ
 
 
