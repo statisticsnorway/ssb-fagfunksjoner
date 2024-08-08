@@ -9,6 +9,11 @@ import dateutil.parser
 import requests as rs
 
 
+TEXT = "#text"
+ENDRET = "@endret"
+DESKFLYT = "@deskFlyt"
+
+
 @dataclass
 class PublishingSpecifics:
     """Hold specific information about each publishing."""
@@ -18,15 +23,15 @@ class PublishingSpecifics:
     statistikk: str
     variant: str
     status: str
-    erPeriode: bool
-    periodeFra: datetime.datetime
-    periodeTil: datetime.datetime
+    er_periode: bool
+    periode_fra: datetime.datetime
+    periode_til: datetime.datetime
     presisjon: str
     tidspunkt: datetime.datetime
-    erEndret: bool
-    deskFlyt: str
+    er_endret: bool
+    desk_flyt: str
     endret: datetime.datetime
-    erAvlyst: bool
+    er_avlyst: bool
     revisjon: str
     tittel: str
 
@@ -37,9 +42,9 @@ class StatisticPublishingShort:
 
     statid: str
     variant: str
-    deskFlyt: str
+    desk_flyt: str
     endret: datetime.datetime
-    statistikkKortnavn: str
+    statistikk_kortnavn: str
     specifics: None | PublishingSpecifics
 
 
@@ -72,10 +77,10 @@ class Navn:
     """Represents a list of LangText objects.
 
     Attributes:
-        navn (list[LangText]): A list of LangText objects.
+        navn_lang (list[LangText]): A list of LangText objects.
     """
 
-    navn: list[LangText]
+    navn_lang: list[LangText]
 
 
 @dataclass
@@ -132,7 +137,7 @@ class Variant:
     revisjon: str
     opphort: str
     detaljniva: str
-    detaljniva_EN: str
+    detaljniva_en: str
     frekvens: str
 
 
@@ -162,21 +167,21 @@ class SinglePublishing:
 
     navn: Navn
     kortnavn: str
-    gamleEmnekoder: str
+    gamle_emnekoder: str
     forstegangspublisering: str
     status: str
     eierseksjon: Eierseksjon
     kontakter: list[Kontakt]
     triggerord: dict[str, list[dict[str, str]]]
     varianter: list[Variant]
-    regionaleNivaer: list[str]
+    regionale_nivaer: list[str]
     videreforing: dict[str, bool]
     statid: str
-    defaultLang: str
+    default_lang: str
     godkjent: str
     endret: str
-    deskFlyt: str
-    dirFlyt: str
+    desk_flyt: str
+    dir_flyt: str
 
 
 def parse_lang_text_single(entry: dict[str, Any]) -> LangText:
@@ -190,7 +195,7 @@ def parse_lang_text_single(entry: dict[str, Any]) -> LangText:
     """
     return LangText(
         lang=entry["@{http://www.w3.org/XML/1998/namespace}lang"],
-        text=entry.get("#text", None),
+        text=entry.get(TEXT, None),
         navn=entry.get("@navn", None),
     )
 
@@ -204,7 +209,7 @@ def parse_navn_single(entry: dict[str, Any]) -> Navn:
     Returns:
         Navn: The parsed Navn object.
     """
-    return Navn(navn=[parse_lang_text_single(e) for e in entry["navn"]])
+    return Navn(navn_lang=[parse_lang_text_single(e) for e in entry["navn"]])
 
 
 def parse_kontakt_single(entry: dict[str, Any]) -> Kontakt:
@@ -251,7 +256,7 @@ def parse_triggerord_single(entry: dict[str, Any]) -> dict[str, str]:
     """
     return {
         "lang": entry["@{http://www.w3.org/XML/1998/namespace}lang"],
-        "text": entry["#text"],
+        "text": entry[TEXT],
     }
 
 
@@ -285,8 +290,8 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
         SinglePublishing: The parsed SinglePublishing object.
     """
     navn = parse_navn_single(root["navn"])
-    kortnavn = root["kortnavn"]["#text"]
-    gamleEmnekoder = root["gamleEmnekoder"]
+    kortnavn = root["kortnavn"][TEXT]
+    gamle_emnekoder = root["gamleEmnekoder"]
     forstegangspublisering = root["forstegangspublisering"]
     try:
         forstegangspublisering = dateutil.parser.parse(forstegangspublisering).date()
@@ -305,39 +310,39 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
     varianter = [
         parse_variant_single(variant) for variant in root["varianter"]["variant"]
     ]
-    regionaleNivaer = root["regionaleNivaer"]["kode"]
+    regionale_nivaer = root["regionaleNivaer"]["kode"]
     videreforing = {
         k.replace("@", ""): v == "true" for k, v in root["videreforing"].items()
     }
     statid = root["@id"]
-    defaultLang = root["@defaultLang"]
+    default_lang = root["@defaultLang"]
     godkjent = root["@godkjent"]
-    endret = root["@endret"]
+    endret = root[ENDRET]
     try:
         endret = dateutil.parser.parse(endret)
     except ValueError:
         pass
-    deskFlyt = root["@deskFlyt"]
-    dirFlyt = root["@dirFlyt"]
+    desk_flyt = root[DESKFLYT]
+    dir_flyt = root["@dirFlyt"]
 
     return SinglePublishing(
         navn=navn,
         kortnavn=kortnavn,
-        gamleEmnekoder=gamleEmnekoder,
+        gamle_emnekoder=gamle_emnekoder,
         forstegangspublisering=forstegangspublisering,
         status=status,
         eierseksjon=eierseksjon,
         kontakter=kontakter,
         triggerord=triggerord,
         varianter=varianter,
-        regionaleNivaer=regionaleNivaer,
+        regionale_nivaer=regionale_nivaer,
         videreforing=videreforing,
         statid=statid,
-        defaultLang=defaultLang,
+        defaultLang=default_lang,
         godkjent=godkjent,
         endret=endret,
-        deskFlyt=deskFlyt,
-        dirFlyt=dirFlyt,
+        desk_flyt=desk_flyt,
+        dir_flyt=dir_flyt,
     )
 
 
@@ -356,15 +361,15 @@ def kwargs_specifics(nested: dict[str, Any]) -> dict[str, Any]:
         "statistikk": nested["publisering"]["@statistikk"],
         "variant": nested["publisering"]["@variant"],
         "status": nested["publisering"]["@status"],
-        "erPeriode": nested["publisering"]["@erPeriode"] == "true",
-        "periodeFra": dateutil.parser.parse(nested["publisering"]["@periodeFra"]),
-        "periodeTil": dateutil.parser.parse(nested["publisering"]["@periodeTil"]),
+        "er_periode": nested["publisering"]["@erPeriode"] == "true",
+        "periode_fra": dateutil.parser.parse(nested["publisering"]["@periodeFra"]),
+        "periode_til": dateutil.parser.parse(nested["publisering"]["@periodeTil"]),
         "presisjon": nested["publisering"]["@presisjon"],
         "tidspunkt": dateutil.parser.parse(nested["publisering"]["@tidspunkt"]),
-        "erEndret": nested["publisering"]["@erEndret"] == "true",
-        "deskFlyt": nested["publisering"]["@deskFlyt"],
-        "endret": dateutil.parser.parse(nested["publisering"]["@endret"]),
-        "erAvlyst": nested["publisering"]["@erAvlyst"] == "true",
+        "er_endret": nested["publisering"]["@erEndret"] == "true",
+        "desk_flyt": nested["publisering"][DESKFLYT],
+        "endret": dateutil.parser.parse(nested["publisering"][ENDRET]),
+        "er_avlyst": nested["publisering"]["@erAvlyst"] == "true",
         "revisjon": nested["publisering"]["@revisjon"],
         "tittel": nested["publisering"]["@tittel"],
     }
@@ -471,9 +476,9 @@ def find_publishings(
             StatisticPublishingShort(
                 statid=pub["@id"],
                 variant=pub["@variant"],
-                deskFlyt=pub["@deskFlyt"],
-                endret=dateutil.parser.parse(pub["@endret"]),
-                statistikkKortnavn=pub["@statistikkKortnavn"],
+                desk_flyt=pub[DESKFLYT],
+                endret=dateutil.parser.parse(pub[ENDRET]),
+                statistikk_kortnavn=pub["@statistikkKortnavn"],
                 specifics=pub[
                     "specifics"
                 ],  # Already in the correct class from specific_p
@@ -579,7 +584,7 @@ def etree_to_dict(t: ET.Element) -> dict[str, Any]:
         text = t.text.strip()
         if children or t.attrib:
             if text:
-                d[t.tag]["#text"] = text
+                d[t.tag][TEXT] = text
         else:
             d[t.tag] = text
     return d
