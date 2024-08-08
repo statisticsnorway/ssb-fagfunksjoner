@@ -275,7 +275,7 @@ def parse_variant_single(entry: dict[str, Any]) -> Variant:
         revisjon=entry["@revisjon"],
         opphort=entry["@opphort"],
         detaljniva=entry["@detaljniva"],
-        detaljniva_EN=entry["@detaljniva_EN"],
+        detaljniva_en=entry["@detaljniva_EN"],
         frekvens=entry["@frekvens"],
     )
 
@@ -338,7 +338,7 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
         regionale_nivaer=regionale_nivaer,
         videreforing=videreforing,
         statid=statid,
-        defaultLang=default_lang,
+        default_lang=default_lang,
         godkjent=godkjent,
         endret=endret,
         desk_flyt=desk_flyt,
