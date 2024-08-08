@@ -56,6 +56,14 @@ class MultiplePublishings:
 
 @dataclass
 class LangText:
+    """Represents a text with a language attribute.
+
+    Attributes:
+        lang (str): The language code.
+        text (None | str): The text in the specified language.
+        navn (None): Unused attribute, kept for compatibility.
+    """
+
     lang: str
     text: None | str
     navn: None
@@ -63,11 +71,28 @@ class LangText:
 
 @dataclass
 class Navn:
+    """Represents a list of LangText objects.
+
+    Attributes:
+        navn (list[LangText]): A list of LangText objects.
+    """
+
     navn: list[LangText]
 
 
 @dataclass
 class Kontakt:
+    """Represents a contact with various attributes.
+
+    Attributes:
+        navn (list[LangText]): A list of LangText objects representing names.
+        statid (str): The contact ID.
+        telefon (str): The contact's phone number.
+        mobil (str): The contact's mobile number.
+        epost (str): The contact's email address.
+        initialer (str): The contact's initials.
+    """
+
     navn: list[LangText]
     statid: str
     telefon: str
@@ -78,6 +103,14 @@ class Kontakt:
 
 @dataclass
 class Eierseksjon:
+    """Represents an ownership section with various attributes.
+
+    Attributes:
+        navn (list[LangText]): A list of LangText objects representing names.
+        statid (str): The section ID.
+        navn_attr (str): The section name.
+    """
+
     navn: list[LangText]
     statid: str
     navn_attr: str
@@ -85,6 +118,18 @@ class Eierseksjon:
 
 @dataclass
 class Variant:
+    """Represents a variant with various attributes.
+
+    Attributes:
+        navn (str): The name of the variant.
+        statid (str): The variant ID.
+        revisjon (str): The revision of the variant.
+        opphort (str): Whether the variant is discontinued.
+        detaljniva (str): Detailed level information.
+        detaljniva_EN (str): Detailed level information in English.
+        frekvens (str): The frequency of the variant.
+    """
+
     navn: str
     statid: str
     revisjon: str
@@ -96,6 +141,28 @@ class Variant:
 
 @dataclass
 class SinglePublishing:
+    """Represents a single publishing entry with various attributes.
+
+    Attributes:
+        navn (Navn): The name details.
+        kortnavn (str): The short name.
+        gamleEmnekoder (str): The old subject codes.
+        forstegangspublisering (str): The first publication date.
+        status (str): The status code.
+        eierseksjon (Eierseksjon): The ownership section details.
+        kontakter (list[Kontakt]): A list of contacts.
+        triggerord (dict[str, list[dict[str, str]]]): A dictionary of trigger words.
+        varianter (list[Variant]): A list of variants.
+        regionaleNivaer (list[str]): A list of regional levels.
+        videreforing (dict): A dictionary of continuation information.
+        statid (str): The ID of the publishing entry.
+        defaultLang (str): The default language code.
+        godkjent (str): Approval status.
+        endret (str): The last modified date.
+        deskFlyt (str): Desk flow status.
+        dirFlyt (str): Directory flow status.
+    """
+
     navn: Navn
     kortnavn: str
     gamleEmnekoder: str
@@ -116,6 +183,14 @@ class SinglePublishing:
 
 
 def parse_lang_text_single(entry: dict[str, Any]) -> LangText:
+    """Parses a dictionary entry into a LangText object.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        LangText: The parsed LangText object.
+    """
     return LangText(
         lang=entry["@{http://www.w3.org/XML/1998/namespace}lang"],
         text=entry.get("#text", None),
@@ -124,10 +199,26 @@ def parse_lang_text_single(entry: dict[str, Any]) -> LangText:
 
 
 def parse_navn_single(entry: dict[str, Any]) -> Navn:
+    """Parses a dictionary entry into a Navn object.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        Navn: The parsed Navn object.
+    """
     return Navn(navn=[parse_lang_text_single(e) for e in entry["navn"]])
 
 
 def parse_kontakt_single(entry: dict[str, Any]) -> Kontakt:
+    """Parses a dictionary entry into a Kontakt object.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        Kontakt: The parsed Kontakt object.
+    """
     navn = [parse_lang_text_single(e) for e in entry["navn"]]
     return Kontakt(
         navn=navn,
@@ -140,11 +231,27 @@ def parse_kontakt_single(entry: dict[str, Any]) -> Kontakt:
 
 
 def parse_eierseksjon_single(entry: dict[str, Any]) -> Eierseksjon:
+    """Parses a dictionary entry into an Eierseksjon object.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        Eierseksjon: The parsed Eierseksjon object.
+    """
     navn = [parse_lang_text_single(e) for e in entry["navn"]]
     return Eierseksjon(navn=navn, statid=entry["@id"], navn_attr=entry["@navn"])
 
 
-def parse_triggerord_single(entry: dict[str, Any]) -> dict:
+def parse_triggerord_single(entry: dict[str, Any]) -> dict[str, str]:
+    """Parses a dictionary entry into a trigger word dictionary.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        dict: The parsed trigger word dictionary.
+    """
     return {
         "lang": entry["@{http://www.w3.org/XML/1998/namespace}lang"],
         "text": entry["#text"],
@@ -152,6 +259,14 @@ def parse_triggerord_single(entry: dict[str, Any]) -> dict:
 
 
 def parse_variant_single(entry: dict[str, Any]) -> Variant:
+    """Parses a dictionary entry into a Variant object.
+
+    Args:
+        entry (dict[str, Any]): The dictionary entry to parse.
+
+    Returns:
+        Variant: The parsed Variant object.
+    """
     logger.info(f"{entry}")
     return Variant(
         navn=entry["navn"],
@@ -165,7 +280,14 @@ def parse_variant_single(entry: dict[str, Any]) -> Variant:
 
 
 def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
+    """Parses the root dictionary into a SinglePublishing object.
 
+    Args:
+        root (dict[str, Any]): The root dictionary to parse.
+
+    Returns:
+        SinglePublishing: The parsed SinglePublishing object.
+    """
     navn = parse_navn_single(root["navn"])
     kortnavn = root["kortnavn"]["#text"]
     gamleEmnekoder = root["gamleEmnekoder"]
