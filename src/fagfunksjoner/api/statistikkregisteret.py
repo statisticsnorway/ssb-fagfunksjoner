@@ -215,25 +215,25 @@ def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta | No
     """
     pub = find_latest_publishing(shortname)
     if pub is not None:
-        pub_time: datetime.datetime = pub.tidspunkt
+        pub_time: datetime.datetime = pub.specifics.tidspunkt
         diff_time: datetime.timedelta = pub_time - datetime.datetime.now()
         return diff_time
     return None
 
 
-def find_latest_publishing(shortname: str = "trosamf") -> PublishingSpecifics | None:
+def find_latest_publishing(shortname: str = "trosamf") -> StatisticPublishing | None:
     """Find the date of the latest publishing of the statistical product.
 
     Args:
         shortname (str): The shortname to find the latest publishing for. Defaults to "trosamf".
 
     Returns:
-        PublishingSpecifics | None: data about the specific publishing. Or None if nothing is found.
+        StatisticPublishing | None: data about the specific publishing. Or None if nothing is found.
     """
     max_date = dateutil.parser.parse("2000-01-01")
-    max_publ: PublishingSpecifics | None = None
+    max_publ: StatisticPublishing | None = None
     for pub in find_publishings(shortname).publiseringer:
-        current_date = pub.tidspunkt
+        current_date = pub.specifics.tidspunkt
         if current_date > max_date:
             max_publ = pub
             max_date = current_date
