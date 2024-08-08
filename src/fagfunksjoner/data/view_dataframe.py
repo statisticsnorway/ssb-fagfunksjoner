@@ -8,7 +8,7 @@ from IPython.display import display
 def filter_display(
     dataframe: pd.DataFrame,
     column: str,
-    value: str | int | float | list[str | int | float],
+    value: str | int | float | tuple[str | int | float, ...],
     operator: str,
 ) -> None:
     """Filter data based on args, and display the result.
@@ -39,10 +39,10 @@ def filter_display(
         display(operator_functions_simple[operator](dataframe))  # type: ignore[no-untyped-call]
         return None
     elif operator in ["!=", "=="]:
-        if isinstance(value, list):
-            value_list: list[str | int | float] = value
+        if isinstance(value, tuple):
+            value_list: tuple[str | int | float, ...] = value
         else:
-            raise TypeError("Cant handle this type of value with this operator.")
+            raise TypeError(f"Cant handle this type of value {value} {type(value)} with this operator {operator}.")
         operator_functions_list: dict[str, Callable[[pd.DataFrame], pd.DataFrame]] = {
             "!=": lambda df: df.loc[~df[column].isin(value_list)],
             "==": lambda df: df.loc[df[column].isin(value_list)],

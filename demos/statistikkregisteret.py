@@ -17,7 +17,22 @@ from fagfunksjoner.api import statistikkregisteret as reg
 
 
 # %%
-reg.find_latest_publishing("vgu")
+shortcode = "vgu"
+
+# %%
+reg.single_stat()
+
+# %%
+reg.find_stat_shortcode(shortcode)
+
+# %%
+reg.find_latest_publishing(shortcode)
+
+# %%
+reg.find_publishings()
+
+# %%
+reg.specific_publishing()
 
 # %%
 reg.time_until_publishing("vgu")
@@ -32,3 +47,5 @@ kortkode = "vgu"
 
 if not datetime.timedelta(0) < reg.time_until_publishing(kortkode):
     raise ValueError("HAR DU IKKE MELDT PUBLISERING!?!?!?")
+
+# %%

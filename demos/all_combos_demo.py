@@ -105,7 +105,7 @@ def test_grand_total() -> None:
     result = all_combos_agg(
         data_in,
         ["sex", "age"],
-        {"points": sum},
+        {"points": "sum"},
         fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
         keep_empty=True,
         grand_total="I alt",
