@@ -24,7 +24,12 @@ single = reg.single_stat()
 single
 
 # %%
-single.triggerord
+print(single.navn.navn[0].text)
+print(single.eierseksjon.statid)
+for kontaktinfo in single.kontakter:
+    for kontakt in kontaktinfo.navn:
+        if kontakt.lang == "no":
+            print(kontakt.text)
 
 # %%
 reg.find_stat_shortcode(shortcode)

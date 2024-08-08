@@ -267,7 +267,6 @@ def parse_variant_single(entry: dict[str, Any]) -> Variant:
     Returns:
         Variant: The parsed Variant object.
     """
-    logger.info(f"{entry}")
     return Variant(
         navn=entry["navn"],
         statid=entry["@id"],
