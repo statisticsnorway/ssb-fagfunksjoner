@@ -114,4 +114,4 @@ def test_find_stat_shortcode():
     assert single_stat("1").triggerord["triggerord"][0]["lang"] == "no"
     assert isinstance(find_latest_publishing("test").endret, datetime.datetime)
     assert find_publishings("test").publiseringer[0].statid.isdigit()
-    assert isinstance(specific_publishing("1").erAvlyst, bool)
+    assert isinstance(specific_publishing("1").er_avlyst, bool)
