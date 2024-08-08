@@ -10,12 +10,13 @@ import requests as rs
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
+
 @dataclass
 class PublishingSpecifics:
     """Hold specific information about each publishing."""
 
     navn: str
-    id: str
+    statid: str
     statistikk: str
     variant: str
     status: str
@@ -36,7 +37,7 @@ class PublishingSpecifics:
 class StatisticPublishingShort:
     """Top-level metadata for a specific statistical product."""
 
-    id: str
+    statid: str
     variant: str
     deskFlyt: str
     endret: datetime.datetime
@@ -51,43 +52,47 @@ class MultiplePublishings:
     publiseringer: list[StatisticPublishingShort]
     antall: int
     dato: str
-    
-    
-    
+
+
 @dataclass
 class LangText:
     lang: str
     text: None | str
-    navn: None 
+    navn: None
+
 
 @dataclass
 class Navn:
     navn: list[LangText]
 
+
 @dataclass
 class Kontakt:
     navn: list[LangText]
-    id: str
+    statid: str
     telefon: str
     mobil: str
     epost: str
     initialer: str
 
+
 @dataclass
 class Eierseksjon:
     navn: list[LangText]
-    id: str
+    statid: str
     navn_attr: str
+
 
 @dataclass
 class Variant:
     navn: str
-    id: str
+    statid: str
     revisjon: str
     opphort: str
     detaljniva: str
     detaljniva_EN: str
     frekvens: str
+
 
 @dataclass
 class SinglePublishing:
@@ -102,91 +107,95 @@ class SinglePublishing:
     varianter: list[Variant]
     regionaleNivaer: list[str]
     videreforing: dict
-    id: str
+    statid: str
     defaultLang: str
     godkjent: str
     endret: str
     deskFlyt: str
-    dirFlyt: str    
-    
-    
+    dirFlyt: str
+
+
 def parse_lang_text_single(entry: dict[str, Any]) -> LangText:
     return LangText(
-        lang=entry['@{http://www.w3.org/XML/1998/namespace}lang'],
-        text=entry.get('#text', None),
-        navn=entry.get('@navn', None),
+        lang=entry["@{http://www.w3.org/XML/1998/namespace}lang"],
+        text=entry.get("#text", None),
+        navn=entry.get("@navn", None),
     )
+
 
 def parse_navn_single(entry: dict[str, Any]) -> Navn:
-    return Navn(navn=[parse_lang_text_single(e) for e in entry['navn']])
+    return Navn(navn=[parse_lang_text_single(e) for e in entry["navn"]])
+
 
 def parse_kontakt_single(entry: dict[str, Any]) -> Kontakt:
-    navn = [parse_lang_text_single(e) for e in entry['navn']]
+    navn = [parse_lang_text_single(e) for e in entry["navn"]]
     return Kontakt(
         navn=navn,
-        id=entry['@id'],
-        telefon=entry['@telefon'],
-        mobil=entry['@mobil'],
-        epost=entry['@epost'],
-        initialer=entry['@initialer']
+        statid=entry["@id"],
+        telefon=entry["@telefon"],
+        mobil=entry["@mobil"],
+        epost=entry["@epost"],
+        initialer=entry["@initialer"],
     )
 
+
 def parse_eierseksjon_single(entry: dict[str, Any]) -> Eierseksjon:
-    navn = [parse_lang_text_single(e) for e in entry['navn']]
-    return Eierseksjon(
-        navn=navn,
-        id=entry['@id'],
-        navn_attr=entry['@navn']
-    )
+    navn = [parse_lang_text_single(e) for e in entry["navn"]]
+    return Eierseksjon(navn=navn, statid=entry["@id"], navn_attr=entry["@navn"])
+
 
 def parse_triggerord_single(entry: dict[str, Any]) -> dict:
     return {
-        'lang': entry['@{http://www.w3.org/XML/1998/namespace}lang'],
-        'text': entry['#text']
+        "lang": entry["@{http://www.w3.org/XML/1998/namespace}lang"],
+        "text": entry["#text"],
     }
+
 
 def parse_variant_single(entry: dict[str, Any]) -> Variant:
     logger.info(f"{entry}")
     return Variant(
-        navn=entry['navn'],
-        id=entry['@id'],
-        revisjon=entry['@revisjon'],
-        opphort=entry['@opphort'],
-        detaljniva=entry['@detaljniva'],
-        detaljniva_EN=entry['@detaljniva_EN'],
-        frekvens=entry['@frekvens']
+        navn=entry["navn"],
+        statid=entry["@id"],
+        revisjon=entry["@revisjon"],
+        opphort=entry["@opphort"],
+        detaljniva=entry["@detaljniva"],
+        detaljniva_EN=entry["@detaljniva_EN"],
+        frekvens=entry["@frekvens"],
     )
+
 
 def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
 
-    navn = parse_navn_single(root['navn'])
-    kortnavn = root['kortnavn']['#text']
-    gamleEmnekoder = root['gamleEmnekoder']
-    forstegangspublisering = root['forstegangspublisering']
+    navn = parse_navn_single(root["navn"])
+    kortnavn = root["kortnavn"]["#text"]
+    gamleEmnekoder = root["gamleEmnekoder"]
+    forstegangspublisering = root["forstegangspublisering"]
     try:
         forstegangspublisering = dateutil.parser.parse(forstegangspublisering).date()
     except ValueError:
         pass
-    status = root['status']['@kode']
-    eierseksjon = parse_eierseksjon_single(root['eierseksjon'])
-    kontakter = [parse_kontakt_single(e) for e in root['kontakter']['kontakt']]
-    triggerord = [parse_triggerord_single(e) for e in root['triggerord']['triggerord']]
+    status = root["status"]["@kode"]
+    eierseksjon = parse_eierseksjon_single(root["eierseksjon"])
+    kontakter = [parse_kontakt_single(e) for e in root["kontakter"]["kontakt"]]
+    triggerord = [parse_triggerord_single(e) for e in root["triggerord"]["triggerord"]]
     # Some times single variants are not in a list already?
-    if not isinstance(root['varianter']['variant'], list):
-        root['varianter']['variant'] = [root['varianter']['variant']]
-    varianter = [parse_variant_single(variant) for variant in root['varianter']['variant']]
-    regionaleNivaer = root['regionaleNivaer']['kode']
-    videreforing = root['videreforing']
-    id = root['@id']
-    defaultLang = root['@defaultLang']
-    godkjent = root['@godkjent']
-    endret = root['@endret']
+    if not isinstance(root["varianter"]["variant"], list):
+        root["varianter"]["variant"] = [root["varianter"]["variant"]]
+    varianter = [
+        parse_variant_single(variant) for variant in root["varianter"]["variant"]
+    ]
+    regionaleNivaer = root["regionaleNivaer"]["kode"]
+    videreforing = root["videreforing"]
+    statid = root["@id"]
+    defaultLang = root["@defaultLang"]
+    godkjent = root["@godkjent"]
+    endret = root["@endret"]
     try:
         endret = dateutil.parser.parse(endret)
     except ValueError:
         pass
-    deskFlyt = root['@deskFlyt']
-    dirFlyt = root['@dirFlyt']
+    deskFlyt = root["@deskFlyt"]
+    dirFlyt = root["@dirFlyt"]
 
     return SinglePublishing(
         navn=navn,
@@ -200,13 +209,14 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
         varianter=varianter,
         regionaleNivaer=regionaleNivaer,
         videreforing=videreforing,
-        id=id,
+        statid=statid,
         defaultLang=defaultLang,
         godkjent=godkjent,
         endret=endret,
         deskFlyt=deskFlyt,
-        dirFlyt=dirFlyt
+        dirFlyt=dirFlyt,
     )
+
 
 def kwargs_specifics(nested: dict[str, Any]) -> dict[str, Any]:
     """Map fields in specifics to kwargs for the dataclass.
@@ -219,7 +229,7 @@ def kwargs_specifics(nested: dict[str, Any]) -> dict[str, Any]:
     """
     return {
         "navn": nested["publisering"]["navn"],
-        "id": nested["publisering"]["@id"],
+        "statid": nested["publisering"]["@id"],
         "statistikk": nested["publisering"]["@statistikk"],
         "variant": nested["publisering"]["@variant"],
         "status": nested["publisering"]["@status"],
@@ -297,13 +307,14 @@ def single_stat(stat_id: str = "4922") -> SinglePublishing:
         stat_id (str): The ID for the product in statistikkregisteret. Defaults to "4922".
 
     Returns:
-        StatisticPublishingShort: Datastructure with the found metadata.
+        SinglePublishing: Datastructure with the found metadata.
     """
     url = f"https://i.ssb.no/statistikkregisteret/statistikk/xml/{stat_id}"
     result = rs.get(url)
     result.raise_for_status()
     nested: dict[str, Any] = etree_to_dict(ET.fromstring(result.text))["statistikk"]
     return parse_data_single(nested)
+
 
 @lru_cache(maxsize=128)
 def find_publishings(
@@ -335,12 +346,14 @@ def find_publishings(
     return MultiplePublishings(
         publiseringer=[
             StatisticPublishingShort(
-                id=pub["@id"],
+                statid=pub["@id"],
                 variant=pub["@variant"],
                 deskFlyt=pub["@deskFlyt"],
                 endret=dateutil.parser.parse(pub["@endret"]),
                 statistikkKortnavn=pub["@statistikkKortnavn"],
-                specifics=pub["specifics"], # Already in the correct class from specific_p
+                specifics=pub[
+                    "specifics"
+                ],  # Already in the correct class from specific_p
             )
             for pub in publishings["publisering"]
         ],
@@ -369,7 +382,9 @@ def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta | No
     return None
 
 
-def find_latest_publishing(shortname: str = "trosamf") -> StatisticPublishingShort | None:
+def find_latest_publishing(
+    shortname: str = "trosamf",
+) -> StatisticPublishingShort | None:
     """Find the date of the latest publishing of the statistical product.
 
     Args:

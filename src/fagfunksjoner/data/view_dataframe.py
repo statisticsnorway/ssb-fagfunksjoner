@@ -42,7 +42,9 @@ def filter_display(
         if isinstance(value, tuple):
             value_list: tuple[str | int | float, ...] = value
         else:
-            raise TypeError(f"Cant handle this type of value {value} {type(value)} with this operator {operator}.")
+            raise TypeError(
+                f"Cant handle this type of value {value} {type(value)} with this operator {operator}."
+            )
         operator_functions_list: dict[str, Callable[[pd.DataFrame], pd.DataFrame]] = {
             "!=": lambda df: df.loc[~df[column].isin(value_list)],
             "==": lambda df: df.loc[df[column].isin(value_list)],
