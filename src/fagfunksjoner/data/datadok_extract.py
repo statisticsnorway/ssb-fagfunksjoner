@@ -31,6 +31,9 @@ import pandas as pd
 import requests
 
 from fagfunksjoner.fagfunksjoner_logger import logger
+from fagfunksjoner.prodsone.check_env import linux_shortcuts
+from fagfunksjoner.data.dicts import get_key_by_value
+
 
 
 # %% [markdown]
@@ -561,36 +564,81 @@ def open_path_datadok(path: str, **read_fwf_params: Any) -> ArchiveData:
     Returns:
         ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
     """
-    # Correcting path for API
-    dokpath = path
-    if dokpath.endswith(".dat") or dokpath.endswith(".txt"):
-        dokpath = ".".join(dokpath.split(".")[:-1])
-    url_address = f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={dokpath}"
+    
 
-    # Correcting address if it doesnt go anywhere
-    if 200 != requests.get(url_address).status_code and not path.startswith("$"):
-        for name, stamm in os.environ.items():
-            if not name.startswith("JUPYTERHUB") and path.startswith(stamm):
-                dokpath = f"${name}{path.replace(stamm,'')}"
-    url_address = f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={dokpath}"
+    def url_replace(path: str) -> str:
+        return f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={path}"
+
+    def test_url(url: str) -> bool:
+        result = requests.get(url)
+        if 200 != result.status_code or "Value cannot be null." in result.text:
+            return False
+        return True
+    
+    
+    # Combinations to test
+    file_ext_tests = ["", ".dat", ".txt"]
+    if path.endswith(".dat") or path.endswith(".txt"):
+        path = path[:-4]
+    
+    paths = [path]
+
+    # Get the opposite of the dollar-ish path
+    stammer = linux_shortcuts()
+    if path.startswith("$"):
+        dollar = path.lsplit("/", 1)[0].replace("$","").replace("_PII", "").upper()
+        non_dollar = stammer.get(dollar , None)
+        if non_dollar is not None:
+            paths += [os.path.join(non_dollar, "/".join(path.split('/')[-1:]))]
+    else:
+        if not path.startswith("/"):
+            path = "/" + path
+        path_parts = [x for x in path.split("/")[:4] if x]
+        if len(path_parts) > 3:
+            path_parts = path_parts[:3]
+        non_dollar = "/" + "/".join(path_parts)
+        dollar = get_key_by_value(stammer, non_dollar)
+        paths += [path.replace(non_dollar, "$" + dollar)]
+        
+        
+    # add pii/ non-pii if necessary
+    paths_pii = []
+    for path in paths:
+        if path.startswith("$"):
+            path_parts = [x for x in path.split("/") if x]
+            if not path_parts[0].endswith("_PII"):
+                path_parts[0] += "_PII"
+            else:
+                path_parts[0] = path_parts[0].replace("_PII","")
+            paths_pii += ["/".join(path_parts)]
+        else:
+            path_parts = [x for x in path.split("/") if x]
+            if not path_parts[2].endswith("_pii"):
+                path_parts[2] += "_pii"
+            else:
+                path_parts[2] = path_parts[2].replace("_pii","")
+            paths_pii += ["/" + "/".join(path_parts)]
+    
+    paths += paths_pii
+
+    combinations = [(path, ext) for path in paths for ext in file_ext_tests]
+
+    for path, ext in combinations:
+        url_address =url_replace(path + ext)
+        if test_url(url_address):
+            break
+    else:
+        raise ValueError(f"Couldnt find datadok-api response for any of these combinations: {combinations}")
+    # url_address should now go to somewhere...
+    logger.info(f"Found datadok-response at path {path}{ext}")
 
     # Correcting path in
-    filepath = path
-    # Flip Stamm
-    for name, stamm in os.environ.items():
-        if not name.startswith("JUPYTERHUB") and filepath.startswith(f"${name}"):
-            end = filepath.replace(f"${name}", "")
-            if end.startswith(os.sep):
-                end = end[len(os.sep) :]
-            filepath = os.path.join(stamm, end)
-
-    if filepath.endswith(".txt") or filepath.endswith(".dat"):
-        ...
+    for path, ext in combinations:
+        filepath = f"{path}{ext}"
+        if os.path.isfile(filepath):
+            break
     else:
-        if os.path.isfile(f"{filepath}.txt"):
-            filepath += ".txt"
-        elif os.path.isfile(f"{filepath}.dat"):
-            logger.info(filepath)
-            filepath += ".dat"
+        raise ValueError(f"Couldnt find a file on disk for {filepath} using these combinations: {combinations}")
+    logger.info(f"Found datafile at path {filepath}")
 
     return import_archive_data(url_address, filepath, **read_fwf_params)
