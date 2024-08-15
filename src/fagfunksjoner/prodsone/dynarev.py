@@ -13,10 +13,10 @@ def dynarev_uttrekk(
     """Fetches and processes data from the Oracle database using the Oracle class for connection management.
 
     Args:
-        delreg_nr (str): Delregisternummer.
-        skjema (str): Skjemanavn.
-        dublettsjekk (bool) : If True, checks for and returns duplicates.
-        sfu_cols (list[str | str. | bool | None) : Specify a list of columns for SFU data, or a single column as a string.
+        delreg_nr: Delregisternummer.
+        skjema Skjemanavn.
+        dublettsjekk: If True, checks for and returns duplicates.
+        sfu_cols: Specify a list of columns for SFU data, or a single column as a string.
             If True picks all columns. If None, skips getting sfu-data.
 
     Returns:

@@ -24,7 +24,7 @@ def date_time(date: dt.datetime | None = None) -> str:
     See: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
 
     Args:
-        date (dt.datetime | None): A specified datetime you want to convert to string format.
+        date: A specified datetime you want to convert to string format.
             If not specified, it will give the datetime right now.
 
     Returns:
@@ -48,7 +48,7 @@ def date(date: dt.date | None = None) -> str:
     """Get date with standard format.
 
     Args:
-        date (dt.date | None): A specified date you want to convert to string format.
+        date: A specified date you want to convert to string format.
             If not specified, it will give the date today.
 
     Returns:
@@ -63,7 +63,7 @@ def month(date: dt.date | None = None) -> str:
     """Get month period with standard format.
 
     Args:
-        date (dt.date | None): A specified date you want to convert to string format.
+        date: A specified date you want to convert to string format.
             If not specified, it will give the date today.
 
     Returns:
@@ -78,7 +78,7 @@ def year(date: dt.date | None = None) -> str:
     """Get year period with standard format.
 
     Args:
-        date (dt.date | None): A specified date you want to convert to string format.
+        date: A specified date you want to convert to string format.
             If not specified, it will give the date today.
 
     Returns:
@@ -93,7 +93,7 @@ def week(date: dt.date | None = None) -> str:
     """Get week period with standard format.
 
     Args:
-        date (dt.date | None): A specified date you want to convert to string format.
+        date: A specified date you want to convert to string format.
             If not specified, it will give the date today.
 
     Returns:
@@ -108,7 +108,7 @@ def year_days(date: dt.date | None = None) -> str:
     """Gives day of year period with standard format.
 
     Args:
-        date (dt.date | None): A specified date you want to convert to string format.
+        date: A specified date you want to convert to string format.
             If not specified, it will give the date today.
 
     Returns:
@@ -123,7 +123,7 @@ def quarterly(date: dt.date | None = None) -> str:
     """Get quarter period with standard format.
 
     Args:
-        date (dt.date | None): A specified date you want to convert to string format.
+        date: A specified date you want to convert to string format.
             If not specified, it will give the date today.
 
     Returns:
@@ -138,7 +138,7 @@ def bimester(date: dt.date | None = None) -> str:
     """Get bimester period with standard format.
 
     Args:
-        date (dt.date | None): A specified date you want to convert to string format.
+        date: A specified date you want to convert to string format.
             If not specified, it will give the date today.
 
     Returns:
@@ -162,7 +162,7 @@ def triannual(date: dt.date | None = None) -> str:
     """Gives triannual period with standard format.
 
     Args:
-        date (dt.date | None): A specified date you want to convert to string format.
+        date: A specified date you want to convert to string format.
             If not specified, it will give the date today.
 
     Returns:
@@ -179,7 +179,7 @@ def halfyear(date: dt.date | None = None) -> str:
     """Get halfyear period with standard format.
 
     Args:
-        date (dt.date | None): A specified date you want to convert to string format.
+        date: A specified date you want to convert to string format.
             If not specified, it will give the date today.
 
     Returns:
@@ -199,10 +199,10 @@ def _find_period(period_dict: dict[str, list[int]], month: int) -> str:
     represent a month between 1 and 12.
 
     Args:
-        period_dict (dict[str, list[int]]): Dict with self-made period standard.
+        period_dict: Dict with self-made period standard.
             The keys represent the self-made period,
             and the values are list of int that represent a month between 1 and 12.
-        month (int): Current month in number, between 1 and 12.
+        month: Current month in number, between 1 and 12.
 
     Returns:
         str: The self-made period, the key, fram the period_dict.

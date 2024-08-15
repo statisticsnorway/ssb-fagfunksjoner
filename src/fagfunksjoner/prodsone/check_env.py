@@ -36,7 +36,7 @@ def linux_shortcuts(insert_environ: bool = False) -> dict[str, str]:
     If the function can find the file they are shared in.
 
     Args:
-        insert_environ (bool): Set to True if you want the dict to be inserted into the
+        insert_environ: Set to True if you want the dict to be inserted into the
             environment variables (os.environ).
 
     Returns:

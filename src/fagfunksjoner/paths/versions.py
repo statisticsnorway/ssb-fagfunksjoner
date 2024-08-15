@@ -21,7 +21,7 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
     - Locally: https://docs.python.org/3/library/glob.html
 
     Args:
-        glob_list_path (list[str]): List of strings that represents a filepath.
+        glob_list_path: List of strings that represents a filepath.
             Recommend that the list is created with glob operation.
 
     Returns:
@@ -47,7 +47,7 @@ def latest_version_number(filepath: str) -> int:
     """Function for finding latest version in use for a file.
 
     Args:
-        filepath (str): GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
+        filepath: GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
             eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet
             or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
 
@@ -91,7 +91,7 @@ def next_version_number(filepath: str) -> int:
     """Function for finding next version for a new file.
 
     Args:
-        filepath (str): GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
+        filepath: GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
             eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet
             or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
 
@@ -111,7 +111,7 @@ def next_version_path(filepath: str) -> str:
     It increments the version number by one, to ensure the new file path is unique.
 
     Args:
-        filepath (str): The address for the file.
+        filepath: The address for the file.
 
     Returns:
         str: The new file path with an incremented version number and specified suffix.
@@ -131,7 +131,7 @@ def split_path(filepath: str) -> tuple[str, str, str]:
     """Split the filepath into three pieces, version, file-extension and the rest.
 
     Args:
-        filepath (str): The path you want split into pieces.
+        filepath: The path you want split into pieces.
 
     Raises:
         ValueError: If the version-part doesnt follow the naming standard.

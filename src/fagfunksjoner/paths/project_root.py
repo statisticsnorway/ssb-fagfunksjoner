@@ -64,7 +64,7 @@ class ProjectRoot:
         Looks in the current folder, the specified path, the project root.
 
         Args:
-            config_file (str): The path or filename of the config-file to load.
+            config_file: The path or filename of the config-file to load.
 
         Returns:
             dict[Any]: The contents of the toml-file.
@@ -131,7 +131,7 @@ def load_toml(config_file: str) -> dict[Any, Any]:
     Looks in the current folder, the specified path, the project root.
 
     Args:
-        config_file (str): The path or filename of the config-file to load.
+        config_file: The path or filename of the config-file to load.
 
     Returns:
         dict[Any]: The contents of the toml-file

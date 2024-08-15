@@ -14,10 +14,10 @@ def filter_display(
     """Filter data based on args, and display the result.
 
     Args:
-        dataframe (pd.DataFrame): The DataFrame to filter.
-        column (str): Column to base filter on.
-        value (str | int | float):The value to compare filter against.
-        operator (str): How to compare column against value.
+        dataframe: The DataFrame to filter.
+        column: Column to base filter on.
+        value:The value to compare filter against.
+        operator: How to compare column against value.
 
     Returns:
         None: only has visual side-effects
@@ -64,12 +64,12 @@ def view_dataframe(
     """Display an interactive widget for filtering and viewing data in a DataFrame based on selection of values in one column.
 
     Args:
-        dataframe (pd.DataFrame): The DataFrame containing the data to be filtered.
-        column (str): The column in the DataFrame to be filtered.
-        operator (str): The comparison operator for filtering (may be altered during the display).
+        dataframe: The DataFrame containing the data to be filtered.
+        column: The column in the DataFrame to be filtered.
+        operator: The comparison operator for filtering (may be altered during the display).
             Options: '==', '!=', '>=', '>', '<', '<='.
             Default: '=='.
-        unique_limit (int): The maximum number of unique values in the column
+        unique_limit: The maximum number of unique values in the column
             for using '==' or '!=' operators.
             Default: 100.
 

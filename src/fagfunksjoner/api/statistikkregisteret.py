@@ -62,9 +62,9 @@ class LangText:
     """Represents a text with a language attribute.
 
     Attributes:
-        lang (str): The language code.
-        text (None | str): The text in the specified language.
-        navn (None): Unused attribute, kept for compatibility.
+        lang: The language code.
+        text: The text in the specified language.
+        navn: Unused attribute, kept for compatibility.
     """
 
     lang: str
@@ -77,7 +77,7 @@ class Navn:
     """Represents a list of LangText objects.
 
     Attributes:
-        navn_lang (list[LangText]): A list of LangText objects.
+        navn_lang: A list of LangText objects.
     """
 
     navn_lang: list[LangText]
@@ -88,12 +88,12 @@ class Kontakt:
     """Represents a contact with various attributes.
 
     Attributes:
-        navn (list[LangText]): A list of LangText objects representing names.
-        statid (str): The contact ID.
-        telefon (str): The contact's phone number.
-        mobil (str): The contact's mobile number.
-        epost (str): The contact's email address.
-        initialer (str): The contact's initials.
+        navn: A list of LangText objects representing names.
+        statid: The contact ID.
+        telefon: The contact's phone number.
+        mobil: The contact's mobile number.
+        epost: The contact's email address.
+        initialer: The contact's initials.
     """
 
     navn: list[LangText]
@@ -109,9 +109,9 @@ class Eierseksjon:
     """Represents an ownership section with various attributes.
 
     Attributes:
-        navn (list[LangText]): A list of LangText objects representing names.
-        statid (str): The section ID.
-        navn_attr (str): The section name.
+        navn: A list of LangText objects representing names.
+        statid: The section ID.
+        navn_attr: The section name.
     """
 
     navn: list[LangText]
@@ -123,13 +123,13 @@ class Variant:
     """Represents a variant with various attributes.
 
     Attributes:
-        navn (str): The name of the variant.
-        statid (str): The variant ID.
-        revisjon (str): The revision of the variant.
-        opphort (str): Whether the variant is discontinued.
-        detaljniva (str): Detailed level information.
-        detaljniva_EN (str): Detailed level information in English.
-        frekvens (str): The frequency of the variant.
+        navn: The name of the variant.
+        statid: The variant ID.
+        revisjon: The revision of the variant.
+        opphort: Whether the variant is discontinued.
+        detaljniva: Detailed level information.
+        detaljniva_EN: Detailed level information in English.
+        frekvens: The frequency of the variant.
     """
 
     navn: str
@@ -146,23 +146,23 @@ class SinglePublishing:
     """Represents a single publishing entry with various attributes.
 
     Attributes:
-        navn (Navn): The name details.
-        kortnavn (str): The short name.
-        gamleEmnekoder (str): The old subject codes.
-        forstegangspublisering (str): The first publication date.
-        status (str): The status code.
-        eierseksjon (Eierseksjon): The ownership section details.
-        kontakter (list[Kontakt]): A list of contacts.
-        triggerord (dict[str, list[dict[str, str]]]): A dictionary of trigger words.
-        varianter (list[Variant]): A list of variants.
-        regionaleNivaer (list[str]): A list of regional levels.
-        videreforing (dict): A dictionary of continuation information.
-        statid (str): The ID of the publishing entry.
-        defaultLang (str): The default language code.
-        godkjent (str): Approval status.
-        endret (str): The last modified date.
-        deskFlyt (str): Desk flow status.
-        dirFlyt (str): Directory flow status.
+        navn: The name details.
+        kortnavn: The short name.
+        gamleEmnekoder: The old subject codes.
+        forstegangspublisering: The first publication date.
+        status: The status code.
+        eierseksjon: The ownership section details.
+        kontakter: A list of contacts.
+        triggerord: A dictionary of trigger words.
+        varianter: A list of variants.
+        regionaleNivaer: A list of regional levels.
+        videreforing: A dictionary of continuation information.
+        statid: The ID of the publishing entry.
+        defaultLang: The default language code.
+        godkjent: Approval status.
+        endret: The last modified date.
+        deskFlyt: Desk flow status.
+        dirFlyt: Directory flow status.
     """
 
     navn: Navn
@@ -188,7 +188,7 @@ def parse_lang_text_single(entry: dict[str, Any]) -> LangText:
     """Parses a dictionary entry into a LangText object.
 
     Args:
-        entry (dict[str, Any]): The dictionary entry to parse.
+        entry: The dictionary entry to parse.
 
     Returns:
         LangText: The parsed LangText object.
@@ -204,7 +204,7 @@ def parse_navn_single(entry: dict[str, Any]) -> Navn:
     """Parses a dictionary entry into a Navn object.
 
     Args:
-        entry (dict[str, Any]): The dictionary entry to parse.
+        entry: The dictionary entry to parse.
 
     Returns:
         Navn: The parsed Navn object.
@@ -216,7 +216,7 @@ def parse_kontakt_single(entry: dict[str, Any]) -> Kontakt:
     """Parses a dictionary entry into a Kontakt object.
 
     Args:
-        entry (dict[str, Any]): The dictionary entry to parse.
+        entry: The dictionary entry to parse.
 
     Returns:
         Kontakt: The parsed Kontakt object.
@@ -236,7 +236,7 @@ def parse_eierseksjon_single(entry: dict[str, Any]) -> Eierseksjon:
     """Parses a dictionary entry into an Eierseksjon object.
 
     Args:
-        entry (dict[str, Any]): The dictionary entry to parse.
+        entry: The dictionary entry to parse.
 
     Returns:
         Eierseksjon: The parsed Eierseksjon object.
@@ -249,7 +249,7 @@ def parse_triggerord_single(entry: dict[str, Any]) -> dict[str, str]:
     """Parses a dictionary entry into a trigger word dictionary.
 
     Args:
-        entry (dict[str, Any]): The dictionary entry to parse.
+        entry: The dictionary entry to parse.
 
     Returns:
         dict: The parsed trigger word dictionary.
@@ -264,7 +264,7 @@ def parse_variant_single(entry: dict[str, Any]) -> Variant:
     """Parses a dictionary entry into a Variant object.
 
     Args:
-        entry (dict[str, Any]): The dictionary entry to parse.
+        entry: The dictionary entry to parse.
 
     Returns:
         Variant: The parsed Variant object.
@@ -284,7 +284,7 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
     """Parses the root dictionary into a SinglePublishing object.
 
     Args:
-        root (dict[str, Any]): The root dictionary to parse.
+        root: The root dictionary to parse.
 
     Returns:
         SinglePublishing: The parsed SinglePublishing object.
@@ -350,7 +350,7 @@ def kwargs_specifics(nested: dict[str, Any]) -> dict[str, Any]:
     """Map fields in specifics to kwargs for the dataclass.
 
     Args:
-        nested (dict[str, Any]): The XML-datastructure to map.
+        nested: The XML-datastructure to map.
 
     Returns:
         dict[str, Any]: Cleaned up data-structure
@@ -397,10 +397,10 @@ def find_stat_shortcode(
     """Find the data for a statistical product by searching by its shortname.
 
     Args:
-        shortcode_or_id (str): The shortname for the statistical product. Defaults to "trosamf".
-        get_singles (bool): Get more single data. Defaults to True.
-        get_publishings (bool): Get more publishing data. Defaults to True.
-        get_publishing_specifics (bool): Get the specific publishings data as well. Defaults to True.
+        shortcode_or_id: The shortname for the statistical product. Defaults to "trosamf".
+        get_singles: Get more single data. Defaults to True.
+        get_publishings: Get more publishing data. Defaults to True.
+        get_publishing_specifics: Get the specific publishings data as well. Defaults to True.
 
     Returns:
         list[dict[str, Any]]: A data structure containing the found data on the product.
@@ -432,7 +432,7 @@ def single_stat(stat_id: str = "4922") -> SinglePublishing:
     """Get the metadata for specific product.
 
     Args:
-        stat_id (str): The ID for the product in statistikkregisteret. Defaults to "4922".
+        stat_id: The ID for the product in statistikkregisteret. Defaults to "4922".
 
     Returns:
         SinglePublishing: Datastructure with the found metadata.
@@ -451,8 +451,8 @@ def find_publishings(
     """Get the publishings for a specific shortcode.
 
     Args:
-        shortname (str): The shortcode to look for in the API among the publishings. Defaults to "trosamf".
-        get_publishing_specifics (bool): Looks up more info about each of the publishings found. Defaults to True.
+        shortname: The shortcode to look for in the API among the publishings. Defaults to "trosamf".
+        get_publishing_specifics: Looks up more info about each of the publishings found. Defaults to True.
 
     Returns:
         MultiplePublishings: A datastructure with the found metadata about the statistics.
@@ -496,7 +496,7 @@ def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta | No
     Returns a negative timedelta, if there is no future publishing recorded.
 
     Args:
-        shortname (str): The shortcode to look for in the API among the publishings. Defaults to "trosamf".
+        shortname: The shortcode to look for in the API among the publishings. Defaults to "trosamf".
 
     Returns:
         datetime.timedelta | None : The time difference between now, and the latest publishing date.
@@ -521,7 +521,7 @@ def find_latest_publishing(
     """Find the date of the latest publishing of the statistical product.
 
     Args:
-        shortname (str): The shortname to find the latest publishing for. Defaults to "trosamf".
+        shortname: The shortname to find the latest publishing for. Defaults to "trosamf".
 
     Returns:
         StatisticPublishingShort | None: data about the specific publishing. Or None if nothing is found.
@@ -549,7 +549,7 @@ def specific_publishing(publish_id: str = "162143") -> PublishingSpecifics:
     """Get the publishing-data from a specific publishing-ID in statistikkregisteret.
 
     Args:
-        publish_id (str): The API-ID for the publishing. Defaults to "162143".
+        publish_id: The API-ID for the publishing. Defaults to "162143".
 
     Returns:
         PublishingSpecifics: The metadata found for the specific publishing.
@@ -565,7 +565,7 @@ def etree_to_dict(t: ET.Element) -> dict[str, Any]:
     """Convert an XML-tree to a python dictionary.
 
     Args:
-        t (ET): The XML element to convert.
+        t: The XML element to convert.
 
     Returns:
         dict[str, Any]: The python dictionary that has been converted to.

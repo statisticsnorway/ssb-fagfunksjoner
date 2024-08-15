@@ -5,8 +5,8 @@ def cast_pyarrow_table_schema(data: pa.Table, schema: pa.Schema) -> pa.Table:
     """Set correct schema on Pyarrow Table, especially when dictionary datatype is wanted.
 
     Args:
-        data (pa.Table): The pyarrow table data
-        schema (pa.schema): The wanted schema to cast to the table data.
+        data: The pyarrow table data
+        schema: The wanted schema to cast to the table data.
             All columns in pyarrow table must be present in the schema.
             The order of the columns in the schema will be used.
 
@@ -38,8 +38,8 @@ def restructur_pyarrow_schema(
     this new schema.
 
     Args:
-        inuse_schema (pa.Schema): The schema that is in use of your pyarrow dataset or table.
-        wanted_schema (pa.Schema): The schema that you want, but it is not in the same order of
+        inuse_schema: The schema that is in use of your pyarrow dataset or table.
+        wanted_schema: The schema that you want, but it is not in the same order of
             the schema that is in use.
 
     Returns:

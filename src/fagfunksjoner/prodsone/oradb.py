@@ -58,7 +58,7 @@ class Oracle:
         If it is too much data, then use the select_many method.
 
         Args:
-            sql (str): the SQL query statement
+            sql: the SQL query statement
 
         Returns:
             list[dict[str, Any]]: A list of dictionaries of every record, column names as keys.
@@ -93,8 +93,8 @@ class Oracle:
         correct order to each other.
 
         Args:
-            sql (str): SQL query statement, insert or update.
-            update (list[tuple[Any, ...]]): list of record values to insert or update.
+            sql: SQL query statement, insert or update.
+            update: list of record values to insert or update.
 
         Raises:
             error: If the connection returns an error.
@@ -123,8 +123,8 @@ class Oracle:
         which is preferred when there is a lot of data that needs to be fetched.
 
         Args:
-            sql (str): the SQL query statement.
-            batchsize (int): the size of rows per batch.
+            sql: the SQL query statement.
+            batchsize: the size of rows per batch.
 
         Returns:
             list[dict[str, Any]]: A list of dictionaries of every record, column names as keys.

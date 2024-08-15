@@ -12,8 +12,8 @@ def get_key_by_value(data: dict[KeyType, Any], value: Any) -> KeyType | list[Key
     """Searches through the values in a dict for a match, returns the key.
 
     Args:
-        data (dict[KeyType, Any]): The data to search through, will only look in top most level...
-        value (Any): The value to look for in the dict
+        data: The data to search through, will only look in top most level...
+        value: The value to look for in the dict
 
     Returns:
         KeyType | list[KeyType]: Returns a single key if a single match on value,

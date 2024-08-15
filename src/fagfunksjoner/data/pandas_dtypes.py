@@ -17,8 +17,8 @@ def dtype_set_from_json(df: pd.DataFrame, json_path: str) -> pd.DataFrame:
     """Use a stored json to change the dtypes of a dataframe to match what was stored.
 
     Args:
-        df (pd.DataFrame): The Dataframe to manipulate towards the stored dtypes.
-        json_path (str): The jsonfile containing the dtypes on the columns.
+        df: The Dataframe to manipulate towards the stored dtypes.
+        json_path: The jsonfile containing the dtypes on the columns.
 
     Returns:
         pd.DataFrame: The manipulated dataframe, with newly set dtypes.
@@ -36,8 +36,8 @@ def dtype_store_json(df: pd.DataFrame, json_path: str) -> None:
     """Store the dtypes of a dataframes columns as a json for later reference.
 
     Args:
-        df (pd.DataFrame): The dataframe to look at for column names and dtypes.
-        json_path (str): The path to the jsonfile, to store dtypes in.
+        df: The dataframe to look at for column names and dtypes.
+        json_path: The path to the jsonfile, to store dtypes in.
     """
     dtype_metadata = {}
     for col, dtype in df.dtypes.items():
@@ -70,11 +70,11 @@ def auto_dtype(
     if number of unique values in the columns are below the threshold.
 
     Args:
-        df (pd.DataFrame): The dataframe to manipulate
-        cardinality_threshold (int): Less unique values in columns than this threshold,
+        df: The dataframe to manipulate
+        cardinality_threshold: Less unique values in columns than this threshold,
             means it should be converted to a categorical. Defaults to 0, meaning no conversion to categoricals.
-        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
-        show_memory (bool): Show the user how much memory was saved by doing the conversion, does require some processing. Defaults to True.
+        copy_df: The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        show_memory: Show the user how much memory was saved by doing the conversion, does require some processing. Defaults to True.
 
     Returns:
         pd.DataFrame: _description_
@@ -117,9 +117,9 @@ def decode_bytes(
     """Check object columns if they contain bytes and should be attempted to convert to real utf8 strings.
 
     Args:
-        df (pd.DataFrame): The dataframe to check.
-        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
-        check_row_len (int): How many rows to look for byte-content in, conserves processing, but might miss columns if set too low. Defaults to 50.
+        df: The dataframe to check.
+        copy_df: The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        check_row_len: How many rows to look for byte-content in, conserves processing, but might miss columns if set too low. Defaults to 50.
 
     Returns:
         pd.DataFrame: The dataframe with converted byte-columns to string-columns.
@@ -158,8 +158,8 @@ def object_to_strings(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
     """Convert columns that are still "object", to pyarrow strings.
 
     Args:
-        df (pd.DataFrame): The dataframe to manipulate.
-        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        df: The dataframe to manipulate.
+        copy_df: The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
 
     Returns:
         pd.DataFrame: The modified dataframe.
@@ -178,8 +178,8 @@ def strings_to_int(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
     This conserves A LOT of storage and memory.
 
     Args:
-        df (pd.DataFrame): The dataframe to manipulate.
-        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        df: The dataframe to manipulate.
+        copy_df: The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
 
     Returns:
         pd.DataFrame: The manipulated dataframe.
@@ -203,8 +203,8 @@ def smaller_ints(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
     """Downcasts ints to smaller int-dtypes to conserve space.
 
     Args:
-        df (pd.DataFrame): The dataframe to manipulate.
-        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        df: The dataframe to manipulate.
+        copy_df: The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
 
     Returns:
         pd.DataFrame: The manipulated dataframe.
@@ -222,10 +222,10 @@ def categories_threshold(
     """Convert to categoricals using a threshold of unique values.
 
     Args:
-        df (pd.DataFrame): The dataframe to convert to categoricals on.
-        cardinality_threshold (int): Less unique values in columns than this threshold,
+        df: The dataframe to convert to categoricals on.
+        cardinality_threshold: Less unique values in columns than this threshold,
             means it should be converted to a categorical. Defaults to 0, meaning no conversion to categoricals.
-        copy_df (bool): The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
+        copy_df: The reverse of inplace, make a copy in memory. This may give a memory impact, but be safer. Defaults to True.
 
     Returns:
         pd.DataFrame: The dataframe with converted columns to categoricals.

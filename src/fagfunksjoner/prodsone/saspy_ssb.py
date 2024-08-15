@@ -66,7 +66,7 @@ def set_password(password: str) -> None:
     Send this as the parameter into this function.
 
     Args:
-        password (str): Your password encrypted using SAS EG
+        password: Your password encrypted using SAS EG
     """
     brukernavn = getpass.getuser()
     authpath = "/ssb/bruker/" + brukernavn + "/.authinfo"
@@ -102,7 +102,7 @@ def swap_server(new_server: int) -> None:
     """Swap between the sas-servers you connect to with saspy.
 
     Args:
-        new_server (int): The server number to switch to.
+        new_server: The server number to switch to.
     """
     felles = os.environ["FELLES"]
     brukernavn = getpass.getuser()
@@ -140,7 +140,7 @@ def split_path_for_sas(path: Path) -> tuple[str, str, str]:
     """Split a path in three parts, mainly for having a name for the libname.
 
     Args:
-        path (Path): The full path to be split
+        path: The full path to be split
 
     Returns:
         tuple[str]: The three parts the path has been split into.
@@ -158,7 +158,7 @@ def saspy_df_from_path(path: str) -> pd.DataFrame:
     terminates the connection to saspy cleanly, and returns the dataframe.
 
     Args:
-        path (str): The full path to the sasfile you want to open with sas.
+        path: The full path to the sasfile you want to open with sas.
 
     Returns:
         pandas.DataFrame: The raw content of the sasfile straight from saspy
@@ -183,9 +183,9 @@ def sasfile_to_parquet(
     """Convert a sasfile directly to a parquetfile, using saspy and pandas.
 
     Args:
-        path_str (str): The path to the in-sas-file.
-        out_path_str (str): The path to place the parquet-file on
-        gzip (bool): If you want the parquetfile gzipped or not.
+        path_str: The path to the in-sas-file.
+        out_path_str: The path to place the parquet-file on
+        gzip: If you want the parquetfile gzipped or not.
 
     Returns:
         pandas.DataFrame: In case you want to use the content for something else.
@@ -217,8 +217,8 @@ def cp(from_path: str, to_path: str) -> dict[str, Any]:
     """Use saspy and sas-server to copy files.
 
     Args:
-        from_path (str): The path for the source file to copy
-        to_path (str): The path to place the copy on
+        from_path: The path for the source file to copy
+        to_path: The path to place the copy on
 
     Returns:
         dict[str, Any]: A key for if it succeded, and a key for holding the log as string.
