@@ -345,7 +345,7 @@ def make_single_dataframe_record(
     Returns:
         dict[str, str | float]: A dictionary representing a single record in the DataFrame.
     """
-    record = {
+    record: dict[str, str | float] = {
         **{
             dim.id: dim.values[int(series_key.split(":")[dim.keyPosition])]["name"]
             for dim in structure_obj.dimensions.get("series", [])

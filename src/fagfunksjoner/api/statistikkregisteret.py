@@ -409,25 +409,33 @@ def find_stat_shortcode(
     results = []
     for stat in register:
         if shortcode_or_id.isdigit() and shortcode_or_id == stat["id"]:
-            return get_singles_publishings(stat,
-                            shortcode_or_id,
-                            get_singles,
-                            get_publishings,
-                            get_publishing_specifics)
+            return get_singles_publishings(
+                stat,
+                shortcode_or_id,
+                get_singles,
+                get_publishings,
+                get_publishing_specifics,
+            )
         elif shortcode_or_id in stat["shortName"]:
-            results.append(get_singles_publishings(stat,
-                            stat["id"],
-                            get_singles,
-                            get_publishings,
-                            get_publishing_specifics))
+            results.append(
+                get_singles_publishings(
+                    stat,
+                    stat["id"],
+                    get_singles,
+                    get_publishings,
+                    get_publishing_specifics,
+                )
+            )
     return results
 
 
-def get_singles_publishings(stat: dict[str, Any],
-                            shortcode_or_id: str = "trosamf",
-                            get_singles: bool = True,
-                            get_publishings: bool = True,
-                            get_publishing_specifics: bool = True,): 
+def get_singles_publishings(
+    stat: dict[str, Any],
+    shortcode_or_id: str = "trosamf",
+    get_singles: bool = True,
+    get_publishings: bool = True,
+    get_publishing_specifics: bool = True,
+) -> dict[str, Any]:
     """Find the data for a statistical product by searching by its shortname.
 
     Args:
@@ -447,6 +455,7 @@ def get_singles_publishings(stat: dict[str, Any],
             stat["shortName"], get_publishing_specifics
         )
     return stat
+
 
 @lru_cache(maxsize=128)
 def single_stat(stat_id: str = "4922") -> SinglePublishing:
@@ -606,13 +615,14 @@ def etree_to_dict(t: ET.Element) -> dict[str, Any]:
             d[t.tag] = text
     return d
 
+
 def handle_children(children: list[ET.Element], t: ET.Element) -> dict[str, Any]:
     """Handle children in the etree.
-    
+
     Args:
         children: The children to treat.
         t: The XML element to convert.
-    
+
     Returns:
         dict[str, Any]: The python dictionary of the children part.
     """
