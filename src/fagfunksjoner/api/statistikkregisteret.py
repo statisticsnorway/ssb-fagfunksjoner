@@ -409,23 +409,44 @@ def find_stat_shortcode(
     results = []
     for stat in register:
         if shortcode_or_id.isdigit() and shortcode_or_id == stat["id"]:
-            if get_singles:
-                stat["product_info"] = single_stat(shortcode_or_id)
-            if get_publishings:
-                stat["publishings"] = find_publishings(
-                    stat["shortName"], get_publishing_specifics
-                )
-            return stat
+            return get_singles_publishings(stat,
+                            shortcode_or_id,
+                            get_singles,
+                            get_publishings,
+                            get_publishing_specifics)
         elif shortcode_or_id in stat["shortName"]:
-            if get_singles:
-                stat["product_info"] = single_stat(stat["id"])
-            if get_publishings:
-                stat["publishings"] = find_publishings(
-                    stat["shortName"], get_publishing_specifics
-                )
-            results.append(stat)
+            results.append(get_singles_publishings(stat,
+                            stat["id"],
+                            get_singles,
+                            get_publishings,
+                            get_publishing_specifics))
     return results
 
+
+def get_singles_publishings(stat: dict[str, Any],
+                            shortcode_or_id: str = "trosamf",
+                            get_singles: bool = True,
+                            get_publishings: bool = True,
+                            get_publishing_specifics: bool = True,): 
+    """Find the data for a statistical product by searching by its shortname.
+
+    Args:
+        stat: A single stat from the register.
+        shortcode_or_id: The shortname for the statistical product. Defaults to "trosamf".
+        get_singles: Get more single data. Defaults to True.
+        get_publishings: Get more publishing data. Defaults to True.
+        get_publishing_specifics: Get the specific publishings data as well. Defaults to True.
+
+    Returns:
+        list[dict[str, Any]]: A data structure containing the found data on the product.
+    """
+    if get_singles:
+        stat["product_info"] = single_stat(shortcode_or_id)
+    if get_publishings:
+        stat["publishings"] = find_publishings(
+            stat["shortName"], get_publishing_specifics
+        )
+    return stat
 
 @lru_cache(maxsize=128)
 def single_stat(stat_id: str = "4922") -> SinglePublishing:
@@ -573,11 +594,7 @@ def etree_to_dict(t: ET.Element) -> dict[str, Any]:
     d: dict[str, Any] = {t.tag: {} if t.attrib else None}
     children = list(t)
     if children:
-        dd = defaultdict(list)
-        for dc in map(etree_to_dict, children):
-            for k, v in dc.items():
-                dd[k].append(v)
-        d = {t.tag: {k: v[0] if len(v) == 1 else v for k, v in dd.items()}}
+        d = handle_children(children, t)
     if t.attrib:
         d[t.tag].update(("@" + k, v) for k, v in t.attrib.items())
     if t.text:
@@ -588,3 +605,19 @@ def etree_to_dict(t: ET.Element) -> dict[str, Any]:
         else:
             d[t.tag] = text
     return d
+
+def handle_children(children: list[ET.Element], t: ET.Element) -> dict[str, Any]:
+    """Handle children in the etree.
+    
+    Args:
+        children: The children to treat.
+        t: The XML element to convert.
+    
+    Returns:
+        dict[str, Any]: The python dictionary of the children part.
+    """
+    dd = defaultdict(list)
+    for dc in map(etree_to_dict, children):
+        for k, v in dc.items():
+            dd[k].append(v)
+    return {t.tag: {k: v[0] if len(v) == 1 else v for k, v in dd.items()}}

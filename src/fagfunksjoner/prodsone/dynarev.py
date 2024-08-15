@@ -14,7 +14,7 @@ def dynarev_uttrekk(
 
     Args:
         delreg_nr: Delregisternummer.
-        skjema Skjemanavn.
+        skjema: Skjemanavn.
         dublettsjekk: If True, checks for and returns duplicates.
         sfu_cols: Specify a list of columns for SFU data, or a single column as a string.
             If True picks all columns. If None, skips getting sfu-data.

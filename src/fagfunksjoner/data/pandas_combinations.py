@@ -171,27 +171,7 @@ def finalize_dataframe(
     all_levels = flatten_col_multiindex(all_levels)
 
     if grand_total:
-        cat_groupcols = df[groupcols].select_dtypes("category").columns
-        if len(cat_groupcols):
-            for col in cat_groupcols:
-                all_levels[col] = all_levels[col].add_categories(grand_total)
-
-        gt: pd.Series | pd.DataFrame = df.agg(aggargs)  # type: ignore[type-arg, arg-type]
-        if isinstance(gt, pd.DataFrame):
-            gt_df = flatten_col_multiindex(pd.DataFrame(gt.unstack()).T)
-        else:
-            gt_df = flatten_col_multiindex(pd.DataFrame(gt).T)
-
-        gt_df["level"] = 0
-        gt_df["ways"] = 0
-        if isinstance(grand_total, str):
-            gt_df[groupcols] = grand_total
-        elif isinstance(grand_total, dict):
-            for col, val in grand_total.items():
-                gt_df[col] = val
-
-        gt_df = gt_df[all_levels.columns]
-        all_levels = pd.concat([all_levels, gt_df], ignore_index=True)
+        all_levels = handle_grand_total(all_levels, df, groupcols, grand_total, aggargs)
 
     all_levels = all_levels.sort_values(["level", *groupcols])
 
@@ -203,6 +183,49 @@ def finalize_dataframe(
         all_levels = all_levels.astype(reset_types)
 
     return all_levels.reset_index(drop=True)
+
+
+def handle_grand_total(
+    all_levels: pd.DataFrame,
+    df: pd.DataFrame,
+    groupcols: list[str],
+    grand_total: dict[str, str] | str,
+    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries[str] | dict[str, list[str]],
+) -> pd.DataFrame:
+    """Handle the totals of groupcols, in addition to a grand total for the whole dataset?
+
+    Args:
+        all_levels: The inherited dataset from the previous step.
+        df: The original dataframe.
+        groupcols: List of columns to group by.
+        grand_total: Value(s) to use for the grand total row.
+        aggargs: Aggregation functions to apply.
+
+    Returns:
+        pd.DataFrame: The modified original dataset that now should contain the grand totals.
+    """
+    cat_groupcols = df[groupcols].select_dtypes("category").columns
+    if len(cat_groupcols):
+        for col in cat_groupcols:
+            all_levels[col] = all_levels[col].add_categories(grand_total)
+
+    gt: pd.Series | pd.DataFrame = df.agg(aggargs)  # type: ignore[type-arg, arg-type]
+    if isinstance(gt, pd.DataFrame):
+        gt_df = flatten_col_multiindex(pd.DataFrame(gt.unstack()).T)
+    else:
+        gt_df = flatten_col_multiindex(pd.DataFrame(gt).T)
+
+    gt_df["level"] = 0
+    gt_df["ways"] = 0
+    if isinstance(grand_total, str):
+        gt_df[groupcols] = grand_total
+    elif isinstance(grand_total, dict):
+        for col, val in grand_total.items():
+            gt_df[col] = val
+
+    gt_df = gt_df[all_levels.columns]
+    all_levels = pd.concat([all_levels, gt_df], ignore_index=True)
+    return all_levels
 
 
 def fill_na_dict(df: pd.DataFrame, mapping: dict[str, Any]) -> pd.DataFrame:

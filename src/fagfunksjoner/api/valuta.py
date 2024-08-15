@@ -296,53 +296,11 @@ def create_dataframe(data_obj: Data, structure_obj: Structure) -> pd.DataFrame:
     for dataset_obj in data_obj.dataSets:
         for series_key, series_val in dataset_obj.series.items():
             for obs_key, obs_value in series_val.observations.items():
-                record = {
-                    **{
-                        dim.id: dim.values[int(series_key.split(":")[dim.keyPosition])][
-                            "name"
-                        ]
-                        for dim in structure_obj.dimensions.get("series", [])
-                    },
-                    **{
-                        dim.id
-                        + "_id": dim.values[
-                            int(series_key.split(":")[dim.keyPosition])
-                        ]["id"]
-                        for dim in structure_obj.dimensions.get("series", [])
-                    },
-                    **{
-                        dim.id: next(
-                            (val["name"] for val in dim.values if val["id"] == obs_key),
-                            obs_key,
-                        )
-                        for dim in structure_obj.dimensions.get("observation", [])
-                    },
-                    **{
-                        dim.id + "_id": obs_key
-                        for dim in structure_obj.dimensions.get("observation", [])
-                    },
-                    "Observation": obs_value[0],
-                }
-                for _attr_key, attr_list in structure_obj.attributes.items():
-                    for attr in attr_list:
-                        attr_index = next(
-                            (
-                                i
-                                for i, dim in enumerate(
-                                    structure_obj.dimensions.get("series", [])
-                                )
-                                if dim.id == attr.relationship["dimensions"][0]
-                            ),
-                            None,
-                        )
-                        if attr_index is not None:
-                            record[attr.id] = attr.values[
-                                series_val.attributes[attr_index]
-                            ]["name"]
-                            record[attr.id + "_id"] = attr.values[
-                                series_val.attributes[attr_index]
-                            ]["id"]
-                records.append(record)
+                records.append(
+                    make_single_dataframe_record(
+                        series_key, series_val, obs_key, obs_value, structure_obj
+                    )
+                )
 
     return pd.DataFrame(
         records,
@@ -362,6 +320,70 @@ def create_dataframe(data_obj: Data, structure_obj: Structure) -> pd.DataFrame:
             for attr in attr_list
         ],
     )
+
+
+def make_single_dataframe_record(
+    series_key: str,
+    series_val: Series,
+    obs_key: str,
+    obs_value: list[str],
+    structure_obj: Structure,
+) -> dict[str, str | float]:
+    """Create a single record for a pandas DataFrame from a series and observation.
+
+    This function generates a dictionary representing a single row in a pandas
+    DataFrame based on the series key, series value, observation key, observation
+    value, and the structure object of the dataset.
+
+    Args:
+        series_key: The key representing the series in the dataset.
+        series_val: The series object containing attributes and observations.
+        obs_key: The key representing the specific observation in the series.
+        obs_value: The list of values corresponding to the observation.
+        structure_obj: The structure object containing dataset dimensions and attributes.
+
+    Returns:
+        dict[str, str | float]: A dictionary representing a single record in the DataFrame.
+    """
+    record = {
+        **{
+            dim.id: dim.values[int(series_key.split(":")[dim.keyPosition])]["name"]
+            for dim in structure_obj.dimensions.get("series", [])
+        },
+        **{
+            dim.id
+            + "_id": dim.values[int(series_key.split(":")[dim.keyPosition])]["id"]
+            for dim in structure_obj.dimensions.get("series", [])
+        },
+        **{
+            dim.id: next(
+                (val["name"] for val in dim.values if val["id"] == obs_key),
+                obs_key,
+            )
+            for dim in structure_obj.dimensions.get("observation", [])
+        },
+        **{
+            dim.id + "_id": obs_key
+            for dim in structure_obj.dimensions.get("observation", [])
+        },
+        "Observation": obs_value[0],
+    }
+    for _attr_key, attr_list in structure_obj.attributes.items():
+        for attr in attr_list:
+            attr_index = next(
+                (
+                    i
+                    for i, dim in enumerate(structure_obj.dimensions.get("series", []))
+                    if dim.id == attr.relationship["dimensions"][0]
+                ),
+                None,
+            )
+            if attr_index is not None:
+                record[attr.id] = attr.values[series_val.attributes[attr_index]]["name"]
+                record[attr.id + "_id"] = attr.values[
+                    series_val.attributes[attr_index]
+                ]["id"]
+    return record
 
 
 def parse_response(json_data: dict[str, Any]) -> ValutaData:
