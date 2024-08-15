@@ -445,10 +445,10 @@ def handle_decimals(
 
     for col in desi_cols:
         # Look for comma as delimiter
-        if df[col].str.contains(",").any():
+        if df[col].str.contains(",", regex=False).any():
             df[col] = df[col].str.replace(",", ".").astype("Float64")
         # Look for punktum as delimiter
-        elif df[col].str.contains(".").any():
+        elif df[col].str.contains(".", regex=False).any():  # "." is a special character in regex, making this fail if regex is used.
             df[col] = df[col].str.replace(",", ".").astype("Float64")
         # If no delimiter is found, use number of decimals from metadata
         else:
