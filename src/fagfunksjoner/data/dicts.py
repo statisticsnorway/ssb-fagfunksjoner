@@ -1,17 +1,22 @@
 """Extra functionality operating on baseline dicts added to this module."""
 
-from typing import Any
+from collections.abc import Hashable
+from typing import Any, TypeVar
 
 
-def get_key_by_value(data: dict[Any, Any], value: Any) -> Any | list[Any]:
+# Define a type variable that will match the type of the keys in the dictionary
+KeyType = TypeVar("KeyType", bound=Hashable)
+
+
+def get_key_by_value(data: dict[KeyType, Any], value: Any) -> KeyType | list[KeyType]:
     """Searches through the values in a dict for a match, returns the key.
 
     Args:
-        data (dict[Hashable, Any]): The data to search through, will only look in top most level...
+        data (dict[KeyType, Any]): The data to search through, will only look in top most level...
         value (Any): The value to look for in the dict
 
     Returns:
-        Hashable | list[Hashable]: Returns a single key if a single match on value,
+        KeyType | list[KeyType]: Returns a single key if a single match on value,
             otherwise returns a list of keys with the same value.
 
     Raises:
