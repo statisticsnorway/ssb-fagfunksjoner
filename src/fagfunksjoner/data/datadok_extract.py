@@ -448,7 +448,9 @@ def handle_decimals(
         if df[col].str.contains(",", regex=False).any():
             df[col] = df[col].str.replace(",", ".").astype("Float64")
         # Look for punktum as delimiter
-        elif df[col].str.contains(".", regex=False).any():  # "." is a special character in regex, making this fail if regex is used.
+        elif (
+            df[col].str.contains(".", regex=False).any()
+        ):  # "." is a special character in regex, making this fail if regex is used.
             df[col] = df[col].str.replace(",", ".").astype("Float64")
         # If no delimiter is found, use number of decimals from metadata
         else:
@@ -677,7 +679,7 @@ def get_path_combinations(
         dollar: str = path.split("/")[0].replace("$", "").replace("_PII", "").upper()
         non_dollar = stammer.get(dollar, None)
         if non_dollar is not None:
-            paths += [os.path.join(non_dollar, "/".join(path.split("/")[1:]))]
+            paths += ["/".join([non_dollar, "/".join(path.split("/")[1:])])]
     else:
         if not path.startswith("/"):
             path = "/" + path

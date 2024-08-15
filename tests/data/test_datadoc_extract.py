@@ -1,9 +1,9 @@
-import pytest
-from unittest.mock import patch, mock_open, MagicMock
-
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from unittest.mock import mock_open, patch
+
 import pandas as pd
+import pytest
 
 from fagfunksjoner.data import datadok_extract
 
@@ -15,6 +15,7 @@ def test_is_valid_url():
     assert datadok_extract.is_valid_url("invalid-url") is False
     assert datadok_extract.is_valid_url("http://") is False
     assert datadok_extract.is_valid_url("") is False
+
 
 def test_extract_context_variables():
     xml_data = """
@@ -48,12 +49,24 @@ def test_extract_context_variables():
 
 def test_codelist_to_df():
     codelist = [
-        datadok_extract.CodeList(context_id="1", codelist_title="Title1", codelist_description="Desc1", code_value="001", code_text="Code Text 1"),
-        datadok_extract.CodeList(context_id="2", codelist_title="Title2", codelist_description="Desc2", code_value="002", code_text="Code Text 2"),
+        datadok_extract.CodeList(
+            context_id="1",
+            codelist_title="Title1",
+            codelist_description="Desc1",
+            code_value="001",
+            code_text="Code Text 1",
+        ),
+        datadok_extract.CodeList(
+            context_id="2",
+            codelist_title="Title2",
+            codelist_description="Desc2",
+            code_value="002",
+            code_text="Code Text 2",
+        ),
     ]
-    
+
     df = datadok_extract.codelist_to_df(codelist)
-    
+
     assert isinstance(df, pd.DataFrame)
     assert len(df) == 2
     assert df.iloc[0]["context_id"] == "1"
@@ -66,26 +79,28 @@ def test_date_parser():
     assert datadok_extract.date_parser("240101", "%y%m%d") == datetime(2024, 1, 1)
     assert pd.isna(datadok_extract.date_parser("invalid-date", "%Y%m%d"))
 
+
 def test_codelist_to_dict():
     # Test with non-empty DataFrame
     data = {
         "codelist_title": ["Title1", "Title1", "Title2"],
         "code_value": ["001", "002", "003"],
-        "code_text": ["Text1", "Text2", "Text3"]
+        "code_text": ["Text1", "Text2", "Text3"],
     }
     df = pd.DataFrame(data)
     result = datadok_extract.codelist_to_dict(df)
-    
+
     assert isinstance(result, dict)
     assert "Title1" in result
     assert result["Title1"]["001"] == "Text1"
     assert result["Title2"]["003"] == "Text3"
-    
+
     # Test with empty DataFrame
     df_empty = pd.DataFrame(columns=["codelist_title", "code_value", "code_text"])
     result_empty = datadok_extract.codelist_to_dict(df_empty)
-    
+
     assert result_empty == {}
+
 
 def test_convert_dates():
     data = {
@@ -94,15 +109,12 @@ def test_convert_dates():
         "datatype": ["Dato1", "Dato2"],
     }
     metadata_df = pd.DataFrame(data)
-    
-    df_data = {
-        "date_col1": ["20240101", "20231231"],
-        "date_col2": ["010124", "311223"]
-    }
+
+    df_data = {"date_col1": ["20240101", "20231231"], "date_col2": ["010124", "311223"]}
     df = pd.DataFrame(df_data)
-    
+
     df, metadata_df = datadok_extract.convert_dates(df, metadata_df)
-    
+
     assert pd.api.types.is_datetime64_any_dtype(df["date_col1"])
     assert pd.api.types.is_datetime64_any_dtype(df["date_col2"])
 
@@ -160,6 +172,7 @@ def test_extract_codelist():
     assert codelist_data[2].code_value == "003"
     assert codelist_data[2].code_text == "Code Text 3"
 
+
 def test_extract_codelist_missing_elements():
     xml_data_missing = """
     <root xmlns:meta="http://www.ssb.no/ns/meta" xmlns:codelist="http://www.ssb.no/ns/meta/codelist">
@@ -184,96 +197,82 @@ def test_extract_codelist_missing_elements():
     assert len(codelist_data) == 0
 
 
-
 def test_handle_decimals_with_comma():
     # Test case with comma as the decimal separator
-    data = {
-        "col1": ["1,23", "4,56", "7,89"],
-        "col2": ["10,00", "20,50", "30,75"]
-    }
+    data = {"col1": ["1,23", "4,56", "7,89"], "col2": ["10,00", "20,50", "30,75"]}
     df = pd.DataFrame(data)
-    
+
     metadata_data = {
         "title": ["col1", "col2"],
         "datatype": ["Desimaltall", "Desimaltall"],
-        "precision": [None, None]  # Precision not used in this case
+        "precision": [None, None],  # Precision not used in this case
     }
     metadata_df = pd.DataFrame(metadata_data)
-    
+
     df, metadata_df = datadok_extract.handle_decimals(df, metadata_df)
-    
+
     assert df["col1"].dtype == "Float64"
     assert df["col2"].dtype == "Float64"
     assert df["col1"].iloc[0] == 1.23
     assert df["col2"].iloc[1] == 20.50
     assert metadata_df.loc[metadata_df["title"] == "col1", "type"].iloc[0] == "Float64"
+
 
 def test_handle_decimals_with_period():
     # Test case with period as the decimal separator
-    data = {
-        "col1": ["1.23", "4.56", "7.89"],
-        "col2": ["10.00", "20.50", "30.75"]
-    }
+    data = {"col1": ["1.23", "4.56", "7.89"], "col2": ["10.00", "20.50", "30.75"]}
     df = pd.DataFrame(data)
-    
+
     metadata_data = {
         "title": ["col1", "col2"],
         "datatype": ["Desimaltall", "Desimaltall"],
-        "precision": [None, None]  # Precision not used in this case
+        "precision": [None, None],  # Precision not used in this case
     }
     metadata_df = pd.DataFrame(metadata_data)
-    
+
     df, metadata_df = datadok_extract.handle_decimals(df, metadata_df)
-    
+
     assert df["col1"].dtype == "Float64"
     assert df["col2"].dtype == "Float64"
     assert df["col1"].iloc[0] == 1.23
     assert df["col2"].iloc[1] == 20.50
     assert metadata_df.loc[metadata_df["title"] == "col1", "type"].iloc[0] == "Float64"
 
+
 def test_handle_decimals_with_no_separator():
     # Test case with no separator and precision in metadata
-    data = {
-        "col1": ["123", "456", "789"],
-        "col2": ["1000", "2050", "3075"]
-    }
+    data = {"col1": ["123", "456", "789"], "col2": ["1000", "2050", "3075"]}
     df = pd.DataFrame(data)
-    
+
     metadata_data = {
         "title": ["col1", "col2"],
         "datatype": ["Desimaltall", "Desimaltall"],
-        "precision": [2, 2]  # Precision indicates 2 decimal places
+        "precision": [2, 2],  # Precision indicates 2 decimal places
     }
     metadata_df = pd.DataFrame(metadata_data)
-    
+
     df, metadata_df = datadok_extract.handle_decimals(df, metadata_df)
-    
+
     assert pd.api.types.is_float_dtype(df["col1"])
     assert pd.api.types.is_float_dtype(df["col2"])
     assert df["col1"].iloc[0] == 1.23  # 123 -> 1.23 based on precision
     assert df["col2"].iloc[1] == 20.50  # 2050 -> 20.50 based on precision
     assert metadata_df.loc[metadata_df["title"] == "col1", "type"].iloc[0] == "Float64"
 
+
 def test_handle_decimals_with_empty_metadata():
     # Test case with empty metadata DataFrame
-    data = {
-        "col1": ["1,23", "4,56", "7,89"]
-    }
+    data = {"col1": ["1,23", "4,56", "7,89"]}
     df = pd.DataFrame(data)
-    
+
     metadata_df = pd.DataFrame(columns=["title", "datatype", "precision"])
-    
+
     df, metadata_df = datadok_extract.handle_decimals(df, metadata_df)
-    
+
     # The dataframe should remain unchanged since no metadata information is provided
     assert df["col1"].iloc[0] == "1,23"  # No change
     assert df["col1"].dtype == "object"  # No type change
 
-
-import pytest
-from unittest.mock import patch, mock_open, MagicMock
-import pandas as pd
-import xml.etree.ElementTree as ET
 
 # Mocking the is_valid_url function to return True or False as needed
 @patch("requests.get")
@@ -304,8 +303,7 @@ def test_import_archive_data_with_url(mock_read_fwf, mock_open, mock_requests_ge
 
     # Import the function from the module where it is defined
     archive_data = datadok_extract.import_archive_data(
-        archive_desc_xml="http://example.com/mock.xml",
-        archive_file="mock_archive.txt"
+        archive_desc_xml="http://example.com/mock.xml", archive_file="mock_archive.txt"
     )
 
     # Check if requests.get was called
@@ -319,6 +317,7 @@ def test_import_archive_data_with_url(mock_read_fwf, mock_open, mock_requests_ge
     # Ensure metadata DataFrame and codelist DataFrame are not empty
     assert not archive_data.metadata_df.empty
     assert archive_data.metadata_df["title"].iloc[0] == "Variable Title"
+
 
 @patch("requests.get")
 @patch("builtins.open", new_callable=mock_open, read_data="<root></root>")
@@ -349,8 +348,7 @@ def test_import_archive_data_with_file(mock_read_fwf, mock_open, mock_requests_g
 
     # Import the function from the module where it is defined
     archive_data = datadok_extract.import_archive_data(
-        archive_desc_xml="mock.xml",
-        archive_file="mock_archive.txt"
+        archive_desc_xml="mock.xml", archive_file="mock_archive.txt"
     )
 
     # Check if the file was opened
@@ -365,10 +363,13 @@ def test_import_archive_data_with_file(mock_read_fwf, mock_open, mock_requests_g
     assert not archive_data.metadata_df.empty
     assert archive_data.metadata_df["title"].iloc[0] == "Variable Title"
 
+
 @patch("requests.get")
 @patch("builtins.open", new_callable=mock_open, read_data="<root></root>")
 @patch("pandas.read_fwf")
-def test_import_archive_data_with_invalid_params(mock_read_fwf, mock_open, mock_requests_get):
+def test_import_archive_data_with_invalid_params(
+    mock_read_fwf, mock_open, mock_requests_get
+):
     # Simulate the file-based XML content with ContactInformation element
     xml_content = """
     <root xmlns:meta="http://www.ssb.no/ns/meta" xmlns:common="http://www.ssb.no/ns/meta/common">
@@ -393,17 +394,114 @@ def test_import_archive_data_with_invalid_params(mock_read_fwf, mock_open, mock_
         datadok_extract.import_archive_data(
             archive_desc_xml="mock.xml",
             archive_file="mock_archive.txt",
-            dtype={"col1": "Int64"}  # Passing an invalid parameter that should be overridden
+            dtype={
+                "col1": "Int64"
+            },  # Passing an invalid parameter that should be overridden
         )
 
+
 def test_import_archive_data_parse_error():
-   # Test case when the XML cannot be parsed
+    # Test case when the XML cannot be parsed
     invalid_xml_content = "<root><invalid></root>"
 
     with patch("builtins.open", mock_open(read_data=invalid_xml_content)):
         with pytest.raises(ET.ParseError):
             datadok_extract.import_archive_data(
-                archive_desc_xml="mock.xml",
-                archive_file="mock_archive.txt"
+                archive_desc_xml="mock.xml", archive_file="mock_archive.txt"
             )
 
+
+@patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
+@patch("fagfunksjoner.data.datadok_extract.get_key_by_value")
+def test_get_path_combinations_basic(mock_get_key_by_value, mock_linux_shortcuts):
+    # Mock the linux_shortcuts to return an empty dictionary
+    mock_linux_shortcuts.return_value = {"UTD": "/ssb/stamme01/utd"}
+    mock_get_key_by_value.return_value = "UTD"
+
+    path = "/ssb/stamme01/utd/path/to/file"
+    expected = [
+        ("/ssb/stamme01/utd/path/to/file", ""),
+        ("/ssb/stamme01/utd/path/to/file", ".dat"),
+        ("/ssb/stamme01/utd/path/to/file", ".txt"),
+        ("/ssb/stamme01/utd_pii/path/to/file", ""),
+        ("/ssb/stamme01/utd_pii/path/to/file", ".dat"),
+        ("/ssb/stamme01/utd_pii/path/to/file", ".txt"),
+        ("$UTD/path/to/file", ""),
+        ("$UTD/path/to/file", ".dat"),
+        ("$UTD/path/to/file", ".txt"),
+        ("$UTD_PII/path/to/file", ""),
+        ("$UTD_PII/path/to/file", ".dat"),
+        ("$UTD_PII/path/to/file", ".txt"),
+    ]
+    result = datadok_extract.get_path_combinations(path)
+    assert sorted(result) == sorted(expected)
+
+
+@patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
+@patch("fagfunksjoner.data.datadok_extract.get_key_by_value")
+def test_get_path_combinations_with_dollar(mock_get_key_by_value, mock_linux_shortcuts):
+    # Mock the linux_shortcuts to return a dictionary mapping
+    mock_linux_shortcuts.return_value = {"UTD": "/ssb/stamme01/utd"}
+    mock_get_key_by_value.return_value = "UTD"
+
+    path = "$UTD/path/to/file"
+    expected = [
+        ("/ssb/stamme01/utd/path/to/file", ""),
+        ("/ssb/stamme01/utd/path/to/file", ".dat"),
+        ("/ssb/stamme01/utd/path/to/file", ".txt"),
+        ("/ssb/stamme01/utd_pii/path/to/file", ""),
+        ("/ssb/stamme01/utd_pii/path/to/file", ".dat"),
+        ("/ssb/stamme01/utd_pii/path/to/file", ".txt"),
+        ("$UTD/path/to/file", ""),
+        ("$UTD/path/to/file", ".dat"),
+        ("$UTD/path/to/file", ".txt"),
+        ("$UTD_PII/path/to/file", ""),
+        ("$UTD_PII/path/to/file", ".dat"),
+        ("$UTD_PII/path/to/file", ".txt"),
+    ]
+    result = datadok_extract.get_path_combinations(path)
+    assert sorted(result) == sorted(expected)
+
+
+@patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
+@patch("fagfunksjoner.data.dicts.get_key_by_value")
+def test_get_path_combinations_with_non_dollar(
+    mock_get_key_by_value, mock_linux_shortcuts
+):
+    # Mock the linux_shortcuts to return a dictionary mapping
+    mock_linux_shortcuts.return_value = {"UTD": "/ssb/stamme01/utd"}
+    mock_get_key_by_value.return_value = "UTD"
+
+    path = "/ssb/stamme01/utd/path/to/file"
+    expected = [
+        ("/ssb/stamme01/utd/path/to/file", ""),
+        ("/ssb/stamme01/utd/path/to/file", ".dat"),
+        ("/ssb/stamme01/utd/path/to/file", ".txt"),
+        ("/ssb/stamme01/utd_pii/path/to/file", ""),
+        ("/ssb/stamme01/utd_pii/path/to/file", ".dat"),
+        ("/ssb/stamme01/utd_pii/path/to/file", ".txt"),
+        ("$UTD/path/to/file", ""),
+        ("$UTD/path/to/file", ".dat"),
+        ("$UTD/path/to/file", ".txt"),
+        ("$UTD_PII/path/to/file", ""),
+        ("$UTD_PII/path/to/file", ".dat"),
+        ("$UTD_PII/path/to/file", ".txt"),
+    ]
+    result = datadok_extract.get_path_combinations(path)
+    assert sorted(result) == sorted(expected)
+
+
+@patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
+@patch("fagfunksjoner.data.datadok_extract.get_key_by_value")
+def test_get_path_combinations_with_invalid_dollar_key(
+    mock_get_key_by_value, mock_linux_shortcuts
+):
+    # Mock the linux_shortcuts to return an empty dictionary
+    mock_get_key_by_value.return_value = 10
+    mock_linux_shortcuts.return_value = {10: "invalid/path/to"}
+
+    with pytest.raises(
+        TypeError,
+        match="What we got out of the dollar-linux file was not a single string",
+    ):
+        datadok_extract.get_path_combinations("invalid/path/to/file")
