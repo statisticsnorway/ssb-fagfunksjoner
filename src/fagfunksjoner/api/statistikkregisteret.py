@@ -665,7 +665,7 @@ def raise_on_missing_future_publish(
         else:
             logger.warning(msg)
             return next_time
-    
+
     elif isinstance(next_time, datetime.timedelta) and next_time < zerotime:
         msg = f"You haven't added a next publishing to the register yet? {next_time.days} days since last publishing?"
         if raise_error:
