@@ -216,7 +216,7 @@ def sasfile_to_parquet(
         )  # Avoid extra file extensions
     if gzip:
         out_path = out_path.with_suffix(".parquet.gzip")
-        logger.info("in-path: %s out-path: %s",path, out_path)
+        logger.info("in-path: %s out-path: %s", path, out_path)
         df.to_parquet(out_path, compression="gzip")
     else:
         out_path = out_path.with_suffix(".parquet")
