@@ -183,7 +183,7 @@ def df_from_sasfile(path: str) -> pd.DataFrame:
     try:
         df: pd.DataFrame = sas.sasdata2dataframe(filename, libref=librefname)
     except Exception as e:
-        logger.error(e)
+        logger.error(str(e))
     finally:
         # sas.disconnect()
         sas._endsas()
@@ -216,11 +216,11 @@ def sasfile_to_parquet(
         )  # Avoid extra file extensions
     if gzip:
         out_path = out_path.with_suffix(".parquet.gzip")
-        logger.info(path, out_path)
+        logger.info("in-path: %s out-path: %s",path, out_path)
         df.to_parquet(out_path, compression="gzip")
     else:
         out_path = out_path.with_suffix(".parquet")
-        logger.info(path, out_path)
+        logger.info("in-path: %s out-path: %s", path, out_path)
         df.to_parquet(out_path)
     logger.info(f"Outputted to {out_path}")
     return df
@@ -241,7 +241,7 @@ def df_to_sasfile(df: pd.DataFrame, outpath: str) -> str:
         librefname, filename = set_libref(outpath, sas)
         sas.df2sd(df, filename, libref=librefname)
     except Exception as e:
-        logger.error(e)
+        logger.error(str(e))
     finally:
         sas._endsas()
     return outpath
