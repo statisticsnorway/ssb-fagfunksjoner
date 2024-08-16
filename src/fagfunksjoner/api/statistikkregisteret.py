@@ -8,6 +8,8 @@ from xml.etree import ElementTree as ET
 import dateutil.parser
 import requests as rs
 
+from fagfunksjoner.fagfunksjoner_logger import logger
+
 
 TEXT = "#text"
 ENDRET = "@endret"
@@ -631,3 +633,45 @@ def handle_children(children: list[ET.Element], t: ET.Element) -> dict[str, Any]
         for k, v in dc.items():
             dd[k].append(v)
     return {t.tag: {k: v[0] if len(v) == 1 else v for k, v in dd.items()}}
+
+
+class FuturePublishingError(Exception):
+    """Missing expected publishing at a future time."""
+
+    ...
+
+
+def raise_on_missing_future_publish(
+    shortname: str, raise_error: bool = True
+) -> datetime.timedelta | None:
+    """Check the next time the product should be published. Possibly raising an error.
+
+    Args:
+        shortname: The shortname for the statistical product to look for.
+        raise_error: Set to False, if you just want to log that statistical product has no future publishings.
+
+    Raises:
+        FuturePublishingError: If raise_error i set to True, raises an error if there are no future publishings.
+
+    Returns:
+        datetime.timedelta: Time until next publishing.
+    """
+    zerotime = datetime.timedelta(0)
+    next_time = time_until_publishing(shortname)
+    if next_time is None:
+        msg = "Cant find any publishing times for {shortname}. Are you using the correct shortname?"
+        if raise_error:
+            raise FuturePublishingError(msg)
+        else:
+            logger.warning(msg)
+            return next_time
+    
+    elif isinstance(next_time, datetime.timedelta) and next_time < zerotime:
+        msg = f"You haven't added a next publishing to the register yet? {next_time.days} days since last publishing?"
+        if raise_error:
+            raise FuturePublishingError(msg)
+        else:
+            logger.warning(msg)
+            return next_time
+    logger.info(f"Publishing in {next_time.days} days, according to register.")
+    return next_time

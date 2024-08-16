@@ -147,11 +147,26 @@ def split_path_for_sas(path: Path) -> tuple[str, str, str]:
     """
     librefpath = str(path.parents[0])
     librefname = path.parts[-2]
-    filename = ".".join(path.parts[-1].split(".")[:-1])
+    if "." in path.parts[-1]:
+        filename = path.parts[-1].rsplit(".", 1)[0]
+    else:
+        filename = path.parts[-1]
     return librefpath, librefname, filename
 
 
 def saspy_df_from_path(path: str) -> pd.DataFrame:
+    """Use df_from_sasfile instead, this is the old (bad) name for the function.
+
+    Args:
+        path: The full path to the sasfile you want to open with sas.
+
+    Returns:
+        pandas.DataFrame: The raw content of the sasfile straight from saspy
+    """
+    return df_from_sasfile(path)
+
+
+def df_from_sasfile(path: str) -> pd.DataFrame:
     """Return a pandas dataframe from the path to a sasfile, using saspy.
 
     Creates saspy-session, create a libref, gets the dataframe,
@@ -163,11 +178,9 @@ def saspy_df_from_path(path: str) -> pd.DataFrame:
     Returns:
         pandas.DataFrame: The raw content of the sasfile straight from saspy
     """
-    librefpath, librefname, filename = split_path_for_sas(Path(path))
-    librefname = "sasdata"  # Simplify... blergh
     sas = saspy_session()
+    librefname, filename = set_libref(path, sas)
     try:
-        _ = sas.saslib(librefname, path=librefpath)
         df: pd.DataFrame = sas.sasdata2dataframe(filename, libref=librefname)
     except Exception as e:
         logger.error(e)
@@ -211,6 +224,45 @@ def sasfile_to_parquet(
         df.to_parquet(out_path)
     logger.info(f"Outputted to {out_path}")
     return df
+
+
+def df_to_sasfile(df: pd.DataFrame, outpath: str) -> str:
+    """Store a pandas dataframe as a sas7bdat on disk.
+
+    Args:
+        df: The dataframe to store.
+        outpath: The path to store the dataset on.
+
+    Returns:
+        str: The outpath you sent in, maybe you can use it...
+    """
+    sas = saspy_session()
+    try:
+        librefname, filename = set_libref(outpath, sas)
+        sas.df2sd(df, filename, libref=librefname)
+    except Exception as e:
+        logger.error(e)
+    finally:
+        sas._endsas()
+    return outpath
+
+
+def set_libref(
+    path: str, sas: saspy.SASsession, librefname: str = "sasdata"
+) -> tuple[str, str]:
+    """Create a libref, return the librefname and filename, which is what sas uses to refer to a sasfile.
+
+    Args:
+        path: The full path to the sasfile.
+        sas: An initialized saspy-session.
+        librefname: The name to use for the libref. Defaults to "sasdata".
+
+    Returns:
+        tuple[str, str]: the librefname and the filename
+    """
+    librefpath, librefname, filename = split_path_for_sas(Path(path))
+    _ = sas.saslib(librefname, path=librefpath)
+    return librefname, filename
 
 
 def cp(from_path: str, to_path: str) -> dict[str, Any]:
