@@ -658,9 +658,6 @@ def get_path_combinations(
 
     Returns:
         list[tuple[str, str]]: The generated combinations for possible locations of the files.
-
-    Raises:
-        TypeError: If what we get for the dollar-paths is not a single string.
     """
     if file_exts is None:
         exts: list[str] = ["", ".dat", ".txt"]
@@ -672,8 +669,53 @@ def get_path_combinations(
     if path.endswith(".dat") or path.endswith(".txt"):
         path = path[:-4]
 
-    paths = [path]
+    paths = add_dollar_or_nondollar_path(path)
+    paths = add_pii_paths(paths)
 
+    return [(path, ext) for path in paths for ext in exts]
+
+
+def add_pii_paths(paths: list[str]) -> list[str]:
+    """Add PII-paths to a list of paths, to look in more places.
+
+    Args:
+        paths (list[str]): List containing paths that we will add PII or non-PII paths for.
+
+    Returns:
+        list[str]: List containing more paths now, we should have added to it.
+    """
+    paths_pii = []
+    for path in paths:
+        if path.startswith("$"):
+            path_parts = [x for x in path.split("/") if x]
+            if not path_parts[0].endswith("_PII"):
+                path_parts[0] += "_PII"
+            else:
+                path_parts[0] = path_parts[0].replace("_PII", "")
+            paths_pii += ["/".join(path_parts)]
+        else:
+            path_parts = [x for x in path.split("/") if x]
+            if not path_parts[2].endswith("_pii"):
+                path_parts[2] += "_pii"
+            else:
+                path_parts[2] = path_parts[2].replace("_pii", "")
+            paths_pii += ["/" + "/".join(path_parts)]
+    return paths + paths_pii
+
+
+def add_dollar_or_nondollar_path(path: str) -> list[str]:
+    """Add a $-path or non-$-path to an existing path. Output should be a list of length 2.
+
+    Args:
+        path (str): The path to expand on.
+
+    Raises:
+        TypeError: If what we get for the dollar-paths is not a single string.
+
+    Returns:
+        list[str]: List containing one more path now.
+    """
+    paths = [path]
     stammer = linux_shortcuts()
     if path.startswith("$"):
         dollar: str = path.split("/")[0].replace("$", "").replace("_PII", "").upper()
@@ -695,28 +737,7 @@ def get_path_combinations(
                 "What we got out of the dollar-linux file was not a single string: {dollar_want}"
             )
         paths += [path.replace(non_dollar, "$" + dollar)]
-
-    # add pii/ non-pii if necessary
-    paths_pii = []
-    for path in paths:
-        if path.startswith("$"):
-            path_parts = [x for x in path.split("/") if x]
-            if not path_parts[0].endswith("_PII"):
-                path_parts[0] += "_PII"
-            else:
-                path_parts[0] = path_parts[0].replace("_PII", "")
-            paths_pii += ["/".join(path_parts)]
-        else:
-            path_parts = [x for x in path.split("/") if x]
-            if not path_parts[2].endswith("_pii"):
-                path_parts[2] += "_pii"
-            else:
-                path_parts[2] = path_parts[2].replace("_pii", "")
-            paths_pii += ["/" + "/".join(path_parts)]
-
-    paths += paths_pii
-
-    return [(path, ext) for path in paths for ext in exts]
+    return paths
 
 
 def go_back_in_time(path: str) -> str | None:
@@ -731,23 +752,10 @@ def go_back_in_time(path: str) -> str | None:
         str | None: The path that was found, with a corresponding URL with content in the Datadok-API.
             If nothing is found returns None.
     """
-    # Identify character ranges we want to manipulate
-    yr_char_ranges: list[tuple[int, int]] = []
     path_parts = path.rsplit("/", 1)
-    while True:
-        if not yr_char_ranges:
-            last_offset = 0
-        else:
-            last_offset = yr_char_ranges[-1][-1]
-        if (
-            len(path_parts[1]) > last_offset
-            and path_parts[1][last_offset].lower() == "g"
-            and path_parts[1][last_offset + 1 : last_offset + 5].lower().isdigit()
-        ):
-            yr_char_ranges += [(last_offset + 1, last_offset + 5)]
-        else:
-            break
-
+    # Identify character ranges we want to manipulate in the filename
+    yr_char_ranges = get_yr_char_ranges(path_parts[1])
+    # Loop over the years we want to look at, changing all the year ranges in the path
     if yr_char_ranges:
         # Looking 20 years back in time
         for looking_back in range(-1, -20, -1):
@@ -768,3 +776,30 @@ def go_back_in_time(path: str) -> str | None:
 
     logger.info(f"Looking back {looking_back} years, DIDNT find a path at {path + ext}")
     return None
+
+
+def get_yr_char_ranges(filename: str) -> list[tuple[int, int]]:
+    """Find the character ranges containing years in the path. Usually 1-4 ranges.
+
+    Args:
+        filename: The filename to look at for character ranges.
+
+    Returns:
+        list[tuple[int, int]]: A list of tuples, tuples have length 2,
+            one int for the starting position of a year range, and one int for the last position.
+    """
+    yr_char_ranges: list[tuple[int, int]] = []
+    while True:
+        if not yr_char_ranges:
+            last_offset = 0
+        else:
+            last_offset = yr_char_ranges[-1][-1]
+        if (
+            len(filename) > last_offset
+            and filename[last_offset].lower() == "g"
+            and filename[last_offset + 1 : last_offset + 5].lower().isdigit()
+        ):
+            yr_char_ranges += [(last_offset + 1, last_offset + 5)]
+        else:
+            break
+    return yr_char_ranges

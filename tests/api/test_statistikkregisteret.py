@@ -1,12 +1,16 @@
 import datetime
+from unittest.mock import patch
 
+import pytest
 import responses
 
 from fagfunksjoner.api.statistikkregisteret import (
+    FuturePublishingError,
     find_latest_publishing,
     find_publishings,
     find_stat_shortcode,
     get_statistics_register,
+    raise_on_missing_future_publish,
     single_stat,
     specific_publishing,
     time_until_publishing,
@@ -115,3 +119,85 @@ def test_find_stat_shortcode():
     assert isinstance(find_latest_publishing("test").endret, datetime.datetime)
     assert find_publishings("test").publiseringer[0].statid.isdigit()
     assert isinstance(specific_publishing("1").er_avlyst, bool)
+
+
+@pytest.fixture
+def mock_time_until_publishing():
+    with patch("fagfunksjoner.api.statistikkregisteret.time_until_publishing") as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_logger():
+    with patch("fagfunksjoner.api.statistikkregisteret.logger") as mock:
+        yield mock
+
+
+def test_no_future_publishing_raises_error(mock_time_until_publishing, mock_logger):
+    # Mock time_until_publishing to return None
+    mock_time_until_publishing.return_value = None
+
+    with pytest.raises(FuturePublishingError):
+        raise_on_missing_future_publish("test_shortname")
+
+    mock_logger.warning.assert_not_called()
+
+
+def test_no_future_publishing_logs_warning(mock_time_until_publishing, mock_logger):
+    # Mock time_until_publishing to return None
+    mock_time_until_publishing.return_value = None
+
+    test_shortname = "test_shortname"
+
+    # Call the function with raise_error=False
+    result = raise_on_missing_future_publish(test_shortname, raise_error=False)
+
+    # Check that it returns None
+    assert result is None
+
+    # Check that a warning is logged
+    mock_logger.warning.assert_called_once_with(
+        f"Cant find any publishing times for {test_shortname}. Are you using the correct shortname?"
+    )
+
+
+def test_past_publishing_raises_error(mock_time_until_publishing, mock_logger):
+    # Mock time_until_publishing to return a negative timedelta
+    mock_time_until_publishing.return_value = datetime.timedelta(days=-5)
+
+    with pytest.raises(FuturePublishingError):
+        raise_on_missing_future_publish("test_shortname")
+
+    mock_logger.warning.assert_not_called()
+
+
+def test_past_publishing_logs_warning(mock_time_until_publishing, mock_logger):
+    # Mock time_until_publishing to return a negative timedelta
+    mock_time_until_publishing.return_value = datetime.timedelta(days=-5)
+
+    # Call the function with raise_error=False
+    result = raise_on_missing_future_publish("test_shortname", raise_error=False)
+
+    # Check that it returns the timedelta
+    assert result == datetime.timedelta(days=-5)
+
+    # Check that a warning is logged
+    mock_logger.warning.assert_called_once_with(
+        "You haven't added a next publishing to the register yet? -5 days since last publishing?"
+    )
+
+
+def test_future_publishing_logs_info(mock_time_until_publishing, mock_logger):
+    # Mock time_until_publishing to return a positive timedelta
+    mock_time_until_publishing.return_value = datetime.timedelta(days=10)
+
+    # Call the function
+    result = raise_on_missing_future_publish("test_shortname")
+
+    # Check that it returns the timedelta
+    assert result == datetime.timedelta(days=10)
+
+    # Check that info is logged
+    mock_logger.info.assert_called_once_with(
+        "Publishing in 10 days, according to register."
+    )

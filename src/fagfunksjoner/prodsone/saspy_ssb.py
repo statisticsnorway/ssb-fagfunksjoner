@@ -260,7 +260,7 @@ def set_libref(
     Returns:
         tuple[str, str]: the librefname and the filename
     """
-    librefpath, librefname, filename = split_path_for_sas(Path(path))
+    librefpath, _librefname, filename = split_path_for_sas(Path(path))
     _ = sas.saslib(librefname, path=librefpath)
     return librefname, filename
 

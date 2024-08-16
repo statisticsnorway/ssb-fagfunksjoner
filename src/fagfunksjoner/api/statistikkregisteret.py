@@ -659,7 +659,7 @@ def raise_on_missing_future_publish(
     zerotime = datetime.timedelta(0)
     next_time = time_until_publishing(shortname)
     if next_time is None:
-        msg = "Cant find any publishing times for {shortname}. Are you using the correct shortname?"
+        msg = f"Cant find any publishing times for {shortname}. Are you using the correct shortname?"
         if raise_error:
             raise FuturePublishingError(msg)
         else:
