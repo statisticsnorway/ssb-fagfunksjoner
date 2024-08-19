@@ -29,14 +29,14 @@ def all_combos_agg(
     """Generate all aggregation levels for a set of columns in a dataframe.
 
     Args:
-        df (pd.DataFrame): dataframe to aggregate.
-        groupcols (list[str]): List of columns to group by.
-        aggargs (AggFuncTypeBase | AggFuncTypeDictSeries): how to aggregate, is sent to the agg function in pandas, look at its documentation.
-        fillna_dict (dict[str, str]): Fills "totals" in the groupcols, by filling their NA values.
+        df: dataframe to aggregate.
+        groupcols: List of columns to group by.
+        aggargs: how to aggregate, is sent to the agg function in pandas, look at its documentation.
+        fillna_dict: Fills "totals" in the groupcols, by filling their NA values.
             Send a dict with col names as keys, and string-values to put in cells as values.
-        keep_empty (bool): Keep groups without observations through the process.
+        keep_empty: Keep groups without observations through the process.
             Removing them is default behaviour of Pandas
-        grand_total (str | dict[str|str]): Fill this value, if you want a grand total in your aggregations.
+        grand_total: Fill this value, if you want a grand total in your aggregations.
             If you use a string, this will be input in the fields in the groupcol columns.
             If you send a dict, like to the fillna_dict parameter, the values in the cells in the grand_total will reflect the values in the dict.
 
@@ -94,9 +94,9 @@ def prepare_combinations(
     """Prepare the dataframe and generate all possible combinations of group columns.
 
     Args:
-        df (pd.DataFrame): The dataframe to process.
-        groupcols (list[str]): List of columns to group by.
-        keep_empty (bool): Whether to keep groups without observations.
+        df: The dataframe to process.
+        groupcols: List of columns to group by.
+        keep_empty: Whether to keep groups without observations.
 
     Returns:
         tuple[pd.DataFrame, list[tuple[str]]]: The prepared dataframe and list of group column combinations.
@@ -121,10 +121,10 @@ def calculate_aggregates(
     """Calculate aggregates for each combination of group columns.
 
     Args:
-        df (pd.DataFrame): The dataframe to aggregate.
-        combos (list[tuple[str]]): List of group column combinations.
-        aggargs (AggFuncTypeBase | AggFuncTypeDictSeries[str] | dict[str, list[str]]): Aggregation functions to apply.
-        keep_empty (bool): Whether to keep groups without observations.
+        df: The dataframe to aggregate.
+        combos: List of group column combinations.
+        aggargs: Aggregation functions to apply.
+        keep_empty: Whether to keep groups without observations.
 
     Returns:
         pd.DataFrame: The dataframe with calculated aggregates for each combination.
@@ -157,13 +157,13 @@ def finalize_dataframe(
     """Finalize the dataframe by calculating the grand total and filling missing values.
 
     Args:
-        all_levels (pd.DataFrame): The dataframe with calculated aggregates.
-        df (pd.DataFrame): The original dataframe.
-        groupcols (list[str]): List of columns to group by.
-        aggargs (AggFuncTypeBase | AggFuncTypeDictSeries[str] | dict[str, list[str]]): Aggregation functions to apply.
-        grand_total (dict[str, str] | str): Value(s) to use for the grand total row.
-        fillna_dict (dict[str, Any] | None): Values to fill in missing data.
-        keep_empty (bool): Whether to keep groups without observations.
+        all_levels: The dataframe with calculated aggregates.
+        df: The original dataframe.
+        groupcols: List of columns to group by.
+        aggargs: Aggregation functions to apply.
+        grand_total: Value(s) to use for the grand total row.
+        fillna_dict: Values to fill in missing data.
+        keep_empty: Whether to keep groups without observations.
 
     Returns:
         pd.DataFrame: The finalized dataframe.
@@ -171,27 +171,7 @@ def finalize_dataframe(
     all_levels = flatten_col_multiindex(all_levels)
 
     if grand_total:
-        cat_groupcols = df[groupcols].select_dtypes("category").columns
-        if len(cat_groupcols):
-            for col in cat_groupcols:
-                all_levels[col] = all_levels[col].add_categories(grand_total)
-
-        gt: pd.Series | pd.DataFrame = df.agg(aggargs)  # type: ignore[type-arg, arg-type]
-        if isinstance(gt, pd.DataFrame):
-            gt_df = flatten_col_multiindex(pd.DataFrame(gt.unstack()).T)
-        else:
-            gt_df = flatten_col_multiindex(pd.DataFrame(gt).T)
-
-        gt_df["level"] = 0
-        gt_df["ways"] = 0
-        if isinstance(grand_total, str):
-            gt_df[groupcols] = grand_total
-        elif isinstance(grand_total, dict):
-            for col, val in grand_total.items():
-                gt_df[col] = val
-
-        gt_df = gt_df[all_levels.columns]
-        all_levels = pd.concat([all_levels, gt_df], ignore_index=True)
+        all_levels = handle_grand_total(all_levels, df, groupcols, grand_total, aggargs)
 
     all_levels = all_levels.sort_values(["level", *groupcols])
 
@@ -205,6 +185,49 @@ def finalize_dataframe(
     return all_levels.reset_index(drop=True)
 
 
+def handle_grand_total(
+    all_levels: pd.DataFrame,
+    df: pd.DataFrame,
+    groupcols: list[str],
+    grand_total: dict[str, str] | str,
+    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries[str] | dict[str, list[str]],
+) -> pd.DataFrame:
+    """Handle the totals of groupcols, in addition to a grand total for the whole dataset?
+
+    Args:
+        all_levels: The inherited dataset from the previous step.
+        df: The original dataframe.
+        groupcols: List of columns to group by.
+        grand_total: Value(s) to use for the grand total row.
+        aggargs: Aggregation functions to apply.
+
+    Returns:
+        pd.DataFrame: The modified original dataset that now should contain the grand totals.
+    """
+    cat_groupcols = df[groupcols].select_dtypes("category").columns
+    if len(cat_groupcols):
+        for col in cat_groupcols:
+            all_levels[col] = all_levels[col].add_categories(grand_total)
+
+    gt: pd.Series | pd.DataFrame = df.agg(aggargs)  # type: ignore[type-arg, arg-type]
+    if isinstance(gt, pd.DataFrame):
+        gt_df = flatten_col_multiindex(pd.DataFrame(gt.unstack()).T)
+    else:
+        gt_df = flatten_col_multiindex(pd.DataFrame(gt).T)
+
+    gt_df["level"] = 0
+    gt_df["ways"] = 0
+    if isinstance(grand_total, str):
+        gt_df[groupcols] = grand_total
+    elif isinstance(grand_total, dict):
+        for col, val in grand_total.items():
+            gt_df[col] = val
+
+    gt_df = gt_df[all_levels.columns]
+    all_levels = pd.concat([all_levels, gt_df], ignore_index=True)
+    return all_levels
+
+
 def fill_na_dict(df: pd.DataFrame, mapping: dict[str, Any]) -> pd.DataFrame:
     """Fills NAs in the passed dataframe with a dict.
 
@@ -212,8 +235,8 @@ def fill_na_dict(df: pd.DataFrame, mapping: dict[str, Any]) -> pd.DataFrame:
     Also handles categorical columns if they exist in the dataframe.
 
     Args:
-        df (pd.DataFrame): The DataFrame to fill NAs on.
-        mapping (dict): What each of the columns should have their NAs filled with.
+        df: The DataFrame to fill NAs on.
+        mapping: What each of the columns should have their NAs filled with.
 
     Returns:
         pd.DataFrame: The DataFrame with filled NAs.
@@ -232,8 +255,8 @@ def flatten_col_multiindex(df: pd.DataFrame, sep: str = "_") -> pd.DataFrame:
     Flattens it by combining the names of the multiindex, using the seperator (sep).
 
     Args:
-        df (pd.DataFrame): The DataFrame with multiindexed columns.
-        sep (str): What should seperate the names of the levels in the multiindex. Defaults to "_".
+        df: The DataFrame with multiindexed columns.
+        sep: What should seperate the names of the levels in the multiindex. Defaults to "_".
 
     Returns:
         pd.DataFrame: The DataFrame with the flattened column headers.
