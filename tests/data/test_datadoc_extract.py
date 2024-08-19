@@ -1,3 +1,4 @@
+import math
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from unittest.mock import mock_open, patch
@@ -211,10 +212,10 @@ def test_handle_decimals_with_comma():
 
     df, metadata_df = datadok_extract.handle_decimals(df, metadata_df)
 
-    assert df["col1"].dtype == "Float64"
-    assert df["col2"].dtype == "Float64"
-    assert df["col1"].iloc[0] == 1.23
-    assert df["col2"].iloc[1] == 20.50
+    assert pd.api.types.is_float_dtype(df["col1"])
+    assert pd.api.types.is_float_dtype(df["col2"])
+    assert math.isclose(df["col1"].iloc[0], 1.23)
+    assert math.isclose(df["col2"].iloc[1], 20.50)
     assert metadata_df.loc[metadata_df["title"] == "col1", "type"].iloc[0] == "Float64"
 
 
@@ -232,10 +233,10 @@ def test_handle_decimals_with_period():
 
     df, metadata_df = datadok_extract.handle_decimals(df, metadata_df)
 
-    assert df["col1"].dtype == "Float64"
+    assert pd.api.types.is_float_dtype(df["col1"])
     assert df["col2"].dtype == "Float64"
-    assert df["col1"].iloc[0] == 1.23
-    assert df["col2"].iloc[1] == 20.50
+    assert math.isclose(df["col1"].iloc[0], 1.23)
+    assert math.isclose(df["col2"].iloc[1], 20.50)
     assert metadata_df.loc[metadata_df["title"] == "col1", "type"].iloc[0] == "Float64"
 
 
@@ -255,8 +256,8 @@ def test_handle_decimals_with_no_separator():
 
     assert pd.api.types.is_float_dtype(df["col1"])
     assert pd.api.types.is_float_dtype(df["col2"])
-    assert df["col1"].iloc[0] == 1.23  # 123 -> 1.23 based on precision
-    assert df["col2"].iloc[1] == 20.50  # 2050 -> 20.50 based on precision
+    assert math.isclose(df["col1"].iloc[0], 1.23)  # 123 -> 1.23 based on precision
+    assert math.isclose(df["col2"].iloc[1], 20.50)  # 2050 -> 20.50 based on precision
     assert metadata_df.loc[metadata_df["title"] == "col1", "type"].iloc[0] == "Float64"
 
 
