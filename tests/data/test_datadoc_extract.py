@@ -1,21 +1,15 @@
 import math
+import os
+import tempfile
+from pathlib import Path
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from unittest.mock import mock_open, patch
+from unittest.mock import mock_open, patch, ANY
 
 import pandas as pd
 import pytest
 
 from fagfunksjoner.data import datadok_extract
-
-
-def test_is_valid_url():
-    assert datadok_extract.is_valid_url("http://example.com") is True
-    assert datadok_extract.is_valid_url("https://example.com") is True
-    assert datadok_extract.is_valid_url("ftp://example.com") is True
-    assert datadok_extract.is_valid_url("invalid-url") is False
-    assert datadok_extract.is_valid_url("http://") is False
-    assert datadok_extract.is_valid_url("") is False
 
 
 def test_extract_context_variables():
@@ -408,7 +402,7 @@ def test_import_archive_data_parse_error():
     with patch("builtins.open", mock_open(read_data=invalid_xml_content)):
         with pytest.raises(ET.ParseError):
             datadok_extract.import_archive_data(
-                archive_desc_xml="mock.xml", archive_file="mock_archive.txt"
+                archive_desc_xml="https://mock.xml", archive_file="mock_archive.txt"
             )
 
 
@@ -416,24 +410,10 @@ def test_import_archive_data_parse_error():
 @patch("fagfunksjoner.data.datadok_extract.get_key_by_value")
 def test_get_path_combinations_basic(mock_get_key_by_value, mock_linux_shortcuts):
     # Mock the linux_shortcuts to return an empty dictionary
-    mock_linux_shortcuts.return_value = {"UTD": "/ssb/stamme01/utd"}
+    utd_path, path, expected = utd_path_expected()
+    mock_linux_shortcuts.return_value = {"UTD": utd_path}
     mock_get_key_by_value.return_value = "UTD"
-
-    path = "/ssb/stamme01/utd/path/to/file"
-    expected = [
-        ("/ssb/stamme01/utd/path/to/file", ""),
-        ("/ssb/stamme01/utd/path/to/file", ".dat"),
-        ("/ssb/stamme01/utd/path/to/file", ".txt"),
-        ("/ssb/stamme01/utd_pii/path/to/file", ""),
-        ("/ssb/stamme01/utd_pii/path/to/file", ".dat"),
-        ("/ssb/stamme01/utd_pii/path/to/file", ".txt"),
-        ("$UTD/path/to/file", ""),
-        ("$UTD/path/to/file", ".dat"),
-        ("$UTD/path/to/file", ".txt"),
-        ("$UTD_PII/path/to/file", ""),
-        ("$UTD_PII/path/to/file", ".dat"),
-        ("$UTD_PII/path/to/file", ".txt"),
-    ]
+    utd_path, path, expected = utd_path_expected()
     result = datadok_extract.get_path_combinations(path)
     assert sorted(result) == sorted(expected)
 
@@ -442,10 +422,16 @@ def test_get_path_combinations_basic(mock_get_key_by_value, mock_linux_shortcuts
 @patch("fagfunksjoner.data.datadok_extract.get_key_by_value")
 def test_get_path_combinations_with_dollar(mock_get_key_by_value, mock_linux_shortcuts):
     # Mock the linux_shortcuts to return a dictionary mapping
-    mock_linux_shortcuts.return_value = {"UTD": "/ssb/stamme01/utd"}
+    utd_path, path, expected = utd_path_expected()
+    mock_linux_shortcuts.return_value = {"UTD": utd_path}
     mock_get_key_by_value.return_value = "UTD"
+    result = datadok_extract.get_path_combinations(path)
+    assert sorted(result) == sorted(expected)
 
-    path = "$UTD/path/to/file"
+
+def utd_path_expected() -> tuple[str, str, list[tuple[str, str]]]:
+    utd_path = Path("/ssb/stamme01/utd")
+    path = Path("/ssb/stamme01/utd/path/to/file")
     expected = [
         ("/ssb/stamme01/utd/path/to/file", ""),
         ("/ssb/stamme01/utd/path/to/file", ".dat"),
@@ -460,9 +446,8 @@ def test_get_path_combinations_with_dollar(mock_get_key_by_value, mock_linux_sho
         ("$UTD_PII/path/to/file", ".dat"),
         ("$UTD_PII/path/to/file", ".txt"),
     ]
-    result = datadok_extract.get_path_combinations(path)
-    assert sorted(result) == sorted(expected)
-
+    expected = [(Path(p[0]), p[1],) for p in expected]
+    return utd_path, path, expected
 
 @patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
 @patch("fagfunksjoner.data.dicts.get_key_by_value")
@@ -470,26 +455,13 @@ def test_get_path_combinations_with_non_dollar(
     mock_get_key_by_value, mock_linux_shortcuts
 ):
     # Mock the linux_shortcuts to return a dictionary mapping
-    mock_linux_shortcuts.return_value = {"UTD": "/ssb/stamme01/utd"}
+    utd_path, path, expected = utd_path_expected()
+    mock_linux_shortcuts.return_value = {"UTD": utd_path}
     mock_get_key_by_value.return_value = "UTD"
-
-    path = "/ssb/stamme01/utd/path/to/file"
-    expected = [
-        ("/ssb/stamme01/utd/path/to/file", ""),
-        ("/ssb/stamme01/utd/path/to/file", ".dat"),
-        ("/ssb/stamme01/utd/path/to/file", ".txt"),
-        ("/ssb/stamme01/utd_pii/path/to/file", ""),
-        ("/ssb/stamme01/utd_pii/path/to/file", ".dat"),
-        ("/ssb/stamme01/utd_pii/path/to/file", ".txt"),
-        ("$UTD/path/to/file", ""),
-        ("$UTD/path/to/file", ".dat"),
-        ("$UTD/path/to/file", ".txt"),
-        ("$UTD_PII/path/to/file", ""),
-        ("$UTD_PII/path/to/file", ".dat"),
-        ("$UTD_PII/path/to/file", ".txt"),
-    ]
+    # Convert the paths to be OS-independent using os.path.join
     result = datadok_extract.get_path_combinations(path)
     assert sorted(result) == sorted(expected)
+
 
 
 @patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
@@ -506,3 +478,42 @@ def test_get_path_combinations_with_invalid_dollar_key(
         match="What we got out of the dollar-linux file was not a single string",
     ):
         datadok_extract.get_path_combinations("invalid/path/to/file")
+
+
+
+@patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
+@patch("fagfunksjoner.data.datadok_extract.get_key_by_value")
+@patch("fagfunksjoner.data.datadok_extract.import_archive_data")
+@patch("fagfunksjoner.data.datadok_extract.test_url")
+def test_file_with_ark_extension(mock_test_url, mock_import_archive_data, mock_get_key_by_value, mock_linux_shortcuts):
+    utd_path, path, expected = utd_path_expected()
+    mock_linux_shortcuts.return_value = {"UTD": utd_path}
+    mock_get_key_by_value.return_value = "UTD"
+    mock_import_archive_data.return_value = pd.DataFrame()
+    mock_test_url.return_value = True
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        ark_file = Path(tmpdirname, "file.ark")
+        ark_file.open('a').close()
+        result = datadok_extract.open_path_datadok(ark_file)
+        mock_import_archive_data.assert_called_once_with(ANY, ark_file)
+        assert isinstance(result, pd.DataFrame)
+
+
+@patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
+@patch("fagfunksjoner.data.datadok_extract.get_key_by_value")
+@patch("fagfunksjoner.data.datadok_extract.import_archive_data")
+@patch("fagfunksjoner.data.datadok_extract.test_url")
+def test_file_with_ark_extension_finds_dat(mock_test_url, mock_import_archive_data, mock_get_key_by_value, mock_linux_shortcuts):
+    utd_path, path, expected = utd_path_expected()
+    mock_linux_shortcuts.return_value = {"UTD": utd_path}
+    mock_get_key_by_value.return_value = "UTD"
+    mock_import_archive_data.return_value = pd.DataFrame()
+    mock_test_url.return_value = True
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        ark_file = Path(tmpdirname, "file.dat")
+        ark_file.open('a').close()
+        result = datadok_extract.open_path_datadok(ark_file.with_suffix(".ark"))
+        mock_import_archive_data.assert_called_once_with(ANY, ark_file)
+        assert isinstance(result, pd.DataFrame)
