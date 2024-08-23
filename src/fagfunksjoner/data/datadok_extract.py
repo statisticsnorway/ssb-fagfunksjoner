@@ -866,18 +866,19 @@ def go_back_in_time(
     yr_char_ranges = get_yr_char_ranges(path_lib)
     # Loop over the years we want to look at, changing all the year ranges in the path
     if yr_char_ranges:
+        curr_path = path_lib
         # Looking 20 years back in time
         for looking_back in range(-1, -20, -1):
             for year_range in yr_char_ranges:
-                yr = path_lib.name[year_range[0] : year_range[1]]
+                yr = curr_path.name[year_range[0] : year_range[1]]
                 name_update = (
-                    path_lib.name[: year_range[0]]
-                    + str(int(yr) + looking_back)
-                    + path_lib.name[year_range[1] :]
+                    curr_path.name[: year_range[0]]
+                    + str(int(yr) - 1)
+                    + curr_path.name[year_range[1] :]
                 )
-                new_path = Path(path_lib.parent, name_update)
-                logger.info(f"Looking back at {looking_back}, {new_path=}")
-            yr_combinations = get_path_combinations(new_path, file_exts=exts)
+                curr_path = Path(curr_path.parent, name_update)
+                logger.info(f"Looking back at {looking_back}, {curr_path=}")
+            yr_combinations = get_path_combinations(curr_path, file_exts=exts)
             for yrpath, ext in yr_combinations:
                 url_address = url_from_path(yrpath.with_suffix(ext))
                 if test_url(url_address):
