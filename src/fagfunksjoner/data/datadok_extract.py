@@ -872,7 +872,7 @@ def go_back_in_time(
                 yr = path_lib.name[year_range[0] : year_range[1]]
                 name_update = (
                     path_lib.name[: year_range[0]]
-                    + str(int(yr) - 1)
+                    + str(int(yr) + looking_back)
                     + path_lib.name[year_range[1] :]
                 )
                 new_path = Path(path_lib.parent, name_update)
