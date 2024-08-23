@@ -876,6 +876,7 @@ def go_back_in_time(
                     + path_lib.name[year_range[1] :]
                 )
                 new_path = Path(path_lib.parent, name_update)
+                logger.info(f"Looking back at {looking_back}, {new_path=}")
             yr_combinations = get_path_combinations(new_path, file_exts=exts)
             for yrpath, ext in yr_combinations:
                 url_address = url_from_path(yrpath.with_suffix(ext))
