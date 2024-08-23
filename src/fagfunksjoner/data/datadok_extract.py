@@ -587,8 +587,8 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
     logger.info(f"Found datadok-response for path {url_path}")
 
     file_combinations = get_path_combinations(
-        path_lib, file_exts=None, add_dollar=False
-    )
+        path_lib.with_suffix(""), file_exts=None, add_dollar=False
+    )  # file_exts=None gets replaced by dat, txt, ""
     logger.info(f"Will try combinations: {file_combinations}")
     # Correcting path in
     if path_lib.is_file():
@@ -784,11 +784,12 @@ def add_dollar_or_nondollar_path(
     stammer = linux_shortcuts()
     if str(path_lib).startswith("$"):
         dollar: str = (
-            str(path_lib.parents[-1]).replace("$", "").replace("_PII", "").upper()
+            str(path_lib.parts[0]).replace("$", "").replace("_PII", "").upper()
         )
         non_dollar = stammer.get(dollar, None)
         if non_dollar is not None:
-            new_path = Path(non_dollar, *path_lib.parts[2:])
+            new_path = Path(non_dollar, *path_lib.parts[1:])
+            logger.info(f"Constructed new_path {new_path} from dollar {dollar} and non_dollar {non_dollar} from path {path_lib}")
             paths += [new_path]
     elif add_dollar:
         if len(path_lib.parts) >= 4:
