@@ -589,8 +589,10 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
     file_combinations = get_path_combinations(
         path_lib.with_suffix(""), file_exts=None, add_dollar=False
     )  # file_exts=None gets replaced by dat, txt, ""
-    logger.info(f"Will try combinations: {file_combinations}")
+    logger.debug(f"Will try combinations: {file_combinations}")
     # Correcting path in
+    if str(path_lib).startswith("$"):
+        path_lib = replace_dollar_stamme(path_lib)
     if path_lib.is_file():
         filepath = path_lib
     else:
@@ -742,7 +744,7 @@ def add_pii_paths(paths: list[Path]) -> list[Path]:
         if str(path_lib).startswith("$"):
             if not path_lib.parts[0].endswith("_PII"):
                 new_path = Path(str(path_lib.parts[0]) + "_PII", *path_lib.parts[1:])
-                logger.info(f"{new_path=}")
+                logger.debug(f"{new_path=}")
             else:
                 new_path = Path(
                     str(path_lib.parts[0]).replace("_PII", ""), *path_lib.parts[1:]
@@ -763,6 +765,25 @@ def add_pii_paths(paths: list[Path]) -> list[Path]:
         paths_pii += [new_path]
     return paths + paths_pii
 
+def replace_dollar_stamme(path_lib: Path) -> Path | None:
+    """Replace the dollar in a path with the full path using the linux-stammer.
+
+    Args:
+        path_lib (Path): Th inpath, suspected to have a dollar.
+
+    Returns:
+        Path | None: Corrected path returned.
+    """
+    dollar: str = (
+        str(path_lib.parts[0]).replace("$", "").replace("_PII", "").upper()
+    )
+    non_dollar = linux_shortcuts().get(dollar, None)
+    if non_dollar is not None:
+        new_path = Path(non_dollar, *path_lib.parts[1:])
+        logger.debug(f"Constructed new_path {new_path} from dollar {dollar} and non_dollar {non_dollar} from path {path_lib}")
+        return new_path
+    return None
+
 
 def add_dollar_or_nondollar_path(
     path: str | Path, add_dollar: bool = True
@@ -781,25 +802,18 @@ def add_dollar_or_nondollar_path(
     """
     path_lib = convert_to_pathlib(path)
     paths = [path_lib]
-    stammer = linux_shortcuts()
     if str(path_lib).startswith("$"):
-        dollar: str = (
-            str(path_lib.parts[0]).replace("$", "").replace("_PII", "").upper()
-        )
-        non_dollar = stammer.get(dollar, None)
-        if non_dollar is not None:
-            new_path = Path(non_dollar, *path_lib.parts[1:])
-            logger.info(f"Constructed new_path {new_path} from dollar {dollar} and non_dollar {non_dollar} from path {path_lib}")
-            paths += [new_path]
+        new_path = replace_dollar_stamme(path_lib)
+        paths += [new_path]
     elif add_dollar:
         if len(path_lib.parts) >= 4:
             non_dollar_path = Path(*path_lib.parts[:4])
         else:
             non_dollar_path = path_lib
-        logger.info(
+        logger.debug(
             f"Looking up in stammer with {non_dollar_path.as_posix()!s} path_lib number of parts: {len(path_lib.parts)} {path_lib.parts}"
         )
-        dollar_want = get_key_by_value(stammer, str(non_dollar_path.as_posix()))
+        dollar_want = get_key_by_value(linux_shortcuts(), str(non_dollar_path.as_posix()))
         if isinstance(dollar_want, str):
             dollar = dollar_want
         else:

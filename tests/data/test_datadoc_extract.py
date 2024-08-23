@@ -478,7 +478,14 @@ def test_file_with_ark_extension(
     utd_path, path, expected = utd_path_expected()
     mock_linux_shortcuts.return_value = {"UTD": str(utd_path.as_posix())}
     mock_get_key_by_value.return_value = "UTD"
-    mock_import_archive_data.return_value = pd.DataFrame()
+    mock_import_archive_data.return_value = datadok_extract.ArchiveData(
+                                                        df=pd.DataFrame(),
+                                                        metadata_df=pd.DataFrame(),
+                                                        codelist_df=pd.DataFrame(),
+                                                        codelist_dict={"":{"":""}},
+                                                        names=[""]
+                                                        widths=[1]
+                                                        datatypes={"":""})
     mock_test_url.return_value = True
 
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -486,7 +493,7 @@ def test_file_with_ark_extension(
         ark_file.open("a").close()
         result = datadok_extract.open_path_datadok(ark_file)
         mock_import_archive_data.assert_called_once_with(ANY, ark_file)
-        assert isinstance(result, pd.DataFrame)
+        assert isinstance(result, datadok_extract.ArchiveData)
 
 
 @patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
