@@ -161,7 +161,7 @@ class SinglePublishing:
         name: The name details.
         short_name: The short name.
         old_subjectcodes: The old subject codes.
-        firstpubilishing: The first publication date.
+        firstpublishing: The first publication date.
         status: The status code.
         owner_name: The ownership section name.
         owner_code: The ownership section code.
@@ -181,7 +181,7 @@ class SinglePublishing:
     name: Name | str
     short_name: str
     old_subjectcodes: str | None
-    firstpubilishing: str
+    firstpublishing: str
     status: str
     owningsection: Owningsection
     contacts: list[Contact] | None
@@ -350,7 +350,7 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
         name=name,
         short_name=short_name,
         old_subjectcodes=old_subjectcodes,
-        firstpubilishing=firstpublishing,
+        firstpublishing=firstpublishing,
         status=status,
         owningsection=owningsection,
         contacts=contacts,
@@ -789,7 +789,7 @@ def parse_single_stat_from_englishjson(stat: dict[str, Any]) -> SinglePublishing
         variants=stat["variants"].split(";"),
         annual_reporting=stat["annualReporting"],
         start_year=stat["startYear"],
-        firstpubilishing=stat["firstReleaseStatistic"],
+        firstpublishing=stat["firstReleaseStatistic"],
         changes=stat["changes"],
         # Not available from the english json endpoint
         contacts=None,

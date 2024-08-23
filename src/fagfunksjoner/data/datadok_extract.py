@@ -589,6 +589,7 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
     file_combinations = get_path_combinations(
         path_lib, file_exts=None, add_dollar=False
     )
+    logger.info(f"Will try combinations: {file_combinations}")
     # Correcting path in
     if path_lib.is_file():
         filepath = path_lib
@@ -606,7 +607,7 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
                 raise FileNotFoundError(msg)
             elif len(filelist) == 0:
                 msg = (
-                    "Found no file matching the name {filepath} in the folder: {folder}"
+                    f"Found no file matching the name {filepath} in the folder: {path_lib.parent}"
                 )
                 raise FileNotFoundError(msg)
             # Replace filepath with file we found matching name
