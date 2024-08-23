@@ -31,7 +31,7 @@ class PublishingSpecifics:
     """Hold specific information about each publishing."""
 
     name: str
-    stat_id: str
+    publish_id: str
     statistic: str
     variant: str
     status: str
@@ -384,7 +384,7 @@ def kwargs_specifics(nested: dict[str, Any]) -> dict[str, Any]:
     """
     return {
         "name": nested["publisering"]["navn"],
-        "stat_id": nested["publisering"]["@id"],
+        "publish_id": nested["publisering"]["@id"],
         "statistic": nested["publisering"]["@statistikk"],
         "variant": nested["publisering"]["@variant"],
         "status": STATUS_MAP.get(
@@ -616,10 +616,10 @@ def time_until_publishing(shortname: str = "trosamf") -> datetime.timedelta | No
     if (
         isinstance(pub, StatisticPublishingShort)
         and pub.specifics is not None
-        and hasattr(pub.specifics, "tidspunkt")
+        and hasattr(pub.specifics, "time")
     ):
 
-        pub_time: datetime.datetime = pub.specifics.tidspunkt
+        pub_time: datetime.datetime = pub.specifics.time
         diff_time: datetime.timedelta = pub_time - datetime.datetime.now()
         return diff_time
     return None
@@ -643,9 +643,9 @@ def find_latest_publishing(
         if (
             isinstance(pub, StatisticPublishingShort)
             and pub.specifics is not None
-            and hasattr(pub.specifics, "tidspunkt")
+            and hasattr(pub.specifics, "time")
         ):
-            current_date = pub.specifics.tidspunkt
+            current_date = pub.specifics.time
             if current_date > max_date:
                 max_publ = (
                     pub  # Overwrites variable with the whole StatisticPublishingShort
@@ -750,7 +750,7 @@ def sections_publishings(
         content = [
             stat
             for stat in content
-            if stat.status not in [STATUS_MAP["IA"], STATUS_MAP["UT"]]
+            if stat.status not in [STATUS_MAP["IA"], STATUS_MAP["UT"], STATUS_MAP["SA"]]
         ]
     if get_publishings:
         for i, stat in enumerate(content):

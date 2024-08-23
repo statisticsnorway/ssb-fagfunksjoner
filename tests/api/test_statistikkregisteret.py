@@ -114,12 +114,12 @@ def test_find_stat_shortcode():
     assert result[0]["id"] == "1"
     assert result[0]["shortName"] == "test"
     assert hasattr(result[0]["publishings"].publishings[0], "specifics")
-    assert result[0]["publishings"].publishings[0].specifics.statid == "162143"
+    assert result[0]["publishings"].publishings[0].specifics.publish_id == "162143"
 
     assert isinstance(time_until_publishing("test"), datetime.timedelta)
     assert single_stat("1").triggerwords["triggerord"][0]["lang"] == "no"
     assert isinstance(find_latest_publishing("test").time_changed, datetime.datetime)
-    assert find_publishings("test").publishings[0].statid.isdigit()
+    assert find_publishings("test").publishings[0].stat_id.isdigit()
     assert isinstance(specific_publishing("1").is_cancelled, bool)
 
 
