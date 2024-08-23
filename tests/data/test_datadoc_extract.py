@@ -483,9 +483,9 @@ def test_file_with_ark_extension(
                                                         metadata_df=pd.DataFrame(),
                                                         codelist_df=pd.DataFrame(),
                                                         codelist_dict={"":{"":""}},
-                                                        names=[""]
-                                                        widths=[1]
-                                                        datatypes={"":""})
+                                                        names=[""],
+                                                        widths=[1],
+                                                        datatypes={"":""},)
     mock_test_url.return_value = True
 
     with tempfile.TemporaryDirectory() as tmpdirname:
