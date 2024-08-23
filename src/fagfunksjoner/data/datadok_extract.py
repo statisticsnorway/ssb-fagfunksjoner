@@ -592,7 +592,9 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
     logger.debug(f"Will try combinations: {file_combinations}")
     # Correcting path in
     if str(path_lib).startswith("$"):
-        path_lib = replace_dollar_stamme(path_lib)
+        replaced = replace_dollar_stamme(path_lib)
+        if replaced is not None:
+            path_lib = replaced
     if path_lib.is_file():
         filepath = path_lib
     else:
@@ -608,12 +610,10 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
             logger.info(f"{filelist=}")
             # If more than one, we cannot now which one you want...
             if len(filelist) >= 2:
-                msg = f"Found more than one matching file {filelist}. Specify file ending please."
+                msg = f"Found more than one matching file: {filelist}. Specify file ending please."
                 raise FileNotFoundError(msg)
             elif len(filelist) == 0:
-                msg = (
-                    f"Found no file matching the name {filepath} in the folder: {path_lib.parent}"
-                )
+                msg = f"Found no file matching the name {filepath} in the folder: {path_lib.parent}"
                 raise FileNotFoundError(msg)
             # Replace filepath with file we found matching name
             filepath = filelist[0]
@@ -768,6 +768,7 @@ def add_pii_paths(paths: list[Path]) -> list[Path]:
         paths_pii += [new_path]
     return paths + paths_pii
 
+
 def replace_dollar_stamme(path_lib: Path) -> Path | None:
     """Replace the dollar in a path with the full path using the linux-stammer.
 
@@ -777,13 +778,13 @@ def replace_dollar_stamme(path_lib: Path) -> Path | None:
     Returns:
         Path | None: Corrected path returned.
     """
-    dollar: str = (
-        str(path_lib.parts[0]).replace("$", "").replace("_PII", "").upper()
-    )
+    dollar: str = str(path_lib.parts[0]).replace("$", "").replace("_PII", "").upper()
     non_dollar = linux_shortcuts().get(dollar, None)
     if non_dollar is not None:
         new_path = Path(non_dollar, *path_lib.parts[1:])
-        logger.debug(f"Constructed new_path {new_path} from dollar {dollar} and non_dollar {non_dollar} from path {path_lib}")
+        logger.debug(
+            f"Constructed new_path {new_path} from dollar {dollar} and non_dollar {non_dollar} from path {path_lib}"
+        )
         return new_path
     return None
 
@@ -806,7 +807,11 @@ def add_dollar_or_nondollar_path(
     path_lib = convert_to_pathlib(path)
     paths = [path_lib]
     if str(path_lib).startswith("$"):
-        new_path = replace_dollar_stamme(path_lib)
+        replaced = replace_dollar_stamme(path_lib)
+        if replaced is not None:
+            new_path = replaced
+        else:
+            new_path = path_lib
         paths += [new_path]
     elif add_dollar:
         if len(path_lib.parts) >= 4:
@@ -816,7 +821,9 @@ def add_dollar_or_nondollar_path(
         logger.debug(
             f"Looking up in stammer with {non_dollar_path.as_posix()!s} path_lib number of parts: {len(path_lib.parts)} {path_lib.parts}"
         )
-        dollar_want = get_key_by_value(linux_shortcuts(), str(non_dollar_path.as_posix()))
+        dollar_want = get_key_by_value(
+            linux_shortcuts(), str(non_dollar_path.as_posix())
+        )
         if isinstance(dollar_want, str):
             dollar = dollar_want
         else:
@@ -853,6 +860,8 @@ def go_back_in_time(
     path_lib = convert_to_pathlib(path)
     if file_exts is None:
         exts: list[str] = ["", ".dat", ".txt"]
+    else:
+        exts = file_exts
     # Identify character ranges we want to manipulate in the filename
     yr_char_ranges = get_yr_char_ranges(path_lib)
     # Loop over the years we want to look at, changing all the year ranges in the path
