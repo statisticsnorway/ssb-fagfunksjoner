@@ -16,6 +16,16 @@ ENDRET = "@endret"
 DESKFLYT = "@deskFlyt"
 
 
+STATUS_MAP = {
+    "K": "K: Kommende",
+    "A": "A: Aktiv",
+    "IA": "IA: Ikke-aktiv",
+    "UT": "UT: Opphørt (Utgått/Utgått)",
+    "SA": "SA: Sammenslått",
+    "SP": "SP: Splittet",
+}
+
+
 @dataclass
 class PublishingSpecifics:
     """Hold specific information about each publishing."""
@@ -43,6 +53,7 @@ class StatisticPublishingShort:
     """Top-level metadata for a specific statistical product."""
 
     stat_id: str
+    short_name: str | None
     variant: str
     desk_flow: str
     time_changed: datetime.datetime
@@ -181,13 +192,16 @@ class SinglePublishing:
     publish_id: str
     default_lang: str
     approved: str | None
-    changed: str | list[str]
+    changed: str | list[str] | None
     desk_flow: str | None
     dir_flow: str | None
 
+    created_date: datetime.datetime | None
     annual_reporting: bool | None
     start_year: str | None
     changes: list[str] | None
+
+    publishings: MultiplePublishings | None
 
 
 def parse_lang_text_single(entry: dict[str, Any]) -> LangText:
@@ -304,7 +318,7 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
         firstpublishing = dateutil.parser.parse(firstpublishing).date()
     except ValueError:
         pass
-    status = root["status"]["@kode"]
+    status = STATUS_MAP.get(root["status"]["@kode"], root["status"]["@kode"])
     owningsection = parse_eierseksjon_single(root["eierseksjon"])
     contacts = [parse_contact_single(e) for e in root["kontakter"]["kontakt"]]
     triggerwords = {
@@ -354,6 +368,8 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
         annual_reporting=None,
         start_year=None,
         changes=None,
+        created_date=None,
+        publishings=None,
     )
 
 
@@ -371,7 +387,9 @@ def kwargs_specifics(nested: dict[str, Any]) -> dict[str, Any]:
         "stat_id": nested["publisering"]["@id"],
         "statistic": nested["publisering"]["@statistikk"],
         "variant": nested["publisering"]["@variant"],
-        "status": nested["publisering"]["@status"],
+        "status": STATUS_MAP.get(
+            nested["publisering"]["@status"], nested["publisering"]["@status"]
+        ),
         "is_period": nested["publisering"]["@erPeriode"] == "true",
         "period_from": dateutil.parser.parse(nested["publisering"]["@periodeFra"]),
         "period_until": dateutil.parser.parse(nested["publisering"]["@periodeTil"]),
@@ -566,7 +584,7 @@ def find_publishings(
     return MultiplePublishings(
         publishings=[
             StatisticPublishingShort(
-                publish_id=pub["@id"],
+                stat_id=pub["@id"],
                 variant=pub["@variant"],
                 desk_flow=pub[DESKFLYT],
                 time_changed=dateutil.parser.parse(pub[ENDRET]),
@@ -621,7 +639,7 @@ def find_latest_publishing(
     max_date = dateutil.parser.parse("2000-01-01")
     max_publ: StatisticPublishingShort | None = None
     # Loop over publishings to find the one with the highest date (latest)
-    for pub in find_publishings(shortname).publiseringer:
+    for pub in find_publishings(shortname).publishings:
         if (
             isinstance(pub, StatisticPublishingShort)
             and pub.specifics is not None
@@ -723,14 +741,16 @@ def sections_publishings(
     """
     register = get_statistics_register()
     section_code_str = str(section_code)
-    content = [
+    content: list[SinglePublishing] = [
         parse_single_stat_from_englishjson(stat)
         for stat in register
         if stat["ownerCode"] == section_code_str
     ]
     if not include_ceased:
         content = [
-            stat for stat in content if "opphørt" not in stat.name.name_lang[0].name
+            stat
+            for stat in content
+            if stat.status not in [STATUS_MAP["IA"], STATUS_MAP["UT"]]
         ]
     if get_publishings:
         for i, stat in enumerate(content):
@@ -754,16 +774,17 @@ def parse_single_stat_from_englishjson(stat: dict[str, Any]) -> SinglePublishing
         short_name=stat["shortName"],
         name=Name(
             name_lang=[
-                LangText(name=stat["name"], lang="no"),
-                LangText(name=stat["nameEN"], lang="en"),
+                LangText(name=stat["name"], lang="no", text=None),
+                LangText(name=stat["nameEN"], lang="en", text=None),
             ]
         ),
         created_date=dateutil.parser.parse(stat["dateCreated"]),
         default_lang=stat["lang"],
         owningsection=Owningsection(
-            name=[LangText(name=stat["owner"], lang="no")], section_id=stat["ownerCode"]
+            name=[LangText(name=stat["owner"], lang="no", text=None)],
+            section_id=stat["ownerCode"],
         ),
-        status=stat["status"],
+        status=STATUS_MAP.get(stat["status"], stat["status"]),
         regional_levels=stat["regionalLevels"].split(";"),
         variants=stat["variants"].split(";"),
         annual_reporting=stat["annualReporting"],
@@ -778,6 +799,8 @@ def parse_single_stat_from_englishjson(stat: dict[str, Any]) -> SinglePublishing
         desk_flow=None,
         dir_flow=None,
         old_subjectcodes=None,
+        changed=None,
+        publishings=None,
     )
 
 

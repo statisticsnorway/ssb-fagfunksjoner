@@ -570,6 +570,7 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
 
     Raises:
         ValueError: If no datadok-api endpoint is found for the path given.
+        FileNotFoundError: If more than one file matches, with different file extensions, we do not know which to pick.
     """
     path_lib = convert_to_pathlib(path)
     combinations = get_path_combinations(path_lib, file_exts=[""])
@@ -598,7 +599,7 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
                 break
         else:
             # Last resort, see if any file matches stripping the extensions
-            filelist = path_lib.parent.glob(path_lib.stem + "*")
+            filelist = list(path_lib.parent.glob(path_lib.stem + "*"))
             # If more than one, we cannot now which one you want...
             if len(filelist) > 2:
                 msg = f"Found more than one matching file {filelist}. Specify file ending please."
@@ -658,7 +659,7 @@ def test_url(url: str) -> bool:
         return False
 
 
-def test_url_combos(combinations: list[tuple[Path, str]]) -> None | str:
+def test_url_combos(combinations: list[tuple[Path, str]]) -> None | str | Path:
     """Tests a set of path combinations for valid responses from the Datadok-API.
 
     Args:
@@ -677,6 +678,14 @@ def test_url_combos(combinations: list[tuple[Path, str]]) -> None | str:
 
 
 def convert_to_pathlib(path: str | Path) -> Path:
+    """Make sure the path is converted to pathlib.Path.
+
+    Args:
+        path (str | Path): The path to possibly convert.
+
+    Returns:
+        Path: The converted path.
+    """
     if not isinstance(path, Path):
         return Path(path)
     return path
@@ -704,10 +713,17 @@ def get_path_combinations(
     else:
         exts = file_exts
 
-    paths = add_dollar_or_nondollar_path(path_lib, add_dollar=add_dollar)
+    paths: list[Path] = add_dollar_or_nondollar_path(path_lib, add_dollar=add_dollar)
     paths = add_pii_paths(paths)
 
-    return [(p, ext) for p in paths for ext in exts]
+    return [
+        (
+            p,
+            ext,
+        )
+        for p in paths
+        for ext in exts
+    ]
 
 
 def add_pii_paths(paths: list[Path]) -> list[Path]:
@@ -749,7 +765,7 @@ def add_pii_paths(paths: list[Path]) -> list[Path]:
 
 def add_dollar_or_nondollar_path(
     path: str | Path, add_dollar: bool = True
-) -> list[str]:
+) -> list[Path]:
     """Add a $-path or non-$-path to an existing path. Output should be a list of length 2.
 
     Args:
@@ -775,13 +791,13 @@ def add_dollar_or_nondollar_path(
             paths += [new_path]
     elif add_dollar:
         if len(path_lib.parts) >= 4:
-            non_dollar = Path(*path_lib.parts[:4])
+            non_dollar_path = Path(*path_lib.parts[:4])
         else:
-            non_dollar = path_lib
+            non_dollar_path = path_lib
         logger.info(
-            f"Looking up in stammer with {non_dollar.as_posix()!s} path_lib number of parts: {len(path_lib.parts)} {path_lib.parts}"
+            f"Looking up in stammer with {non_dollar_path.as_posix()!s} path_lib number of parts: {len(path_lib.parts)} {path_lib.parts}"
         )
-        dollar_want = get_key_by_value(stammer, str(non_dollar.as_posix()))
+        dollar_want = get_key_by_value(stammer, str(non_dollar_path.as_posix()))
         if isinstance(dollar_want, str):
             dollar = dollar_want
         else:
@@ -789,11 +805,13 @@ def add_dollar_or_nondollar_path(
                 "What we got out of the dollar-linux file was not a single string: {dollar_want}"
             )
         new_path = Path(
-            str(path_lib.as_posix()).replace(str(non_dollar.as_posix()), "$" + dollar)
+            str(path_lib.as_posix()).replace(
+                str(non_dollar_path.as_posix()), "$" + dollar
+            )
         )
         paths += [new_path]
         logger.info(
-            f"Path after adding dollar '{new_path}', replacing non-dollar: '{non_dollar.as_posix()!s}' with '${dollar}', paths: {paths}"
+            f"Path after adding dollar '{new_path}', replacing non-dollar: '{non_dollar_path.as_posix()!s}' with '${dollar}', paths: {paths}"
         )
     return paths
 
@@ -807,6 +825,7 @@ def go_back_in_time(
 
     Args:
         path: The path to modify and test for previous years.
+        file_exts: The different file extensions to try.
 
     Returns:
         str | None: The path that was found, with a corresponding URL with content in the Datadok-API.
@@ -850,7 +869,7 @@ def get_yr_char_ranges(path: str | Path) -> list[tuple[int, int]]:
     """Find the character ranges containing years in the path. Usually 1-4 ranges.
 
     Args:
-        filename: The filename to look at for character ranges.
+        path: The filename to look at for character ranges.
 
     Returns:
         list[tuple[int, int]]: A list of tuples, tuples have length 2,
