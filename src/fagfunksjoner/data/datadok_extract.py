@@ -605,6 +605,7 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
             filelist = list(path_lib.parent.glob(path_lib.stem + "*"))
             # Shorten filelist to only those matching stem
             filelist = [x for x in filelist if x.stem == path_lib.stem]
+            logger.info(f"{filelist=}")
             # If more than one, we cannot now which one you want...
             if len(filelist) > 2:
                 msg = f"Found more than one matching file {filelist}. Specify file ending please."
