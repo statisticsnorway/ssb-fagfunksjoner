@@ -836,7 +836,7 @@ def add_dollar_or_nondollar_path(
             )
         )
         paths += [new_path]
-        logger.info(
+        logger.debug(
             f"Path after adding dollar '{new_path}', replacing non-dollar: '{non_dollar_path.as_posix()!s}' with '${dollar}', paths: {paths}"
         )
     return paths
@@ -877,7 +877,7 @@ def go_back_in_time(
                     + curr_path.name[year_range[1] :]
                 )
                 curr_path = Path(curr_path.parent, name_update)
-                logger.info(f"Looking back at {looking_back}, {curr_path=}")
+                logger.debug(f"Looking back at {looking_back}, {curr_path=}")
             yr_combinations = get_path_combinations(curr_path, file_exts=exts)
             for yrpath, ext in yr_combinations:
                 url_address = url_from_path(yrpath.with_suffix(ext))
