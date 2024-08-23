@@ -20,11 +20,11 @@ import gc
 
 
 # %%
-import os
-from pathlib import Path
+import xml.dom.minidom
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -44,7 +44,6 @@ from fagfunksjoner.prodsone.check_env import linux_shortcuts
 # `
 #
 # Den interne metadataportalen http://www.byranettet.ssb.no/metadata/ har også alle filbeskrivelsene og filvariablene.
-
 
 
 # %%
@@ -108,20 +107,29 @@ def extract_context_variables(root: ET.Element) -> list[ContextVariable]:
         ValueError: Missing information in the XML.
     """
     data = []
-    contact_info = root.find("{http://www.ssb.no/ns/meta}ContactInformation")
+    # register xml namespaces
+    ns = {
+        "ns": "http://www.ssb.no/ns/meta",
+        "common": "http://www.ssb.no/ns/meta/common",
+    }
+
+    contact_info = root.find("ns:ContactInformation", ns)
     if contact_info is None:
-        raise ValueError("ContactInformation not found in the XML")
-    division = contact_info.find("{http://www.ssb.no/ns/meta/common}Division")
+        xml_str = ET.tostring(root, encoding="utf8").decode("utf8")
+        pretty_xml = xml.dom.minidom.parseString(xml_str).toprettyxml(indent="  ")
+        raise ValueError(f"ContactInformation not found in the XML: {pretty_xml}")
+
+    division = contact_info.find("common:Division", ns)
     if division is None or division.text is None:
         raise ValueError("Division not found in the XML or has no text")
 
     division_text = division.text
 
-    for context_var in root.findall("{http://www.ssb.no/ns/meta}ContextVariable"):
+    for context_var in root.findall("ns:ContextVariable", ns):
         context_id = context_var.get("id")
-        title_elem = context_var.find("{http://www.ssb.no/ns/meta}Title")
-        description_elem = context_var.find("{http://www.ssb.no/ns/meta}Description")
-        properties = context_var.find("{http://www.ssb.no/ns/meta}Properties")
+        title_elem = context_var.find("ns:Title", ns)
+        description_elem = context_var.find("ns:Description", ns)
+        properties = context_var.find("ns:Properties", ns)
 
         if title_elem is None or title_elem.text is None:
             raise ValueError("Title element missing or has no text")
@@ -130,12 +138,10 @@ def extract_context_variables(root: ET.Element) -> list[ContextVariable]:
         if properties is None:
             raise ValueError("Properties element missing")
 
-        datatype_elem = properties.find("{http://www.ssb.no/ns/meta}Datatype")
-        length_elem = properties.find("{http://www.ssb.no/ns/meta}Length")
-        start_position_elem = properties.find(
-            "{http://www.ssb.no/ns/meta}StartPosition"
-        )
-        precision_elem = properties.find("{http://www.ssb.no/ns/meta}Precision")
+        datatype_elem = properties.find("ns:Datatype", ns)
+        length_elem = properties.find("ns:Length", ns)
+        start_position_elem = properties.find("ns:StartPosition", ns)
+        precision_elem = properties.find("ns:Precision", ns)
 
         if datatype_elem is None or datatype_elem.text is None:
             raise ValueError("Datatype element missing or has no text")
@@ -475,9 +481,15 @@ def import_archive_data(
     """
     if test_url(archive_desc_xml):
         xml_file = requests.get(archive_desc_xml).text
+        logger.debug(
+            f"Opening datadok metadata from URL: {archive_desc_xml}, with content: {xml_file}"
+        )
     else:
         with open(archive_desc_xml) as file:
             xml_file = file.read()
+        logger.debug(
+            f"Opening datadok metadata from FILE: {archive_desc_xml}, with content: {xml_file}"
+        )
     try:
         root = ET.fromstring(xml_file)
     except ET.ParseError as ParseError:
@@ -573,7 +585,9 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
     url_address = url_from_path(url_path)
     logger.info(f"Found datadok-response for path {url_path}")
 
-    file_combinations = get_path_combinations(path_lib, file_exts=None, add_dollar=False)
+    file_combinations = get_path_combinations(
+        path_lib, file_exts=None, add_dollar=False
+    )
     # Correcting path in
     if path_lib.is_file():
         filepath = path_lib
@@ -590,11 +604,13 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
                 msg = f"Found more than one matching file {filelist}. Specify file ending please."
                 raise FileNotFoundError(msg)
             elif len(filelist) == 0:
-                msg = "Found no file matching the name {filepath} in the folder: {folder}"
+                msg = (
+                    "Found no file matching the name {filepath} in the folder: {folder}"
+                )
                 raise FileNotFoundError(msg)
             # Replace filepath with file we found matching name
             filepath = filelist[0]
-        
+
         logger.info(f"Found datafile at path {filepath}")
 
     return import_archive_data(url_address, filepath, **read_fwf_params)
@@ -622,10 +638,24 @@ def test_url(url: str) -> bool:
     Returns:
         bool: True if there is content at the URL. False otherwise.
     """
-    result = requests.get(url)
-    if 200 != result.status_code or "Value cannot be null." in result.text:
+    try:
+        urlparse(url)
+    except AttributeError:
+        logger.debug("Url tested, not parsed correctly.")
         return False
-    return True
+    logger.debug("Url tested, parsed correctly.")
+    try:
+        result = requests.get(url)
+        if 200 != result.status_code or "Value cannot be null." in result.text:
+            logger.debug(
+                f"Url tested, found no content at endpoint, either status_code is not 200: {result.status_code}, or there is null value text: {result.text}"
+            )
+            return False
+        logger.debug("Url tested, found content at endpoint.")
+        return True
+    except (requests.exceptions.ConnectionError, requests.exceptions.MissingSchema):
+        logger.debug("Url tested, cought error.")
+        return False
 
 
 def test_url_combos(combinations: list[tuple[Path, str]]) -> None | str:
@@ -666,7 +696,7 @@ def get_path_combinations(
         list[tuple[str, str]]: The generated combinations for possible locations of the files.
     """
     path_lib = convert_to_pathlib(path)
-    
+
     if file_exts is None:
         exts: list[str] = ["", ".dat", ".txt"]
     elif isinstance(file_exts, str):
@@ -697,21 +727,29 @@ def add_pii_paths(paths: list[Path]) -> list[Path]:
                 new_path = Path(str(path_lib.parts[0]) + "_PII", *path_lib.parts[1:])
                 logger.info(f"{new_path=}")
             else:
-                new_path = Path(str(path_lib.parts[0]).replace("_PII", ""), *path_lib.parts[1:])
+                new_path = Path(
+                    str(path_lib.parts[0]).replace("_PII", ""), *path_lib.parts[1:]
+                )
         else:
-            if not path_lib.parts[2].endswith("_pii"):
-                new_path = Path(*path_lib.parts[:2],
-                                str(path_lib.parts[2]) + "_pii",
-                                *path_lib.parts[3:])
+            if not path_lib.parts[3].endswith("_pii"):
+                new_path = Path(
+                    *path_lib.parts[:3],
+                    str(path_lib.parts[3]) + "_pii",
+                    *path_lib.parts[4:],
+                )
             else:
-                new_path = Path(*path_lib.parts[:2],
-                                str(path_lib.parts[2]).replace("_pii", ""),
-                                *path_lib.parts[3:])
+                new_path = Path(
+                    *path_lib.parts[:3],
+                    str(path_lib.parts[3]).replace("_pii", ""),
+                    *path_lib.parts[4:],
+                )
         paths_pii += [new_path]
     return paths + paths_pii
 
 
-def add_dollar_or_nondollar_path(path: str | Path, add_dollar) -> list[str]:
+def add_dollar_or_nondollar_path(
+    path: str | Path, add_dollar: bool = True
+) -> list[str]:
     """Add a $-path or non-$-path to an existing path. Output should be a list of length 2.
 
     Args:
@@ -728,29 +766,41 @@ def add_dollar_or_nondollar_path(path: str | Path, add_dollar) -> list[str]:
     paths = [path_lib]
     stammer = linux_shortcuts()
     if str(path_lib).startswith("$"):
-        dollar: str = str(path_lib.parents[-1]).replace("$", "").replace("_PII", "").upper()
+        dollar: str = (
+            str(path_lib.parents[-1]).replace("$", "").replace("_PII", "").upper()
+        )
         non_dollar = stammer.get(dollar, None)
         if non_dollar is not None:
-            paths += [Path(non_dollar, *path_lib.parts[2:])]
+            new_path = Path(non_dollar, *path_lib.parts[2:])
+            paths += [new_path]
     elif add_dollar:
-        if len(path_lib.parts) > 3:
+        if len(path_lib.parts) >= 4:
             non_dollar = Path(*path_lib.parts[:4])
         else:
             non_dollar = path_lib
-        dollar_want = get_key_by_value(stammer, str(non_dollar))
+        logger.info(
+            f"Looking up in stammer with {non_dollar.as_posix()!s} path_lib number of parts: {len(path_lib.parts)} {path_lib.parts}"
+        )
+        dollar_want = get_key_by_value(stammer, str(non_dollar.as_posix()))
         if isinstance(dollar_want, str):
             dollar = dollar_want
         else:
             raise TypeError(
                 "What we got out of the dollar-linux file was not a single string: {dollar_want}"
             )
-        paths += [Path(str(path_lib.parts[0]).replace(str(non_dollar), "$" + dollar),
-                       *path_lib.parts[1:])]
-    logger.info(f"Paths after adding dollar, non-dollar: {paths}")
+        new_path = Path(
+            str(path_lib.as_posix()).replace(str(non_dollar.as_posix()), "$" + dollar)
+        )
+        paths += [new_path]
+        logger.info(
+            f"Path after adding dollar '{new_path}', replacing non-dollar: '{non_dollar.as_posix()!s}' with '${dollar}', paths: {paths}"
+        )
     return paths
 
 
-def go_back_in_time(path: str | Path, file_exts: list[str] | None = None) -> Path | None:
+def go_back_in_time(
+    path: str | Path, file_exts: list[str] | None = None
+) -> Path | None:
     """Look for datadok-api URLs back in time. Sometimes new ones are not added, if the previous still works.
 
     Only modifies yearly publishings for now...
@@ -786,9 +836,13 @@ def go_back_in_time(path: str | Path, file_exts: list[str] | None = None) -> Pat
                     f"Looking back {looking_back} years, found a path at {yrpath.with_suffix(ext)}"
                     return yrpath.with_suffix(ext)
 
-        logger.info(f"Looking back {looking_back} years, DIDNT find a path at {yrpath.with_suffix(ext)}")
+        logger.info(
+            f"Looking back {looking_back} years, DIDNT find a path at {yrpath.with_suffix(ext)}"
+        )
     else:
-        logger.info(f"Couldnt determine any year ranges in the pattern gXXXX (possibly repeating, like gXXXXgXXXX.).")
+        logger.info(
+            "Couldnt determine any year ranges in the pattern gXXXX (possibly repeating, like gXXXXgXXXX.)."
+        )
     return None
 
 

@@ -20,33 +20,32 @@ DESKFLYT = "@deskFlyt"
 class PublishingSpecifics:
     """Hold specific information about each publishing."""
 
-    navn: str
-    statid: str
-    statistikk: str
+    name: str
+    stat_id: str
+    statistic: str
     variant: str
     status: str
-    er_periode: bool
-    periode_fra: datetime.datetime
-    periode_til: datetime.datetime
-    presisjon: str
-    tidspunkt: datetime.datetime
-    er_endret: bool
-    desk_flyt: str
-    endret: datetime.datetime
-    er_avlyst: bool
-    revisjon: str
-    tittel: str
+    is_period: bool
+    period_from: datetime.datetime
+    period_until: datetime.datetime
+    precision: str
+    time: datetime.datetime
+    has_changed: bool
+    desk_flow: str
+    time_changed: datetime.datetime
+    is_cancelled: bool
+    revision: str
+    title: str
 
 
 @dataclass
 class StatisticPublishingShort:
     """Top-level metadata for a specific statistical product."""
 
-    statid: str
+    stat_id: str
     variant: str
-    desk_flyt: str
-    endret: datetime.datetime
-    statistikk_kortnavn: str
+    desk_flow: str
+    time_changed: datetime.datetime
     specifics: None | PublishingSpecifics
 
 
@@ -54,9 +53,9 @@ class StatisticPublishingShort:
 class MultiplePublishings:
     """Contains multiple statisticss, like when getting all the data in the API."""
 
-    publiseringer: list[StatisticPublishingShort]
-    antall: int
-    dato: str
+    publishings: list[StatisticPublishingShort]
+    amount: int
+    date: str
 
 
 @dataclass
@@ -66,58 +65,58 @@ class LangText:
     Attributes:
         lang: The language code.
         text: The text in the specified language.
-        navn: Unused attribute, kept for compatibility.
+        name: Unused attribute, kept for compatibility.
     """
 
     lang: str
     text: None | str
-    navn: None
+    name: None
 
 
 @dataclass
-class Navn:
+class Name:
     """Represents a list of LangText objects.
 
     Attributes:
-        navn_lang: A list of LangText objects.
+        name_lang: A list of LangText objects.
     """
 
-    navn_lang: list[LangText]
+    name_lang: list[LangText]
 
 
 @dataclass
-class Kontakt:
+class Contact:
     """Represents a contact with various attributes.
 
     Attributes:
-        navn: A list of LangText objects representing names.
-        statid: The contact ID.
-        telefon: The contact's phone number.
-        mobil: The contact's mobile number.
-        epost: The contact's email address.
-        initialer: The contact's initials.
+        name: A list of LangText objects representing names.
+        contact_id: The contact ID.
+        phone: The contact's phone number.
+        cellphone: The contact's cellphonee number.
+        email: The contact's email address.
+        initials: The contact's initials.
     """
 
-    navn: list[LangText]
-    statid: str
-    telefon: str
-    mobil: str
-    epost: str
-    initialer: str
+    name: Name
+    contact_id: str
+    phone: str
+    cellphone: str
+    email: str
+    initials: str
+    changed: str | datetime.datetime | None
 
 
 @dataclass
-class Eierseksjon:
+class Owningsection:
     """Represents an ownership section with various attributes.
 
     Attributes:
-        navn: A list of LangText objects representing names.
-        statid: The section ID.
-        navn_attr: The section name.
+        name: A list of LangText objects representing names.
+        section_id: The section ID.
     """
 
-    navn: list[LangText]
-    statid: str
+    name: list[LangText]
+    section_id: str
 
 
 @dataclass
@@ -125,22 +124,22 @@ class Variant:
     """Represents a variant with various attributes.
 
     Attributes:
-        navn: The name of the variant.
-        statid: The variant ID.
-        revisjon: The revision of the variant.
-        opphort: Whether the variant is discontinued.
-        detaljniva: Detailed level information.
-        detaljniva_EN: Detailed level information in English.
-        frekvens: The frequency of the variant.
+        name: The name of the variant.
+        variant_id: The variant ID.
+        revision: The revision of the variant.
+        ceased: Whether the variant is discontinued.
+        detail_level: Detailed level information.
+        detail_level_en: Detailed level information in English.
+        frequency: The frequency of the variant.
     """
 
-    navn: str
-    statid: str
-    revisjon: str
-    opphort: str
-    detaljniva: str
-    detaljniva_en: str
-    frekvens: str
+    name: str
+    variant_id: str
+    revision: str
+    ceased: str
+    detail_level: str
+    detail_level_en: str
+    frequency: str
 
 
 @dataclass
@@ -148,42 +147,47 @@ class SinglePublishing:
     """Represents a single publishing entry with various attributes.
 
     Attributes:
-        navn: The name details.
-        kortnavn: The short name.
-        gamleEmnekoder: The old subject codes.
-        forstegangspublisering: The first publication date.
+        name: The name details.
+        short_name: The short name.
+        old_subjectcodes: The old subject codes.
+        firstpubilishing: The first publication date.
         status: The status code.
-        eierseksjon: The ownership section details.
-        kontakter: A list of contacts.
-        triggerord: A dictionary of trigger words.
-        varianter: A list of variants.
-        regionaleNivaer: A list of regional levels.
-        videreforing: A dictionary of continuation information.
-        statid: The ID of the publishing entry.
-        defaultLang: The default language code.
-        godkjent: Approval status.
-        endret: The last modified date.
-        deskFlyt: Desk flow status.
-        dirFlyt: Directory flow status.
+        owner_name: The ownership section name.
+        owner_code: The ownership section code.
+        contacts: A list of contacts.
+        triggerwords: A dictionary of trigger words.
+        variants: A list of variants.
+        regional_levels: A list of regional levels.
+        continuation: A dictionary of continuation information.
+        publish_id: The ID of the publishing entry.
+        default_lang: The default language code.
+        approved: Approval status.
+        changed: The last modified date.
+        desk_flow: Desk flow status.
+        dir_flow: Directory flow status.
     """
 
-    navn: Navn
-    kortnavn: str
-    gamle_emnekoder: str
-    forstegangspublisering: str
+    name: Name | str
+    short_name: str
+    old_subjectcodes: str | None
+    firstpubilishing: str
     status: str
-    eierseksjon: Eierseksjon
-    kontakter: list[Kontakt]
-    triggerord: dict[str, list[dict[str, str]]]
-    varianter: list[Variant]
-    regionale_nivaer: list[str]
-    videreforing: dict[str, bool]
-    statid: str
+    owningsection: Owningsection
+    contacts: list[Contact] | None
+    triggerwords: dict[str, list[dict[str, str]]] | None
+    variants: list[Variant] | list[str]
+    regional_levels: list[str]
+    continuation: dict[str, bool] | None
+    publish_id: str
     default_lang: str
-    godkjent: str
-    endret: str
-    desk_flyt: str
-    dir_flyt: str
+    approved: str | None
+    changed: str | list[str]
+    desk_flow: str | None
+    dir_flow: str | None
+
+    annual_reporting: bool | None
+    start_year: str | None
+    changes: list[str] | None
 
 
 def parse_lang_text_single(entry: dict[str, Any]) -> LangText:
@@ -198,53 +202,54 @@ def parse_lang_text_single(entry: dict[str, Any]) -> LangText:
     return LangText(
         lang=entry["@{http://www.w3.org/XML/1998/namespace}lang"],
         text=entry.get(TEXT, None),
-        navn=entry.get("@navn", None),
+        name=entry.get("@navn", None),
     )
 
 
-def parse_navn_single(entry: dict[str, Any]) -> Navn:
-    """Parses a dictionary entry into a Navn object.
+def parse_name_single(entry: dict[str, Any]) -> Name:
+    """Parses a dictionary entry into a Name object.
 
     Args:
         entry: The dictionary entry to parse.
 
     Returns:
-        Navn: The parsed Navn object.
+        Name: The parsed Name object.
     """
-    return Navn(navn_lang=[parse_lang_text_single(e) for e in entry["navn"]])
+    return Name(name_lang=[parse_lang_text_single(e) for e in entry["navn"]])
 
 
-def parse_kontakt_single(entry: dict[str, Any]) -> Kontakt:
-    """Parses a dictionary entry into a Kontakt object.
+def parse_contact_single(entry: dict[str, Any]) -> Contact:
+    """Parses a dictionary entry into a Contact object.
 
     Args:
         entry: The dictionary entry to parse.
 
     Returns:
-        Kontakt: The parsed Kontakt object.
+        Contact: The parsed Kontakt object.
     """
-    navn = [parse_lang_text_single(e) for e in entry["navn"]]
-    return Kontakt(
-        navn=navn,
-        statid=entry["@id"],
-        telefon=entry["@telefon"],
-        mobil=entry["@mobil"],
-        epost=entry["@epost"],
-        initialer=entry["@initialer"],
+    name = Name(name_lang=[parse_lang_text_single(e) for e in entry["navn"]])
+    return Contact(
+        name=name,
+        contact_id=entry["@id"],
+        phone=entry["@telefon"],
+        cellphone=entry["@mobil"],
+        email=entry["@epost"],
+        initials=entry["@initialer"],
+        changed=entry.get("@endret", None),
     )
 
 
-def parse_eierseksjon_single(entry: dict[str, Any]) -> Eierseksjon:
-    """Parses a dictionary entry into an Eierseksjon object.
+def parse_eierseksjon_single(entry: dict[str, Any]) -> Owningsection:
+    """Parses a dictionary entry into an Owningsection object.
 
     Args:
         entry: The dictionary entry to parse.
 
     Returns:
-        Eierseksjon: The parsed Eierseksjon object.
+        Owningsection: The parsed Owningsection object.
     """
-    navn = [parse_lang_text_single(e) for e in entry["navn"]]
-    return Eierseksjon(navn=navn, statid=entry["@id"])
+    name = [parse_lang_text_single(e) for e in entry["navn"]]
+    return Owningsection(name=name, section_id=entry["@id"])
 
 
 def parse_triggerord_single(entry: dict[str, Any]) -> dict[str, str]:
@@ -272,13 +277,13 @@ def parse_variant_single(entry: dict[str, Any]) -> Variant:
         Variant: The parsed Variant object.
     """
     return Variant(
-        navn=entry["navn"],
-        statid=entry["@id"],
-        revisjon=entry["@revisjon"],
-        opphort=entry["@opphort"],
-        detaljniva=entry["@detaljniva"],
-        detaljniva_en=entry["@detaljniva_EN"],
-        frekvens=entry["@frekvens"],
+        name=entry["navn"],
+        variant_id=entry["@id"],
+        revision=entry["@revisjon"],
+        ceased=entry["@opphort"],
+        detail_level=entry["@detaljniva"],
+        detail_level_en=entry["@detaljniva_EN"],
+        frequency=entry["@frekvens"],
     )
 
 
@@ -291,60 +296,64 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
     Returns:
         SinglePublishing: The parsed SinglePublishing object.
     """
-    navn = parse_navn_single(root["navn"])
-    kortnavn = root["kortnavn"][TEXT]
-    gamle_emnekoder = root["gamleEmnekoder"]
-    forstegangspublisering = root["forstegangspublisering"]
+    name = parse_name_single(root["navn"])
+    short_name = root["kortnavn"][TEXT]
+    old_subjectcodes = root["gamleEmnekoder"]
+    firstpublishing = root["forstegangspublisering"]
     try:
-        forstegangspublisering = dateutil.parser.parse(forstegangspublisering).date()
+        firstpublishing = dateutil.parser.parse(firstpublishing).date()
     except ValueError:
         pass
     status = root["status"]["@kode"]
-    eierseksjon = parse_eierseksjon_single(root["eierseksjon"])
-    kontakter = [parse_kontakt_single(e) for e in root["kontakter"]["kontakt"]]
-    triggerord = {
+    owningsection = parse_eierseksjon_single(root["eierseksjon"])
+    contacts = [parse_contact_single(e) for e in root["kontakter"]["kontakt"]]
+    triggerwords = {
         k: [parse_triggerord_single(e) for e in v]
         for k, v in root["triggerord"].items()
     }
     # Some times single variants are not in a list already?
     if not isinstance(root["varianter"]["variant"], list):
         root["varianter"]["variant"] = [root["varianter"]["variant"]]
-    varianter = [
+    variants = [
         parse_variant_single(variant) for variant in root["varianter"]["variant"]
     ]
-    regionale_nivaer = root["regionaleNivaer"]["kode"]
-    videreforing = {
+    regional_levels = root["regionaleNivaer"]["kode"]
+    continuation = {
         k.replace("@", ""): v == "true" for k, v in root["videreforing"].items()
     }
-    statid = root["@id"]
+    publish_id = root["@id"]
     default_lang = root["@defaultLang"]
-    godkjent = root["@godkjent"]
-    endret = root[ENDRET]
+    approved = root["@godkjent"]
+    changed = root[ENDRET]
     try:
-        endret = dateutil.parser.parse(endret)
+        changed = dateutil.parser.parse(changed)
     except ValueError:
         pass
-    desk_flyt = root[DESKFLYT]
-    dir_flyt = root["@dirFlyt"]
+    desk_flow = root[DESKFLYT]
+    dir_flow = root["@dirFlyt"]
 
     return SinglePublishing(
-        navn=navn,
-        kortnavn=kortnavn,
-        gamle_emnekoder=gamle_emnekoder,
-        forstegangspublisering=forstegangspublisering,
+        name=name,
+        short_name=short_name,
+        old_subjectcodes=old_subjectcodes,
+        firstpubilishing=firstpublishing,
         status=status,
-        eierseksjon=eierseksjon,
-        kontakter=kontakter,
-        triggerord=triggerord,
-        varianter=varianter,
-        regionale_nivaer=regionale_nivaer,
-        videreforing=videreforing,
-        statid=statid,
+        owningsection=owningsection,
+        contacts=contacts,
+        triggerwords=triggerwords,
+        variants=variants,
+        regional_levels=regional_levels,
+        continuation=continuation,
+        publish_id=publish_id,
         default_lang=default_lang,
-        godkjent=godkjent,
-        endret=endret,
-        desk_flyt=desk_flyt,
-        dir_flyt=dir_flyt,
+        approved=approved,
+        changed=changed,
+        desk_flow=desk_flow,
+        dir_flow=dir_flow,
+        # Missing from this endpoint
+        annual_reporting=None,
+        start_year=None,
+        changes=None,
     )
 
 
@@ -358,22 +367,22 @@ def kwargs_specifics(nested: dict[str, Any]) -> dict[str, Any]:
         dict[str, Any]: Cleaned up data-structure
     """
     return {
-        "navn": nested["publisering"]["navn"],
-        "statid": nested["publisering"]["@id"],
-        "statistikk": nested["publisering"]["@statistikk"],
+        "name": nested["publisering"]["navn"],
+        "stat_id": nested["publisering"]["@id"],
+        "statistic": nested["publisering"]["@statistikk"],
         "variant": nested["publisering"]["@variant"],
         "status": nested["publisering"]["@status"],
-        "er_periode": nested["publisering"]["@erPeriode"] == "true",
-        "periode_fra": dateutil.parser.parse(nested["publisering"]["@periodeFra"]),
-        "periode_til": dateutil.parser.parse(nested["publisering"]["@periodeTil"]),
-        "presisjon": nested["publisering"]["@presisjon"],
-        "tidspunkt": dateutil.parser.parse(nested["publisering"]["@tidspunkt"]),
-        "er_endret": nested["publisering"]["@erEndret"] == "true",
-        "desk_flyt": nested["publisering"][DESKFLYT],
-        "endret": dateutil.parser.parse(nested["publisering"][ENDRET]),
-        "er_avlyst": nested["publisering"]["@erAvlyst"] == "true",
-        "revisjon": nested["publisering"]["@revisjon"],
-        "tittel": nested["publisering"]["@tittel"],
+        "is_period": nested["publisering"]["@erPeriode"] == "true",
+        "period_from": dateutil.parser.parse(nested["publisering"]["@periodeFra"]),
+        "period_until": dateutil.parser.parse(nested["publisering"]["@periodeTil"]),
+        "precision": nested["publisering"]["@presisjon"],
+        "time": dateutil.parser.parse(nested["publisering"]["@tidspunkt"]),
+        "has_changed": nested["publisering"]["@erEndret"] == "true",
+        "desk_flow": nested["publisering"][DESKFLYT],
+        "time_changed": dateutil.parser.parse(nested["publisering"][ENDRET]),
+        "is_cancelled": nested["publisering"]["@erAvlyst"] == "true",
+        "revision": nested["publisering"]["@revisjon"],
+        "title": nested["publisering"]["@tittel"],
     }
 
 
@@ -381,13 +390,64 @@ def kwargs_specifics(nested: dict[str, Any]) -> dict[str, Any]:
 def get_statistics_register() -> list[dict[str, Any]]:
     """Get the overview of all the statistical products from the API.
 
+    Warning: this may take a little time to fetch.
+
     Returns:
         dict[str, Any]: The summary of all the products.
     """
-    response = rs.get("https://i.ssb.no/statistikkregisteret/statistics")
+    response = rs.get(
+        "https://i.ssb.no/statistikkregisteret/statistikk/listAllReleasedAsJson"
+    )
     response.raise_for_status()
     stats: list[dict[str, Any]] = response.json()["statistics"]
     return stats
+
+
+@lru_cache(maxsize=1)
+def get_contacts() -> list[Contact]:
+    """Get all the contacts from the API.
+
+    Returns:
+        list[Contacts]: Each of the contacts in a list.
+    """
+    response = rs.get("https://i.ssb.no/statistikkregisteret/kontakt/listSomXml")
+    response.raise_for_status()
+    return parse_contacts(ET.fromstring(response.text))
+
+
+def parse_contacts(t: ET.Element) -> list[Contact]:
+    """Parse the content of contacts into Contact dataclasses.
+
+    Args:
+        t: The xml-element to look for contacts in.
+
+    Returns:
+        list[Contact]: The parsed data inserted into the dataclasses.
+    """
+    content = etree_to_dict(t)
+    result: list[Contact] = []
+    for contact in content["kontakter"]["kontakt"]:
+        result.append(
+            Contact(
+                name=Name(
+                    name_lang=[
+                        LangText(
+                            lang=x["@{http://www.w3.org/XML/1998/namespace}lang"],
+                            text=x.get("#text", None),
+                            name=x.get("@navn", None),
+                        )
+                        for x in contact["navn"]
+                    ]
+                ),
+                contact_id=contact["@id"],
+                phone=contact["@telefon"],
+                cellphone=contact["@mobil"],
+                email=contact["@epost"],
+                initials=contact["@initialer"],
+                changed=dateutil.parser.parse(contact["@endret"]),
+            )
+        )
+    return result
 
 
 def find_stat_shortcode(
@@ -504,21 +564,21 @@ def find_publishings(
             publish["specifics"] = specific_publishing(publish["@id"])
 
     return MultiplePublishings(
-        publiseringer=[
+        publishings=[
             StatisticPublishingShort(
-                statid=pub["@id"],
+                publish_id=pub["@id"],
                 variant=pub["@variant"],
-                desk_flyt=pub[DESKFLYT],
-                endret=dateutil.parser.parse(pub[ENDRET]),
-                statistikk_kortnavn=pub["@statistikkKortnavn"],
+                desk_flow=pub[DESKFLYT],
+                time_changed=dateutil.parser.parse(pub[ENDRET]),
+                short_name=pub["@statistikkKortnavn"],
                 specifics=pub[
                     "specifics"
                 ],  # Already in the correct class from specific_p
             )
             for pub in publishings["publisering"]
         ],
-        antall=int(publishings["@antall"]),
-        dato=publishings["@dato"],
+        amount=int(publishings["@antall"]),
+        date=publishings["@dato"],
     )
 
 
@@ -593,48 +653,6 @@ def specific_publishing(publish_id: str = "162143") -> PublishingSpecifics:
     return PublishingSpecifics(**kwargs_specifics(nested))
 
 
-def etree_to_dict(t: ET.Element) -> dict[str, Any]:
-    """Convert an XML-tree to a python dictionary.
-
-    Args:
-        t: The XML element to convert.
-
-    Returns:
-        dict[str, Any]: The python dictionary that has been converted to.
-    """
-    d: dict[str, Any] = {t.tag: {} if t.attrib else None}
-    children = list(t)
-    if children:
-        d = handle_children(children, t)
-    if t.attrib:
-        d[t.tag].update(("@" + k, v) for k, v in t.attrib.items())
-    if t.text:
-        text = t.text.strip()
-        if children or t.attrib:
-            if text:
-                d[t.tag][TEXT] = text
-        else:
-            d[t.tag] = text
-    return d
-
-
-def handle_children(children: list[ET.Element], t: ET.Element) -> dict[str, Any]:
-    """Handle children in the etree.
-
-    Args:
-        children: The children to treat.
-        t: The XML element to convert.
-
-    Returns:
-        dict[str, Any]: The python dictionary of the children part.
-    """
-    dd = defaultdict(list)
-    for dc in map(etree_to_dict, children):
-        for k, v in dc.items():
-            dd[k].append(v)
-    return {t.tag: {k: v[0] if len(v) == 1 else v for k, v in dd.items()}}
-
-
 def raise_on_missing_future_publish(
     shortname: str, raise_error: bool = True
 ) -> datetime.timedelta | None:
@@ -684,3 +702,122 @@ def _raise_publisherror_possibly(raise_error: bool, msg: str) -> None:
         raise FuturePublishingError(msg)
     logger.warning(msg)
     return None
+
+
+def sections_publishings(
+    section_code: str | int,
+    include_ceased: bool = False,
+    get_publishings: bool = True,
+    get_publishing_specifics: bool = True,
+) -> list[SinglePublishing]:
+    """Get the publishings for a specific owning section at statistics norway.
+
+    Args:
+        section_code: The three digit numeric code for the section.
+        include_ceased: Set to True if you want to include statistical products that have ceased publiscation. Defaults to False.
+        get_publishings: Get more data about all the publishings. Defaults to True.
+        get_publishing_specifics: Get more data about every single publishing. Defaults to True.
+
+    Returns:
+        list[SinglePublishing]: A list of the sections statistical products.
+    """
+    register = get_statistics_register()
+    section_code_str = str(section_code)
+    content = [
+        parse_single_stat_from_englishjson(stat)
+        for stat in register
+        if stat["ownerCode"] == section_code_str
+    ]
+    if not include_ceased:
+        content = [
+            stat for stat in content if "opphørt" not in stat.name.name_lang[0].name
+        ]
+    if get_publishings:
+        for i, stat in enumerate(content):
+            content[i].publishings = find_publishings(
+                stat.short_name, get_publishing_specifics
+            )
+    return content
+
+
+def parse_single_stat_from_englishjson(stat: dict[str, Any]) -> SinglePublishing:
+    """Insert data-parts from the english json endpoint into SinglePublishing object.
+
+    Args:
+        stat: The datapart that represents the statistic.
+
+    Returns:
+        SinglePublishing: A SinglePublishing object with inserted data.
+    """
+    return SinglePublishing(
+        publish_id=stat["id"],
+        short_name=stat["shortName"],
+        name=Name(
+            name_lang=[
+                LangText(name=stat["name"], lang="no"),
+                LangText(name=stat["nameEN"], lang="en"),
+            ]
+        ),
+        created_date=dateutil.parser.parse(stat["dateCreated"]),
+        default_lang=stat["lang"],
+        owningsection=Owningsection(
+            name=[LangText(name=stat["owner"], lang="no")], section_id=stat["ownerCode"]
+        ),
+        status=stat["status"],
+        regional_levels=stat["regionalLevels"].split(";"),
+        variants=stat["variants"].split(";"),
+        annual_reporting=stat["annualReporting"],
+        start_year=stat["startYear"],
+        firstpubilishing=stat["firstReleaseStatistic"],
+        changes=stat["changes"],
+        # Not available from the english json endpoint
+        contacts=None,
+        triggerwords=None,
+        continuation=None,
+        approved=None,
+        desk_flow=None,
+        dir_flow=None,
+        old_subjectcodes=None,
+    )
+
+
+def etree_to_dict(t: ET.Element) -> dict[str, Any]:
+    """Convert an XML-tree to a python dictionary.
+
+    Args:
+        t: The XML element to convert.
+
+    Returns:
+        dict[str, Any]: The python dictionary that has been converted to.
+    """
+    d: dict[str, Any] = {t.tag: {} if t.attrib else None}
+    children = list(t)
+    if children:
+        d = handle_children(children, t)
+    if t.attrib:
+        d[t.tag].update(("@" + k, v) for k, v in t.attrib.items())
+    if t.text:
+        text = t.text.strip()
+        if children or t.attrib:
+            if text:
+                d[t.tag][TEXT] = text
+        else:
+            d[t.tag] = text
+    return d
+
+
+def handle_children(children: list[ET.Element], t: ET.Element) -> dict[str, Any]:
+    """Handle children in the etree.
+
+    Args:
+        children: The children to treat.
+        t: The XML element to convert.
+
+    Returns:
+        dict[str, Any]: The python dictionary of the children part.
+    """
+    dd = defaultdict(list)
+    for dc in map(etree_to_dict, children):
+        for k, v in dc.items():
+            dd[k].append(v)
+    return {t.tag: {k: v[0] if len(v) == 1 else v for k, v in dd.items()}}
