@@ -14,6 +14,7 @@ from fagfunksjoner.fagfunksjoner_logger import logger
 TEXT = "#text"
 ENDRET = "@endret"
 DESKFLYT = "@deskFlyt"
+SPACE_LANG = r"@{http://www.w3.org/XML/1998/namespace}lang"
 
 
 STATUS_MAP = {
@@ -214,7 +215,7 @@ def parse_lang_text_single(entry: dict[str, Any]) -> LangText:
         LangText: The parsed LangText object.
     """
     return LangText(
-        lang=entry["@{http://www.w3.org/XML/1998/namespace}lang"],
+        lang=entry[SPACE_LANG],
         text=entry.get(TEXT, None),
         name=entry.get("@navn", None),
     )
@@ -249,7 +250,7 @@ def parse_contact_single(entry: dict[str, Any]) -> Contact:
         cellphone=entry["@mobil"],
         email=entry["@epost"],
         initials=entry["@initialer"],
-        changed=entry.get("@endret", None),
+        changed=entry.get(ENDRET, None),
     )
 
 
@@ -276,7 +277,7 @@ def parse_triggerord_single(entry: dict[str, Any]) -> dict[str, str]:
         dict: The parsed trigger word dictionary.
     """
     return {
-        "lang": entry["@{http://www.w3.org/XML/1998/namespace}lang"],
+        "lang": entry[SPACE_LANG],
         "text": entry[TEXT],
     }
 
@@ -450,7 +451,7 @@ def parse_contacts(t: ET.Element) -> list[Contact]:
                 name=Name(
                     name_lang=[
                         LangText(
-                            lang=x["@{http://www.w3.org/XML/1998/namespace}lang"],
+                            lang=x[SPACE_LANG],
                             text=x.get("#text", None),
                             name=x.get("@navn", None),
                         )
@@ -462,7 +463,7 @@ def parse_contacts(t: ET.Element) -> list[Contact]:
                 cellphone=contact["@mobil"],
                 email=contact["@epost"],
                 initials=contact["@initialer"],
-                changed=dateutil.parser.parse(contact["@endret"]),
+                changed=dateutil.parser.parse(contact[ENDRET]),
             )
         )
     return result

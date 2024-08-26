@@ -45,6 +45,8 @@ from fagfunksjoner.prodsone.check_env import linux_shortcuts
 #
 # Den interne metadataportalen http://www.byranettet.ssb.no/metadata/ har også alle filbeskrivelsene og filvariablene.
 
+YEARS_BACK_CHECK = -20
+
 
 # %%
 @dataclass
@@ -570,7 +572,6 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
 
     Raises:
         ValueError: If no datadok-api endpoint is found for the path given.
-        FileNotFoundError: If more than one file matches, with different file extensions, we do not know which to pick.
     """
     path_lib = convert_to_pathlib(path)
     combinations = get_path_combinations(path_lib, file_exts=[""])
@@ -586,6 +587,24 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
     url_address = url_from_path(url_path)
     logger.info(f"Found datadok-response for path {url_path}")
 
+    filepath = look_for_filepath(path_lib)
+
+    return import_archive_data(url_address, filepath, **read_fwf_params)
+
+
+def look_for_filepath(path_lib: Path) -> Path:
+    """Look for possible placements of the physical "flatfile" on disk.
+
+    Args:
+        path_lib (Path): The given path from the user as a pathlib.Path
+
+    Raises:
+        FileNotFoundError: If we find more than one matching file, we do not know which to pick.
+        FileNotFoundError: If we find zero matching files, we also do not know which to pick.
+
+    Returns:
+        Path: The found path of an actual physical file.
+    """
     file_combinations = get_path_combinations(
         path_lib.with_suffix(""), file_exts=None, add_dollar=False
     )  # file_exts=None gets replaced by dat, txt, ""
@@ -619,8 +638,7 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
             filepath = filelist[0]
 
         logger.info(f"Found datafile at path {filepath}")
-
-    return import_archive_data(url_address, filepath, **read_fwf_params)
+    return filepath
 
 
 # Correcting path for API
@@ -866,32 +884,50 @@ def go_back_in_time(
     yr_char_ranges = get_yr_char_ranges(path_lib)
     # Loop over the years we want to look at, changing all the year ranges in the path
     if yr_char_ranges:
-        curr_path = path_lib
-        # Looking 20 years back in time
-        for looking_back in range(-1, -20, -1):
-            for year_range in yr_char_ranges:
-                yr = curr_path.name[year_range[0] : year_range[1]]
-                name_update = (
-                    curr_path.name[: year_range[0]]
-                    + str(int(yr) - 1)
-                    + curr_path.name[year_range[1] :]
-                )
-                curr_path = Path(curr_path.parent, name_update)
-                logger.debug(f"Looking back at {looking_back}, {curr_path=}")
-            yr_combinations = get_path_combinations(curr_path, file_exts=exts)
-            for yrpath, ext in yr_combinations:
-                url_address = url_from_path(yrpath.with_suffix(ext))
-                if test_url(url_address):
-                    f"Looking back {looking_back} years, found a path at {yrpath.with_suffix(ext)}"
-                    return yrpath.with_suffix(ext)
-
-        logger.info(
-            f"Looking back {looking_back} years, DIDNT find a path at {yrpath.with_suffix(ext)}"
-        )
+        yrpath = bumpcheck_file_years_back(path_lib, yr_char_ranges, exts)
+        if yrpath is not None:
+            return yrpath
     else:
         logger.info(
             "Couldnt determine any year ranges in the pattern gXXXX (possibly repeating, like gXXXXgXXXX.)."
         )
+    return None
+
+
+def bumpcheck_file_years_back(
+    curr_path: Path, yr_char_ranges: list[tuple[int, int]], exts: list[str]
+) -> Path | None:
+    """Modify the path to point at older versions of file, to look for valid datadok-api paths.
+
+    Args:
+        curr_path: The path given by user to look for.
+        yr_char_ranges: The placement of the year ranges in the paths.
+        exts: The base extensions to explore.
+
+    Returns:
+        Path | None :
+    """
+    # Looking X years back in time
+    for looking_back in range(-1, YEARS_BACK_CHECK, -1):
+        for year_range in yr_char_ranges:
+            yr = curr_path.name[year_range[0] : year_range[1]]
+            name_update = (
+                curr_path.name[: year_range[0]]
+                + str(int(yr) - 1)
+                + curr_path.name[year_range[1] :]
+            )
+            curr_path = Path(curr_path.parent, name_update)
+            logger.debug(f"Looking back at {looking_back}, {curr_path=}")
+        yr_combinations = get_path_combinations(curr_path, file_exts=exts)
+        for yrpath, ext in yr_combinations:
+            url_address = url_from_path(yrpath.with_suffix(ext))
+            if test_url(url_address):
+                f"Looking back {looking_back} years, found a path at {yrpath.with_suffix(ext)}"
+                return yrpath.with_suffix(ext)
+
+    logger.info(
+        f"Looking back {looking_back} years, DIDNT find a path at {yrpath.with_suffix(ext)}"
+    )
     return None
 
 
