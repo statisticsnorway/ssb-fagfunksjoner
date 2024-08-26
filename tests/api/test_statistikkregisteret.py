@@ -19,7 +19,7 @@ from fagfunksjoner.api.statistikkregisteret import (
 
 @responses.activate
 def test_get_statistics_register():
-    url = "https://i.ssb.no/statistikkregisteret/statistics"
+    url = "https://i.ssb.no/statistikkregisteret/statistikk/listAllReleasedAsJson"
     mock_response = {"statistics": [{"id": "1", "shortName": "test"}]}
 
     responses.add(responses.GET, url, json=mock_response, status=200)
@@ -33,7 +33,9 @@ def test_get_statistics_register():
 
 @responses.activate
 def test_find_stat_shortcode():
-    url_statistics = "https://i.ssb.no/statistikkregisteret/statistics"
+    url_statistics = (
+        "https://i.ssb.no/statistikkregisteret/statistikk/listAllReleasedAsJson"
+    )
     url_single_stat = "https://i.ssb.no/statistikkregisteret/statistikk/xml/1"
     url_publishings = "https://i.ssb.no/statistikkregisteret/publisering/listKortnavnSomXml?kortnavn=test"
     url_specific_publishing = "https://i.ssb.no/statistikkregisteret/publisering/xml/1"
@@ -111,14 +113,14 @@ def test_find_stat_shortcode():
     assert isinstance(result, list)
     assert result[0]["id"] == "1"
     assert result[0]["shortName"] == "test"
-    assert hasattr(result[0]["publishings"].publiseringer[0], "specifics")
-    assert result[0]["publishings"].publiseringer[0].specifics.statid == "162143"
+    assert hasattr(result[0]["publishings"].publishings[0], "specifics")
+    assert result[0]["publishings"].publishings[0].specifics.publish_id == "162143"
 
     assert isinstance(time_until_publishing("test"), datetime.timedelta)
-    assert single_stat("1").triggerord["triggerord"][0]["lang"] == "no"
-    assert isinstance(find_latest_publishing("test").endret, datetime.datetime)
-    assert find_publishings("test").publiseringer[0].statid.isdigit()
-    assert isinstance(specific_publishing("1").er_avlyst, bool)
+    assert single_stat("1").triggerwords["triggerord"][0]["lang"] == "no"
+    assert isinstance(find_latest_publishing("test").time_changed, datetime.datetime)
+    assert find_publishings("test").publishings[0].stat_id.isdigit()
+    assert isinstance(specific_publishing("1").is_cancelled, bool)
 
 
 @pytest.fixture

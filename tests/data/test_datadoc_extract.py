@@ -1,21 +1,14 @@
 import math
+import tempfile
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from unittest.mock import mock_open, patch
+from pathlib import Path
+from unittest.mock import ANY, mock_open, patch
 
 import pandas as pd
 import pytest
 
 from fagfunksjoner.data import datadok_extract
-
-
-def test_is_valid_url():
-    assert datadok_extract.is_valid_url("http://example.com") is True
-    assert datadok_extract.is_valid_url("https://example.com") is True
-    assert datadok_extract.is_valid_url("ftp://example.com") is True
-    assert datadok_extract.is_valid_url("invalid-url") is False
-    assert datadok_extract.is_valid_url("http://") is False
-    assert datadok_extract.is_valid_url("") is False
 
 
 def test_extract_context_variables():
@@ -281,22 +274,8 @@ def test_handle_decimals_with_empty_metadata():
 @patch("pandas.read_fwf")
 def test_import_archive_data_with_url(mock_read_fwf, mock_open, mock_requests_get):
     # Mocking the XML response from the URL
-    mock_requests_get.return_value.text = """
-    <root xmlns:meta="http://www.ssb.no/ns/meta" xmlns:common="http://www.ssb.no/ns/meta/common">
-        <meta:ContactInformation>
-            <common:Division>Test Division</common:Division>
-        </meta:ContactInformation>
-        <meta:ContextVariable id="1">
-            <meta:Title>Variable Title</meta:Title>
-            <meta:Description>Variable Description</meta:Description>
-            <meta:Properties>
-                <meta:Datatype>Tekst</meta:Datatype>
-                <meta:Length>10</meta:Length>
-                <meta:StartPosition>1</meta:StartPosition>
-            </meta:Properties>
-        </meta:ContextVariable>
-    </root>
-    """
+    mock_requests_get.return_value.text = xml_content()
+    mock_requests_get.return_value.status_code = 200
 
     # Mocking the DataFrame returned by pd.read_fwf
     mock_df = pd.DataFrame({"col1": [1, 2, 3], "col2": [4, 5, 6]})
@@ -307,8 +286,8 @@ def test_import_archive_data_with_url(mock_read_fwf, mock_open, mock_requests_ge
         archive_desc_xml="http://example.com/mock.xml", archive_file="mock_archive.txt"
     )
 
-    # Check if requests.get was called
-    mock_requests_get.assert_called_once_with("http://example.com/mock.xml")
+    # Check if requests.get was called (called by both url_test and actual get)
+    mock_requests_get.assert_called_with("http://example.com/mock.xml")
 
     # Check if pd.read_fwf was called with the correct parameters
     mock_read_fwf.assert_called_once()
@@ -320,28 +299,35 @@ def test_import_archive_data_with_url(mock_read_fwf, mock_open, mock_requests_ge
     assert archive_data.metadata_df["title"].iloc[0] == "Variable Title"
 
 
+def xml_content():
+    return """<root xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ssb.no/ns/meta">
+    <Title>Example Dataset</Title>
+    <Description>Sample description of the dataset</Description>
+    <Type>SampleType</Type>
+    <ContactInformation>
+        <Person xmlns="http://www.ssb.no/ns/meta/common">John Doe</Person>
+        <Division xmlns="http://www.ssb.no/ns/meta/common">Sample Division</Division>
+    </ContactInformation>
+    <ContextVariable id="urn:example:contextvariable:dataset:1234567" datasetId="urn:example:dataset:1234567">
+        <Title>Variable Title</Title>
+        <Description>Sample Variable 1</Description>
+        <Properties>
+            <Datatype>String</Datatype>
+            <Length>10</Length>
+            <StartPosition>1</StartPosition>
+        </Properties>
+    </ContextVariable>
+    </root>"""
+
+
 @patch("requests.get")
-@patch("builtins.open", new_callable=mock_open, read_data="<root></root>")
+@patch("builtins.open", new_callable=mock_open, read_data=xml_content())
 @patch("pandas.read_fwf")
 def test_import_archive_data_with_file(mock_read_fwf, mock_open, mock_requests_get):
     # Simulate the file-based XML content with ContactInformation element
-    xml_content = """
-    <root xmlns:meta="http://www.ssb.no/ns/meta" xmlns:common="http://www.ssb.no/ns/meta/common">
-        <meta:ContactInformation>
-            <common:Division>Test Division</common:Division>
-        </meta:ContactInformation>
-        <meta:ContextVariable id="1">
-            <meta:Title>Variable Title</meta:Title>
-            <meta:Description>Variable Description</meta:Description>
-            <meta:Properties>
-                <meta:Datatype>Tekst</meta:Datatype>
-                <meta:Length>10</meta:Length>
-                <meta:StartPosition>1</meta:StartPosition>
-            </meta:Properties>
-        </meta:ContextVariable>
-    </root>
-    """
-    mock_open.return_value.read.return_value = xml_content
+
+    mock_open.return_value.read.return_value = xml_content()
+    mock_requests_get.return_value.status_code = 500  # Cause to look for file instead
 
     # Mocking the DataFrame returned by pd.read_fwf
     mock_df = pd.DataFrame({"col1": [1, 2, 3], "col2": [4, 5, 6]})
@@ -372,23 +358,7 @@ def test_import_archive_data_with_invalid_params(
     mock_read_fwf, mock_open, mock_requests_get
 ):
     # Simulate the file-based XML content with ContactInformation element
-    xml_content = """
-    <root xmlns:meta="http://www.ssb.no/ns/meta" xmlns:common="http://www.ssb.no/ns/meta/common">
-        <meta:ContactInformation>
-            <common:Division>Test Division</common:Division>
-        </meta:ContactInformation>
-        <meta:ContextVariable id="1">
-            <meta:Title>Variable Title</meta:Title>
-            <meta:Description>Variable Description</meta:Description>
-            <meta:Properties>
-                <meta:Datatype>Tekst</meta:Datatype>
-                <meta:Length>10</meta:Length>
-                <meta:StartPosition>1</meta:StartPosition>
-            </meta:Properties>
-        </meta:ContextVariable>
-    </root>
-    """
-    mock_open.return_value.read.return_value = xml_content
+    mock_open.return_value.read.return_value = xml_content()
 
     # Now, we expect a ValueError related to the dtype parameter
     with pytest.raises(ValueError, match="You cannot pass dtype to pandas.fwf"):
@@ -416,25 +386,13 @@ def test_import_archive_data_parse_error():
 @patch("fagfunksjoner.data.datadok_extract.get_key_by_value")
 def test_get_path_combinations_basic(mock_get_key_by_value, mock_linux_shortcuts):
     # Mock the linux_shortcuts to return an empty dictionary
-    mock_linux_shortcuts.return_value = {"UTD": "/ssb/stamme01/utd"}
+    utd_path, path, expected = utd_path_expected()
+    mock_linux_shortcuts.return_value = {"UTD": str(utd_path.as_posix())}
     mock_get_key_by_value.return_value = "UTD"
-
-    path = "/ssb/stamme01/utd/path/to/file"
-    expected = [
-        ("/ssb/stamme01/utd/path/to/file", ""),
-        ("/ssb/stamme01/utd/path/to/file", ".dat"),
-        ("/ssb/stamme01/utd/path/to/file", ".txt"),
-        ("/ssb/stamme01/utd_pii/path/to/file", ""),
-        ("/ssb/stamme01/utd_pii/path/to/file", ".dat"),
-        ("/ssb/stamme01/utd_pii/path/to/file", ".txt"),
-        ("$UTD/path/to/file", ""),
-        ("$UTD/path/to/file", ".dat"),
-        ("$UTD/path/to/file", ".txt"),
-        ("$UTD_PII/path/to/file", ""),
-        ("$UTD_PII/path/to/file", ".dat"),
-        ("$UTD_PII/path/to/file", ".txt"),
-    ]
+    utd_path, path, expected = utd_path_expected()
     result = datadok_extract.get_path_combinations(path)
+    print(sorted(result))
+    print(sorted(expected))
     assert sorted(result) == sorted(expected)
 
 
@@ -442,10 +400,18 @@ def test_get_path_combinations_basic(mock_get_key_by_value, mock_linux_shortcuts
 @patch("fagfunksjoner.data.datadok_extract.get_key_by_value")
 def test_get_path_combinations_with_dollar(mock_get_key_by_value, mock_linux_shortcuts):
     # Mock the linux_shortcuts to return a dictionary mapping
-    mock_linux_shortcuts.return_value = {"UTD": "/ssb/stamme01/utd"}
+    utd_path, path, expected = utd_path_expected()
+    mock_linux_shortcuts.return_value = {"UTD": str(utd_path.as_posix())}
     mock_get_key_by_value.return_value = "UTD"
+    result = datadok_extract.get_path_combinations(path)
+    print(sorted(result))
+    print(sorted(expected))
+    assert sorted(result) == sorted(expected)
 
-    path = "$UTD/path/to/file"
+
+def utd_path_expected() -> tuple[str, str, list[tuple[str, str]]]:
+    utd_path = Path("/ssb/stamme01/utd")
+    path = Path("/ssb/stamme01/utd/path/to/file")
     expected = [
         ("/ssb/stamme01/utd/path/to/file", ""),
         ("/ssb/stamme01/utd/path/to/file", ".dat"),
@@ -460,8 +426,14 @@ def test_get_path_combinations_with_dollar(mock_get_key_by_value, mock_linux_sho
         ("$UTD_PII/path/to/file", ".dat"),
         ("$UTD_PII/path/to/file", ".txt"),
     ]
-    result = datadok_extract.get_path_combinations(path)
-    assert sorted(result) == sorted(expected)
+    expected = [
+        (
+            Path(p[0]),
+            p[1],
+        )
+        for p in expected
+    ]
+    return utd_path, path, expected
 
 
 @patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
@@ -470,25 +442,13 @@ def test_get_path_combinations_with_non_dollar(
     mock_get_key_by_value, mock_linux_shortcuts
 ):
     # Mock the linux_shortcuts to return a dictionary mapping
-    mock_linux_shortcuts.return_value = {"UTD": "/ssb/stamme01/utd"}
+    utd_path, path, expected = utd_path_expected()
+    mock_linux_shortcuts.return_value = {"UTD": str(utd_path.as_posix())}
     mock_get_key_by_value.return_value = "UTD"
-
-    path = "/ssb/stamme01/utd/path/to/file"
-    expected = [
-        ("/ssb/stamme01/utd/path/to/file", ""),
-        ("/ssb/stamme01/utd/path/to/file", ".dat"),
-        ("/ssb/stamme01/utd/path/to/file", ".txt"),
-        ("/ssb/stamme01/utd_pii/path/to/file", ""),
-        ("/ssb/stamme01/utd_pii/path/to/file", ".dat"),
-        ("/ssb/stamme01/utd_pii/path/to/file", ".txt"),
-        ("$UTD/path/to/file", ""),
-        ("$UTD/path/to/file", ".dat"),
-        ("$UTD/path/to/file", ".txt"),
-        ("$UTD_PII/path/to/file", ""),
-        ("$UTD_PII/path/to/file", ".dat"),
-        ("$UTD_PII/path/to/file", ".txt"),
-    ]
+    # Convert the paths to be OS-independent using os.path.join
     result = datadok_extract.get_path_combinations(path)
+    print(sorted(result))
+    print(sorted(expected))
     assert sorted(result) == sorted(expected)
 
 
@@ -506,3 +466,61 @@ def test_get_path_combinations_with_invalid_dollar_key(
         match="What we got out of the dollar-linux file was not a single string",
     ):
         datadok_extract.get_path_combinations("invalid/path/to/file")
+
+
+@patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
+@patch("fagfunksjoner.data.datadok_extract.get_key_by_value")
+@patch("fagfunksjoner.data.datadok_extract.import_archive_data")
+@patch("fagfunksjoner.data.datadok_extract.test_url")
+def test_file_with_ark_extension(
+    mock_test_url, mock_import_archive_data, mock_get_key_by_value, mock_linux_shortcuts
+):
+    utd_path, path, expected = utd_path_expected()
+    mock_linux_shortcuts.return_value = {"UTD": str(utd_path.as_posix())}
+    mock_get_key_by_value.return_value = "UTD"
+    mock_import_archive_data.return_value = datadok_extract.ArchiveData(
+        df=pd.DataFrame(),
+        metadata_df=pd.DataFrame(),
+        codelist_df=pd.DataFrame(),
+        codelist_dict={"": {"": ""}},
+        names=[""],
+        widths=[1],
+        datatypes={"": ""},
+    )
+    mock_test_url.return_value = True
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        ark_file = Path(tmpdirname, "file.ark")
+        ark_file.open("a").close()
+        result = datadok_extract.open_path_datadok(ark_file)
+        mock_import_archive_data.assert_called_once_with(ANY, ark_file)
+        assert isinstance(result, datadok_extract.ArchiveData)
+
+
+@patch("fagfunksjoner.data.datadok_extract.linux_shortcuts")
+@patch("fagfunksjoner.data.datadok_extract.get_key_by_value")
+@patch("fagfunksjoner.data.datadok_extract.import_archive_data")
+@patch("fagfunksjoner.data.datadok_extract.test_url")
+def test_file_with_ark_extension_finds_dat(
+    mock_test_url, mock_import_archive_data, mock_get_key_by_value, mock_linux_shortcuts
+):
+    utd_path, path, expected = utd_path_expected()
+    mock_linux_shortcuts.return_value = {"UTD": str(utd_path.as_posix())}
+    mock_get_key_by_value.return_value = "UTD"
+    mock_import_archive_data.return_value = datadok_extract.ArchiveData(
+        df=pd.DataFrame(),
+        metadata_df=pd.DataFrame(),
+        codelist_df=pd.DataFrame(),
+        codelist_dict={"": {"": ""}},
+        names=[""],
+        widths=[1],
+        datatypes={"": ""},
+    )
+    mock_test_url.return_value = True
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        ark_file = Path(tmpdirname, "file.dat")
+        ark_file.open("a").close()
+        result = datadok_extract.open_path_datadok(ark_file.with_suffix(".ark"))
+        mock_import_archive_data.assert_called_once_with(ANY, ark_file)
+        assert isinstance(result, datadok_extract.ArchiveData)

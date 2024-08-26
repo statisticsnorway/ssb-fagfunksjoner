@@ -20,10 +20,11 @@ import gc
 
 
 # %%
-import os
+import xml.dom.minidom
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -44,22 +45,7 @@ from fagfunksjoner.prodsone.check_env import linux_shortcuts
 #
 # Den interne metadataportalen http://www.byranettet.ssb.no/metadata/ har også alle filbeskrivelsene og filvariablene.
 
-
-# %%
-def is_valid_url(url: str) -> bool:
-    """Check if the provided URL is valid.
-
-    Args:
-        url: The URL to validate.
-
-    Returns:
-        bool: True if the URL is valid, False otherwise.
-    """
-    try:
-        result = urlparse(url)
-        return all([result.scheme, result.netloc])
-    except ValueError:
-        return False
+YEARS_BACK_CHECK = -20
 
 
 # %%
@@ -123,20 +109,29 @@ def extract_context_variables(root: ET.Element) -> list[ContextVariable]:
         ValueError: Missing information in the XML.
     """
     data = []
-    contact_info = root.find("{http://www.ssb.no/ns/meta}ContactInformation")
+    # register xml namespaces
+    ns = {
+        "ns": "http://www.ssb.no/ns/meta",
+        "common": "http://www.ssb.no/ns/meta/common",
+    }
+
+    contact_info = root.find("ns:ContactInformation", ns)
     if contact_info is None:
-        raise ValueError("ContactInformation not found in the XML")
-    division = contact_info.find("{http://www.ssb.no/ns/meta/common}Division")
+        xml_str = ET.tostring(root, encoding="utf8").decode("utf8")
+        pretty_xml = xml.dom.minidom.parseString(xml_str).toprettyxml(indent="  ")
+        raise ValueError(f"ContactInformation not found in the XML: {pretty_xml}")
+
+    division = contact_info.find("common:Division", ns)
     if division is None or division.text is None:
         raise ValueError("Division not found in the XML or has no text")
 
     division_text = division.text
 
-    for context_var in root.findall("{http://www.ssb.no/ns/meta}ContextVariable"):
+    for context_var in root.findall("ns:ContextVariable", ns):
         context_id = context_var.get("id")
-        title_elem = context_var.find("{http://www.ssb.no/ns/meta}Title")
-        description_elem = context_var.find("{http://www.ssb.no/ns/meta}Description")
-        properties = context_var.find("{http://www.ssb.no/ns/meta}Properties")
+        title_elem = context_var.find("ns:Title", ns)
+        description_elem = context_var.find("ns:Description", ns)
+        properties = context_var.find("ns:Properties", ns)
 
         if title_elem is None or title_elem.text is None:
             raise ValueError("Title element missing or has no text")
@@ -145,12 +140,10 @@ def extract_context_variables(root: ET.Element) -> list[ContextVariable]:
         if properties is None:
             raise ValueError("Properties element missing")
 
-        datatype_elem = properties.find("{http://www.ssb.no/ns/meta}Datatype")
-        length_elem = properties.find("{http://www.ssb.no/ns/meta}Length")
-        start_position_elem = properties.find(
-            "{http://www.ssb.no/ns/meta}StartPosition"
-        )
-        precision_elem = properties.find("{http://www.ssb.no/ns/meta}Precision")
+        datatype_elem = properties.find("ns:Datatype", ns)
+        length_elem = properties.find("ns:Length", ns)
+        start_position_elem = properties.find("ns:StartPosition", ns)
+        precision_elem = properties.find("ns:Precision", ns)
 
         if datatype_elem is None or datatype_elem.text is None:
             raise ValueError("Datatype element missing or has no text")
@@ -466,7 +459,7 @@ def handle_decimals(
 
 
 def import_archive_data(
-    archive_desc_xml: str, archive_file: str, **read_fwf_params: Any
+    archive_desc_xml: str, archive_file: str | Path, **read_fwf_params: Any
 ) -> ArchiveData:
     """Imports archive data based on the given XML description and archive file.
 
@@ -488,11 +481,17 @@ def import_archive_data(
         archive_data = import_archive_data('path_to_xml.xml', 'path_to_archive_file.txt')
         print(archive_data.df)
     """
-    if is_valid_url(archive_desc_xml):
+    if test_url(archive_desc_xml):
         xml_file = requests.get(archive_desc_xml).text
+        logger.debug(
+            f"Opening datadok metadata from URL: {archive_desc_xml}, with content: {xml_file}"
+        )
     else:
         with open(archive_desc_xml) as file:
             xml_file = file.read()
+        logger.debug(
+            f"Opening datadok metadata from FILE: {archive_desc_xml}, with content: {xml_file}"
+        )
     try:
         root = ET.fromstring(xml_file)
     except ET.ParseError as ParseError:
@@ -558,7 +557,7 @@ def open_path_metapath_datadok(
     )
 
 
-def open_path_datadok(path: str, **read_fwf_params: Any) -> ArchiveData:
+def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
     """Get archive data only based on the path of the .dat or .txt file.
 
     This function attempts to correct and test options, to try track down the file and metadata mentioned.
@@ -574,11 +573,12 @@ def open_path_datadok(path: str, **read_fwf_params: Any) -> ArchiveData:
     Raises:
         ValueError: If no datadok-api endpoint is found for the path given.
     """
-    combinations = get_path_combinations(path)
+    path_lib = convert_to_pathlib(path)
+    combinations = get_path_combinations(path_lib, file_exts=[""])
     url_path = test_url_combos(combinations)
 
     if url_path is None:
-        url_path = go_back_in_time(path)
+        url_path = go_back_in_time(path_lib, file_exts=[""])
         if url_path is None:
             raise ValueError(
                 f"Couldnt find datadok-api response, looked 20 years back in time, and looked for all of these combinations: {combinations}"
@@ -587,22 +587,62 @@ def open_path_datadok(path: str, **read_fwf_params: Any) -> ArchiveData:
     url_address = url_from_path(url_path)
     logger.info(f"Found datadok-response for path {url_path}")
 
-    # Correcting path in
-    for path, ext in combinations:
-        filepath = f"{path}{ext}"
-        if os.path.isfile(filepath):
-            break
-    else:
-        raise ValueError(
-            f"Couldnt find a file on disk for {filepath} using these combinations: {combinations}"
-        )
-    logger.info(f"Found datafile at path {filepath}")
+    filepath = look_for_filepath(path_lib)
 
     return import_archive_data(url_address, filepath, **read_fwf_params)
 
 
+def look_for_filepath(path_lib: Path) -> Path:
+    """Look for possible placements of the physical "flatfile" on disk.
+
+    Args:
+        path_lib (Path): The given path from the user as a pathlib.Path
+
+    Raises:
+        FileNotFoundError: If we find more than one matching file, we do not know which to pick.
+        FileNotFoundError: If we find zero matching files, we also do not know which to pick.
+
+    Returns:
+        Path: The found path of an actual physical file.
+    """
+    file_combinations = get_path_combinations(
+        path_lib.with_suffix(""), file_exts=None, add_dollar=False
+    )  # file_exts=None gets replaced by dat, txt, ""
+    logger.debug(f"Will try combinations: {file_combinations}")
+    # Correcting path in
+    if str(path_lib).startswith("$"):
+        replaced = replace_dollar_stamme(path_lib)
+        if replaced is not None:
+            path_lib = replaced
+    if path_lib.is_file():
+        filepath = path_lib
+    else:
+        for path, ext in file_combinations:
+            filepath = path.with_suffix(ext)
+            if filepath.is_file():
+                break
+        else:
+            # Last resort, see if any file matches stripping the extensions
+            filelist = list(path_lib.parent.glob(path_lib.stem + "*"))
+            # Shorten filelist to only those matching stem
+            filelist = [x for x in filelist if x.stem == path_lib.stem]
+            logger.info(f"{filelist=}")
+            # If more than one, we cannot now which one you want...
+            if len(filelist) >= 2:
+                msg = f"Found more than one matching file: {filelist}. Specify file ending please."
+                raise FileNotFoundError(msg)
+            elif len(filelist) == 0:
+                msg = f"Found no file matching the name {filepath} in the folder: {path_lib.parent}"
+                raise FileNotFoundError(msg)
+            # Replace filepath with file we found matching name
+            filepath = filelist[0]
+
+        logger.info(f"Found datafile at path {filepath}")
+    return filepath
+
+
 # Correcting path for API
-def url_from_path(path: str) -> str:
+def url_from_path(path: str | Path) -> str:
     """Append sent path to the endpoint URL that datadok uses.
 
     Args:
@@ -623,13 +663,27 @@ def test_url(url: str) -> bool:
     Returns:
         bool: True if there is content at the URL. False otherwise.
     """
-    result = requests.get(url)
-    if 200 != result.status_code or "Value cannot be null." in result.text:
+    try:
+        urlparse(url)
+    except AttributeError:
+        logger.debug("Url tested, not parsed correctly.")
         return False
-    return True
+    logger.debug("Url tested, parsed correctly.")
+    try:
+        result = requests.get(url)
+        if 200 != result.status_code or "Value cannot be null." in result.text:
+            logger.debug(
+                f"Url tested, found no content at endpoint, either status_code is not 200: {result.status_code}, or there is null value text: {result.text}"
+            )
+            return False
+        logger.debug("Url tested, found content at endpoint.")
+        return True
+    except (requests.exceptions.ConnectionError, requests.exceptions.MissingSchema):
+        logger.debug("Url tested, cought error.")
+        return False
 
 
-def test_url_combos(combinations: list[tuple[str, str]]) -> None | str:
+def test_url_combos(combinations: list[tuple[Path, str]]) -> None | str | Path:
     """Tests a set of path combinations for valid responses from the Datadok-API.
 
     Args:
@@ -640,42 +694,63 @@ def test_url_combos(combinations: list[tuple[str, str]]) -> None | str:
         None | str: Returns the tested path, if one test passes, if nothing is found, return None.
     """
     for path_head, ext in combinations:
-        url_path = path_head + ext
+        url_path = path_head.with_suffix(ext)
         url_address = url_from_path(url_path)
         if test_url(url_address):
             return url_path
     return None
 
 
+def convert_to_pathlib(path: str | Path) -> Path:
+    """Make sure the path is converted to pathlib.Path.
+
+    Args:
+        path (str | Path): The path to possibly convert.
+
+    Returns:
+        Path: The converted path.
+    """
+    if not isinstance(path, Path):
+        return Path(path)
+    return path
+
+
 def get_path_combinations(
-    path: str, file_exts: list[str] | None = None
-) -> list[tuple[str, str]]:
+    path: str | Path, file_exts: list[str] | str | None = None, add_dollar: bool = True
+) -> list[tuple[Path, str]]:
     """Generate a list of combinations of possible paths and file extensions for a given path.
 
     Args:
         path: The given path, will be modified to include both $UTD, $UTD_PII, utd and utd_pii
         file_exts: Possible file extensions for the files. Defaults to ["", ".dat", ".txt"].
+        add_dollar: If we should add dollar paths (not needed for file opening.)
 
     Returns:
         list[tuple[str, str]]: The generated combinations for possible locations of the files.
     """
+    path_lib = convert_to_pathlib(path)
+
     if file_exts is None:
         exts: list[str] = ["", ".dat", ".txt"]
-    elif not isinstance(file_exts, list):
-        exts = [file_exts]  # type: ignore[unreachable]
+    elif isinstance(file_exts, str):
+        exts = [file_exts]
     else:
         exts = file_exts
 
-    if path.endswith(".dat") or path.endswith(".txt"):
-        path = path[:-4]
-
-    paths = add_dollar_or_nondollar_path(path)
+    paths: list[Path] = add_dollar_or_nondollar_path(path_lib, add_dollar=add_dollar)
     paths = add_pii_paths(paths)
 
-    return [(path, ext) for path in paths for ext in exts]
+    return [
+        (
+            p,
+            ext,
+        )
+        for p in paths
+        for ext in exts
+    ]
 
 
-def add_pii_paths(paths: list[str]) -> list[str]:
+def add_pii_paths(paths: list[Path]) -> list[Path]:
     """Add PII-paths to a list of paths, to look in more places.
 
     Args:
@@ -686,28 +761,60 @@ def add_pii_paths(paths: list[str]) -> list[str]:
     """
     paths_pii = []
     for path in paths:
-        if path.startswith("$"):
-            path_parts = [x for x in path.split("/") if x]
-            if not path_parts[0].endswith("_PII"):
-                path_parts[0] += "_PII"
+        path_lib = convert_to_pathlib(path)
+        if str(path_lib).startswith("$"):
+            if not path_lib.parts[0].endswith("_PII"):
+                new_path = Path(str(path_lib.parts[0]) + "_PII", *path_lib.parts[1:])
+                logger.debug(f"{new_path=}")
             else:
-                path_parts[0] = path_parts[0].replace("_PII", "")
-            paths_pii += ["/".join(path_parts)]
+                new_path = Path(
+                    str(path_lib.parts[0]).replace("_PII", ""), *path_lib.parts[1:]
+                )
         else:
-            path_parts = [x for x in path.split("/") if x]
-            if not path_parts[2].endswith("_pii"):
-                path_parts[2] += "_pii"
+            if not path_lib.parts[3].endswith("_pii"):
+                new_path = Path(
+                    *path_lib.parts[:3],
+                    str(path_lib.parts[3]) + "_pii",
+                    *path_lib.parts[4:],
+                )
             else:
-                path_parts[2] = path_parts[2].replace("_pii", "")
-            paths_pii += ["/" + "/".join(path_parts)]
+                new_path = Path(
+                    *path_lib.parts[:3],
+                    str(path_lib.parts[3]).replace("_pii", ""),
+                    *path_lib.parts[4:],
+                )
+        paths_pii += [new_path]
     return paths + paths_pii
 
 
-def add_dollar_or_nondollar_path(path: str) -> list[str]:
+def replace_dollar_stamme(path_lib: Path) -> Path | None:
+    """Replace the dollar in a path with the full path using the linux-stammer.
+
+    Args:
+        path_lib (Path): Th inpath, suspected to have a dollar.
+
+    Returns:
+        Path | None: Corrected path returned.
+    """
+    dollar: str = str(path_lib.parts[0]).replace("$", "").replace("_PII", "").upper()
+    non_dollar = linux_shortcuts().get(dollar, None)
+    if non_dollar is not None:
+        new_path = Path(non_dollar, *path_lib.parts[1:])
+        logger.debug(
+            f"Constructed new_path {new_path} from dollar {dollar} and non_dollar {non_dollar} from path {path_lib}"
+        )
+        return new_path
+    return None
+
+
+def add_dollar_or_nondollar_path(
+    path: str | Path, add_dollar: bool = True
+) -> list[Path]:
     """Add a $-path or non-$-path to an existing path. Output should be a list of length 2.
 
     Args:
-        path (str): The path to expand on.
+        path: The path to expand on.
+        add_dollar: If we should add dollar-paths (not needed for opening file).
 
     Raises:
         TypeError: If what we get for the dollar-paths is not a single string.
@@ -715,79 +822,126 @@ def add_dollar_or_nondollar_path(path: str) -> list[str]:
     Returns:
         list[str]: List containing one more path now.
     """
-    paths = [path]
-    stammer = linux_shortcuts()
-    if path.startswith("$"):
-        dollar: str = path.split("/")[0].replace("$", "").replace("_PII", "").upper()
-        non_dollar = stammer.get(dollar, None)
-        if non_dollar is not None:
-            paths += ["/".join([non_dollar, "/".join(path.split("/")[1:])])]
-    else:
-        if not path.startswith("/"):
-            path = "/" + path
-        path_parts = [x for x in path.split("/")[:4] if x]
-        if len(path_parts) > 3:
-            path_parts = path_parts[:3]
-        non_dollar = "/" + "/".join(path_parts)
-        dollar_want = get_key_by_value(stammer, non_dollar)
+    path_lib = convert_to_pathlib(path)
+    paths = [path_lib]
+    if str(path_lib).startswith("$"):
+        replaced = replace_dollar_stamme(path_lib)
+        if replaced is not None:
+            new_path = replaced
+        else:
+            new_path = path_lib
+        paths += [new_path]
+    elif add_dollar:
+        if len(path_lib.parts) >= 4:
+            non_dollar_path = Path(*path_lib.parts[:4])
+        else:
+            non_dollar_path = path_lib
+        logger.debug(
+            f"Looking up in stammer with {non_dollar_path.as_posix()!s} path_lib number of parts: {len(path_lib.parts)} {path_lib.parts}"
+        )
+        dollar_want = get_key_by_value(
+            linux_shortcuts(), str(non_dollar_path.as_posix())
+        )
         if isinstance(dollar_want, str):
             dollar = dollar_want
         else:
             raise TypeError(
                 "What we got out of the dollar-linux file was not a single string: {dollar_want}"
             )
-        paths += [path.replace(non_dollar, "$" + dollar)]
+        new_path = Path(
+            str(path_lib.as_posix()).replace(
+                str(non_dollar_path.as_posix()), "$" + dollar
+            )
+        )
+        paths += [new_path]
+        logger.debug(
+            f"Path after adding dollar '{new_path}', replacing non-dollar: '{non_dollar_path.as_posix()!s}' with '${dollar}', paths: {paths}"
+        )
     return paths
 
 
-def go_back_in_time(path: str) -> str | None:
+def go_back_in_time(
+    path: str | Path, file_exts: list[str] | None = None
+) -> Path | None:
     """Look for datadok-api URLs back in time. Sometimes new ones are not added, if the previous still works.
 
     Only modifies yearly publishings for now...
 
     Args:
         path: The path to modify and test for previous years.
+        file_exts: The different file extensions to try.
 
     Returns:
         str | None: The path that was found, with a corresponding URL with content in the Datadok-API.
             If nothing is found returns None.
     """
-    path_parts = path.rsplit("/", 1)
+    path_lib = convert_to_pathlib(path)
+    if file_exts is None:
+        exts: list[str] = ["", ".dat", ".txt"]
+    else:
+        exts = file_exts
     # Identify character ranges we want to manipulate in the filename
-    yr_char_ranges = get_yr_char_ranges(path_parts[1])
+    yr_char_ranges = get_yr_char_ranges(path_lib)
     # Loop over the years we want to look at, changing all the year ranges in the path
     if yr_char_ranges:
-        # Looking 20 years back in time
-        for looking_back in range(-1, -20, -1):
-            for year_range in yr_char_ranges:
-                yr = path_parts[1][year_range[0] : year_range[1]]
-                path_parts[1] = (
-                    path_parts[1][: year_range[0]]
-                    + str(int(yr) - 1)
-                    + path_parts[1][year_range[1] :]
-                )
-            yr_combinations = get_path_combinations("/".join(path_parts))
-            for path, ext in yr_combinations:
-                url_path = path + ext
-                url_address = url_from_path(url_path)
-                if test_url(url_address):
-                    f"Looking back {looking_back} years, found a path at {path + ext}"
-                    return path + ext
-
-    logger.info(f"Looking back {looking_back} years, DIDNT find a path at {path + ext}")
+        yrpath = bumpcheck_file_years_back(path_lib, yr_char_ranges, exts)
+        if yrpath is not None:
+            return yrpath
+    else:
+        logger.info(
+            "Couldnt determine any year ranges in the pattern gXXXX (possibly repeating, like gXXXXgXXXX.)."
+        )
     return None
 
 
-def get_yr_char_ranges(filename: str) -> list[tuple[int, int]]:
+def bumpcheck_file_years_back(
+    curr_path: Path, yr_char_ranges: list[tuple[int, int]], exts: list[str]
+) -> Path | None:
+    """Modify the path to point at older versions of file, to look for valid datadok-api paths.
+
+    Args:
+        curr_path: The path given by user to look for.
+        yr_char_ranges: The placement of the year ranges in the paths.
+        exts: The base extensions to explore.
+
+    Returns:
+        Path | None :
+    """
+    # Looking X years back in time
+    for looking_back in range(-1, YEARS_BACK_CHECK, -1):
+        for year_range in yr_char_ranges:
+            yr = curr_path.name[year_range[0] : year_range[1]]
+            name_update = (
+                curr_path.name[: year_range[0]]
+                + str(int(yr) - 1)
+                + curr_path.name[year_range[1] :]
+            )
+            curr_path = Path(curr_path.parent, name_update)
+            logger.debug(f"Looking back at {looking_back}, {curr_path=}")
+        yr_combinations = get_path_combinations(curr_path, file_exts=exts)
+        for yrpath, ext in yr_combinations:
+            url_address = url_from_path(yrpath.with_suffix(ext))
+            if test_url(url_address):
+                f"Looking back {looking_back} years, found a path at {yrpath.with_suffix(ext)}"
+                return yrpath.with_suffix(ext)
+
+    logger.info(
+        f"Looking back {looking_back} years, DIDNT find a path at {yrpath.with_suffix(ext)}"
+    )
+    return None
+
+
+def get_yr_char_ranges(path: str | Path) -> list[tuple[int, int]]:
     """Find the character ranges containing years in the path. Usually 1-4 ranges.
 
     Args:
-        filename: The filename to look at for character ranges.
+        path: The filename to look at for character ranges.
 
     Returns:
         list[tuple[int, int]]: A list of tuples, tuples have length 2,
             one int for the starting position of a year range, and one int for the last position.
     """
+    path_lib = convert_to_pathlib(path)
     yr_char_ranges: list[tuple[int, int]] = []
     while True:
         if not yr_char_ranges:
@@ -795,9 +949,9 @@ def get_yr_char_ranges(filename: str) -> list[tuple[int, int]]:
         else:
             last_offset = yr_char_ranges[-1][-1]
         if (
-            len(filename) > last_offset
-            and filename[last_offset].lower() == "g"
-            and filename[last_offset + 1 : last_offset + 5].lower().isdigit()
+            len(path_lib.stem) > last_offset
+            and path_lib.stem[last_offset].lower() == "g"
+            and path_lib.stem[last_offset + 1 : last_offset + 5].lower().isdigit()
         ):
             yr_char_ranges += [(last_offset + 1, last_offset + 5)]
         else:
