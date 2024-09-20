@@ -5,7 +5,9 @@ The main purpose is fileversions according to Statistics Norway standards.
 """
 
 import glob
+from enum import Enum
 
+import pandas as pd
 from dapla import FileClient
 
 from fagfunksjoner.fagfunksjoner_logger import logger
@@ -148,5 +150,95 @@ def split_path(filepath: str) -> tuple[str, str, str]:
 
     file_no_version = f"{file_no_version}_"
     file_ext = f".{file_ext}"
-
+    
     return file_no_version, version, file_ext
+
+
+class OrderBy(Enum):
+    """Represents the possibilities for file filters in
+    function get_latest_gcs_files
+    """
+    VERSION = 'version'
+    DATE = 'date'
+
+
+def get_latest_gcs_files(gcs_fileblob_prefix: str,
+                         by: str = 'version',
+                         file_format: str = 'parquet',
+                         date_filter: str = None,
+                         detail: bool = False) -> list[str] | dict[str, str]:
+    """Get latest files from GCS either by date og version if SSB standards for filenames is followed.
+
+    Helps you get latest files in a gcs bucket, where there will be a lot of files.
+    You either get latest by date of creation of the file, or by the file version.
+    File version depends on if SSB standards for filenames are followed.
+
+    Args:
+        gcs_fileblob_prefix: Filename prefix in GCS bucket. This includes filename
+                             description, and periods. This goes in to a glob search,
+                             so it is possible to use glob signs like * and ?.
+        by: Choose between 'version' or 'date', default 'version'.
+        file_format: The files fileformat, default 'parquet'.
+        date_filter: If you want to filter by date greater than, e.g. '2024-09-20'.
+        detail: If you want a bit more details or not.
+
+    Returns:
+        list[str] | dict[str, str]: List of filenames sorted in ascending order.
+                                    If detail is True, then a dictionary is returned,
+                                    with filename er key, and datetime in string as value.
+
+
+    Example::
+
+            # Normal easy usecase
+            KLARGJORT = "bucket/path/to/file/file-desc-name_pYYYY-MM-DD_pYYYY-MM-DD"
+            latest_files = get_latest_gcs_files(KLARGJORT)
+
+            # I want newst files since some date
+            latest_files = get_latest_gcs_files(KLARGJORT, by='date', date_filter='2024-09-19')
+    """
+    
+    dapla_fs = FileClient.get_gcs_file_system()
+    orderby = OrderBy(by)
+    
+    files = dapla_fs.glob(f"{gcs_fileblob_prefix}*.{file_format}", detail=True)
+    files_df = pd.DataFrame.from_records(list(files.values()), columns=['name', 'mtime'])
+    files_df = files_df.sort_values('mtime', ascending=True, ignore_index=True)
+    
+    if date_filter is not None:
+        files_df = files_df.loc[files_df.mtime >= date_filter]
+    
+    match orderby:
+        
+        case orderby.VERSION:
+            
+            files_df['file_name'] = files_df.name.str.split('/').str[-1]
+            files_df['file_desc'] = files_df.file_name.str.split('_v').str[0]
+            files_df['version'] = files_df.file_name.str.split('_v').str[1].str.split('.').str[0]
+            files_df = files_df.dropna(ignore_index=True).sort_values('mtime', ascending=True, ignore_index=True)
+            
+            files_df2 = (
+                files_df
+                .groupby('file_desc', as_index=False)
+                .agg({'version': 'max'})
+                .merge(files_df, on=['file_desc', 'version'], how='left')
+                .sort_values('mtime', ascending=True, ignore_index=True)
+            )
+            
+            if detail:
+                files_df2 = files_df2[['name', 'mtime']]
+                allfiles = files_df2.set_index('name').to_dict('dict').get('mtime')
+                
+            else:
+                allfiles = files_df2.name.tolist()
+        
+        case orderby.DATE:
+            
+            if detail:
+                files_df = files_df[['name', 'mtime']]
+                allfiles = files_df.set_index('name').to_dict('dict').get('mtime')
+                
+            else:
+                allfiles = files_df.name.tolist()
+            
+    return allfiles
