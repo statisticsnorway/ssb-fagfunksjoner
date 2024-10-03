@@ -1,13 +1,11 @@
-from fnmatch import fnmatch
-
-from dapla import FileClient
+from unittest.mock import Mock, patch
 
 from fagfunksjoner.paths.versions import get_latest_gcs_files
 
 
-def test_get_latest_gcs_files(monkeypatch, Mock_filesys):
-
-    monkeypatch.setattr(FileClient, "get_gcs_file_system", Mock_filesys)
+@patch("fagfunksjoner.paths.versions.FileClient")
+def test_get_latest_gcs_files(file_client_mock: Mock, mock_filesys):
+    file_client_mock.get_gcs_file_system.return_value = mock_filesys
 
     latest_files = get_latest_gcs_files(
         "ssb-test-dapla-team-data-produkt/testdata",

@@ -1,11 +1,12 @@
 from datetime import datetime
+from fnmatch import fnmatch
 
 import pytest
 
 
 class MockFS:
 
-    def __init__(self, datafiles) -> None:
+    def __init__(self, datafiles: dict) -> None:
         self.files = datafiles
 
     def glob(self, globstr: str, detail: bool = False) -> list | dict:
@@ -78,5 +79,5 @@ def testdata_get_latest_gcs_files() -> dict:
 
 
 @pytest.fixture
-def Mock_filesys(testdata_get_latest_gcs_files):
+def mock_filesys(testdata_get_latest_gcs_files):
     return MockFS(testdata_get_latest_gcs_files)
