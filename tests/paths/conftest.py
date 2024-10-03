@@ -3,6 +3,29 @@ from datetime import datetime
 import pytest
 
 
+class MockFS:
+
+    def __init__(self, datafiles) -> None:
+        self.files = datafiles
+
+    def glob(self, globstr: str, detail: bool = False) -> list | dict:
+
+        files = []
+
+        for file in self.files.keys():
+            if fnmatch(file, globstr):
+                files.append(file)
+        
+        if detail:
+            relevant_files = {}
+            for file in files:
+                relevant_files[file] = self.files.get(file)
+        
+        else:
+            relevant_files = [f for f in files]
+        
+        return relevant_files
+
 
 @pytest.fixture
 def testdata_get_latest_gcs_files() -> dict:
@@ -52,3 +75,8 @@ def testdata_get_latest_gcs_files() -> dict:
         }
     
     return data
+
+
+@pytest.fixture
+def Mock_filesys(testdata_get_latest_gcs_files):
+    return MockFS(testdata_get_latest_gcs_files)
