@@ -5,6 +5,7 @@ and can help differentiate between the different places we develop code.
 """
 
 import os
+from dapla.auth import AuthClient, DaplaRegion
 
 
 def check_env(raise_err: bool = True) -> str:
@@ -20,14 +21,16 @@ def check_env(raise_err: bool = True) -> str:
         OSError: If no indications match, dapla/prod may have changed (please report)
             Or you are using the function outside of dapla/prod on purpose?
     """
-    jupyter_image_spec = os.environ.get("JUPYTER_IMAGE_SPEC")
-    if jupyter_image_spec and "jupyterlab-dapla" in jupyter_image_spec:
-        return "DAPLA"
-    elif os.path.isdir("/ssb/bruker"):
-        return "PROD"
-    elif raise_err:
-        raise OSError("Not on Dapla or in Prodsone, where are we dude?")
-    return "UNKNOWN"
+    try:
+        current_region = AuthClient.get_dapla_region()
+        if current_region in [DaplaRegion.DAPLA_LAB, DaplaRegion.BIP]:
+            return "DAPLA"
+    except:
+        if os.path.isdir("/ssb/bruker"):
+            return "PROD"
+        elif raise_err:
+            raise OSError("Not on Dapla or in Prodsone, where are we dude?")
+        return "UNKNOWN"
 
 
 def linux_shortcuts(insert_environ: bool = False) -> dict[str, str]:
