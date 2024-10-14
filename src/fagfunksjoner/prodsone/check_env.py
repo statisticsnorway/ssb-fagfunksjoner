@@ -5,8 +5,8 @@ and can help differentiate between the different places we develop code.
 """
 
 import os
-from dapla.auth import AuthClient, DaplaRegion
 
+from dapla.auth import AuthClient, DaplaRegion
 
 
 def check_env(raise_err: bool = True) -> str:
@@ -26,11 +26,13 @@ def check_env(raise_err: bool = True) -> str:
         if current_region in [DaplaRegion.DAPLA_LAB, DaplaRegion.BIP]:
             return "DAPLA"
     except AttributeError:
-        if os.path.isdir("/ssb/bruker"):
-            return "PROD"
-        elif raise_err:
-            raise OSError("Not on Dapla or in Prodsone, where are we dude?") from None
-    
+        pass
+
+    if os.path.isdir("/ssb/bruker"):
+        return "PROD"
+    elif raise_err:
+        raise OSError("Not on Dapla or in Prodsone, where are we dude?")
+
     return "UNKNOWN"
 
 
