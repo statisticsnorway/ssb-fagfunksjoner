@@ -2,26 +2,40 @@ import os
 from unittest import mock
 
 import pytest
+from dapla.auth import DaplaRegion
 
-from fagfunksjoner.prodsone.check_env import check_env, linux_shortcuts
+from fagfunksjoner.prodsone import check_env
 
 
 def test_check_env_dapla():
-    with mock.patch.dict(os.environ, {"JUPYTER_IMAGE_SPEC": "jupyterlab-dapla"}):
-        assert check_env() == "DAPLA"
+    with mock.patch(
+        "dapla.auth.AuthClient.get_dapla_region", return_value=DaplaRegion.DAPLA_LAB
+    ):
+        assert check_env.check_env() == "DAPLA"
 
 
 def test_check_env_prod():
     with mock.patch("os.path.isdir", return_value=True):
-        with mock.patch.dict(os.environ, {}, clear=True):
-            assert check_env() == "PROD"
+        assert check_env.check_env() == "PROD"
 
 
-def test_check_env_error():
-    with mock.patch("os.path.isdir", return_value=False):
-        with mock.patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(OSError):
-                check_env()
+def test_check_env_unknown():
+    with mock.patch(
+        "dapla.auth.AuthClient.get_dapla_region", side_effect=AttributeError
+    ):
+        with mock.patch("os.path.isdir", return_value=False):
+            assert check_env.check_env(raise_err=False) == "UNKNOWN"
+
+
+def test_check_env_raises_error():
+    with mock.patch(
+        "dapla.auth.AuthClient.get_dapla_region", side_effect=AttributeError
+    ):
+        with mock.patch("os.path.isdir", return_value=False):
+            try:
+                check_env.check_env(raise_err=True)
+            except OSError as e:
+                assert str(e) == "Not on Dapla or in Prodsone, where are we dude?"
 
 
 def test_linux_shortcuts():
@@ -29,7 +43,7 @@ def test_linux_shortcuts():
 export VAR2=value2"""
 
     with mock.patch("builtins.open", mock.mock_open(read_data=file_content)):
-        result = linux_shortcuts()
+        result = check_env.linux_shortcuts()
         assert result == {"VAR1": "value1", "VAR2": "value2"}
 
 
@@ -39,7 +53,7 @@ export VAR2=value2"""
 
     with mock.patch("builtins.open", mock.mock_open(read_data=file_content)):
         with mock.patch.dict(os.environ, {}, clear=True):
-            result = linux_shortcuts(insert_environ=True)
+            result = check_env.linux_shortcuts(insert_environ=True)
             assert result == {"VAR1": "value1", "VAR2": "value2"}
             assert os.environ["VAR1"] == "value1"
             assert os.environ["VAR2"] == "value2"
@@ -50,4 +64,4 @@ def test_linux_shortcuts_invalid_format():
 
     with mock.patch("builtins.open", mock.mock_open(read_data=file_content)):
         with pytest.raises(ValueError):
-            linux_shortcuts()
+            check_env.linux_shortcuts()

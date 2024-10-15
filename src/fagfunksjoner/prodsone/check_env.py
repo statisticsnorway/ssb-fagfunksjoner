@@ -6,27 +6,33 @@ and can help differentiate between the different places we develop code.
 
 import os
 
+from dapla.auth import AuthClient, DaplaRegion
+
 
 def check_env(raise_err: bool = True) -> str:
     """Check if you are on Dapla or in prodsone.
 
     Args:
-        raise_err: Set to False if you dont want the code to raise an error, on unrecognized environment.
+        raise_err (bool): Set to False if you don't want the code to raise an error on an unrecognized environment.
 
     Returns:
-        str: "DAPLA" if on dapla, "PROD" if you are in prodsone.
+        str: "DAPLA" if on Dapla, "PROD" if in prodsone, otherwise "UNKNOWN".
 
     Raises:
-        OSError: If no indications match, dapla/prod may have changed (please report)
-            Or you are using the function outside of dapla/prod on purpose?
+        OSError: If no environment indications match (Dapla or Prod), and raise_err is set to True.
     """
-    jupyter_image_spec = os.environ.get("JUPYTER_IMAGE_SPEC")
-    if jupyter_image_spec and "jupyterlab-dapla" in jupyter_image_spec:
-        return "DAPLA"
-    elif os.path.isdir("/ssb/bruker"):
+    try:
+        current_region = AuthClient.get_dapla_region()
+        if current_region in [DaplaRegion.DAPLA_LAB, DaplaRegion.BIP]:
+            return "DAPLA"
+    except AttributeError:
+        pass
+
+    if os.path.isdir("/ssb/bruker"):
         return "PROD"
     elif raise_err:
         raise OSError("Not on Dapla or in Prodsone, where are we dude?")
+
     return "UNKNOWN"
 
 
