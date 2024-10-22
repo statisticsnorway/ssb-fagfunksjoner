@@ -42,9 +42,7 @@ def test_get_latest_fileversions():
 # Test for latest_version_number function
 @patch("fagfunksjoner.paths.versions.FileClient.get_gcs_file_system")
 @patch("fagfunksjoner.paths.versions.glob.glob")
-@patch("fagfunksjoner.paths.versions.check_env")
-def test_latest_version_number(mock_check_env, mock_glob, mock_get_gcs_file_system):
-    mock_check_env.return_value = "DAPLA"
+def test_latest_version_number(mock_glob, mock_get_gcs_file_system):
     mock_get_gcs_file_system.return_value.glob.return_value = [
         "gs://bucket/folder/file_v1.parquet",
         "gs://bucket/folder/file_v2.parquet",
@@ -52,7 +50,6 @@ def test_latest_version_number(mock_check_env, mock_glob, mock_get_gcs_file_syst
     filepath = "gs://bucket/folder/file_v1.parquet"
     assert latest_version_number(filepath) == 2
 
-    mock_check_env.return_value = "LOCAL"
     mock_glob.return_value = [
         "/local/folder/file_v1.parquet",
         "/local/folder/file_v2.parquet",
