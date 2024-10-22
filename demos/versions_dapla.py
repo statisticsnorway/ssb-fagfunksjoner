@@ -14,6 +14,8 @@
 
 # %%
 import dapla as dp
+
+
 fs = dp.FileClient().get_gcs_file_system()
 
 # %%
@@ -25,11 +27,11 @@ folder_name = "versions_paths_fagfunksjoner"
 
 # %%
 testfile_paths = [
-"file_v1.parquet",
-"file_v2.parquet",
-"file_v11.parquet",
-"otherfile_v3.parquet",
-"otherfile_v20.parquet",
+    "file_v1.parquet",
+    "file_v2.parquet",
+    "file_v11.parquet",
+    "otherfile_v3.parquet",
+    "otherfile_v20.parquet",
 ]
 
 # %%
@@ -42,6 +44,7 @@ for file in testfile_paths:
 # %%
 from fagfunksjoner.paths import versions
 
+
 # %%
 files = fs.glob(f"{base_path}/{folder_name}/*.parquet")
 files
@@ -50,15 +53,23 @@ files
 versions.get_latest_fileversions(files)
 
 # %%
-versions.next_version_path('/buckets/produkt/versions_paths_fagfunksjoner/file_v1.parquet')
+versions.next_version_path(
+    "/buckets/produkt/versions_paths_fagfunksjoner/file_v1.parquet"
+)
 
 # %%
-versions.next_version_path('gs://ssb-dapla-felles-data-produkt-prod/versions_paths_fagfunksjoner/file_v1.parquet')
+versions.next_version_path(
+    "gs://ssb-dapla-felles-data-produkt-prod/versions_paths_fagfunksjoner/file_v1.parquet"
+)
 
 # %%
-versions.latest_version_number('ssb-dapla-felles-data-produkt-prod/versions_paths_fagfunksjoner/file_v1.parquet')
+versions.latest_version_number(
+    "ssb-dapla-felles-data-produkt-prod/versions_paths_fagfunksjoner/file_v1.parquet"
+)
 
 # %%
-versions.next_version_path('ssb-dapla-felles-data-produkt-prod/versions_paths_fagfunksjoner/dont_exist_v1.parquet')
+versions.next_version_path(
+    "ssb-dapla-felles-data-produkt-prod/versions_paths_fagfunksjoner/dont_exist_v1.parquet"
+)
 
 # %%

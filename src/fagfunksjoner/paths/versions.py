@@ -38,9 +38,16 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
     result = []
     for unique in uniques:
         entries = [x for x in glob_list_path if x.startswith(unique)]
-        result += [
-            sorted(entries, key=lambda x: int(x.split(".")[0].rsplit("_v", 1)[-1]))[-1]
-        ]
+        unique_sorter = []
+        for entry in entries:
+            try:
+                version_number = int(entry.split(".")[0].rsplit("_v", 1)[-1])
+                unique_sorter += [(version_number, entry,)]
+            except ValueError as v:
+                logger.warning(f"Cannot extract file version from file stem {entry}: {v}")
+        if unique_sorter:
+            result += [sorted(unique_sorter)[-1][-1]]
+            
     return result
 
 
@@ -72,10 +79,10 @@ def latest_version_number(filepath: str) -> int:
         latest_file = get_latest_fileversions(files)[-1]
     else:
         logger.warning(
-            f"""Cant find any files with this name, setting existing version to v0 (should not exist, go straight to v1).
-                        Glob-pattern: {glob_pattern} Found files: {files}"""
+            f"""Cant find any files with this name, glob-pattern: {glob_pattern} Found files: {files}"""
         )
-        latest_file = f"{file_no_version}v0{file_ext}"
+        version_number = int(input("Which version number do you want to use?"))
+        latest_file = f"{file_no_version}v{version_number}{file_ext}"
 
     _file_no_version, latest_version, _file_ext = split_path(latest_file)
     latest_version_int = int("".join([c for c in latest_version if c.isdigit()]))
