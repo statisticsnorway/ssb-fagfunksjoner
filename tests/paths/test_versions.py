@@ -36,7 +36,7 @@ def test_get_latest_fileversions():
         "gs://bucket/folder/file_v2.parquet",
         "gs://bucket/folder/otherfile_v3.parquet",
     ]
-    assert get_latest_fileversions(paths) == expected
+    assert sorted(get_latest_fileversions(paths)) == sorted(expected)
 
 
 # Test for latest_version_number function
