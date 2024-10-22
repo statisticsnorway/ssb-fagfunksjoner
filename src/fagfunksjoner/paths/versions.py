@@ -9,7 +9,6 @@ import glob
 from dapla import FileClient
 
 from fagfunksjoner.fagfunksjoner_logger import logger
-from fagfunksjoner.prodsone.check_env import check_env
 
 
 def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
@@ -35,12 +34,14 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
             all_files = fs.glob("gs://dir/statdata_v*.parquet")
             latest_files = get_latest_fileversions(all_files)
     """
-    return [
-        sorted([file for file in glob_list_path if file.startswith(unique)])[-1]
-        for unique in sorted(
-            list({file[0] for file in [file.split("_v") for file in glob_list_path]})
-        )
-    ]
+    uniques = set([file.rsplit("_v", 1)[0] for file in glob_list_path])
+    result = []
+    for unique in uniques:
+        entries = [x for x in glob_list_path if x.startswith(unique)]
+        result += [
+            sorted(entries, key=lambda x: int(x.split(".")[0].rsplit("_v", 1)[-1]))[-1]
+        ]
+    return result
 
 
 def latest_version_number(filepath: str) -> int:
@@ -54,13 +55,14 @@ def latest_version_number(filepath: str) -> int:
     Returns:
         int: The latest version number for the file.
     """
-    if filepath.startswith("gs://"):
-        filepath = filepath[5:]
-
     file_no_version, old_version, file_ext = split_path(filepath)
     glob_pattern = f"{file_no_version}v*{file_ext}"
 
-    if check_env(raise_err=False) == "DAPLA":
+    if (
+        filepath.startswith("gs://")
+        or filepath.startswith("http")
+        or filepath.startswith("ssb-")
+    ):
         fs = FileClient.get_gcs_file_system()
         files = fs.glob(glob_pattern)
     else:
@@ -69,8 +71,8 @@ def latest_version_number(filepath: str) -> int:
         logger.info(f"Found this list of files: {files}")
         latest_file = sorted(files)[-1]
     else:
-        logger.info(
-            f"""Cant find any files with this name, setting existing version to v0 (should not exist, go straight to v1.
+        logger.warning(
+            f"""Cant find any files with this name, setting existing version to v0 (should not exist, go straight to v1).
                         Glob-pattern: {glob_pattern} Found files: {files}"""
         )
         latest_file = f"{file_no_version}v0{file_ext}"
@@ -98,7 +100,11 @@ def next_version_number(filepath: str) -> int:
     Returns:
         int: The next version number for the file.
     """
-    next_version_int = 1 + latest_version_number(filepath)
+    latest_version = latest_version_number(filepath)
+    if latest_version == 0:
+        next_version_int = 0
+    else:
+        next_version_int = 1 + latest_version
     return next_version_int
 
 
