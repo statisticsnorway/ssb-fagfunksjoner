@@ -15,6 +15,11 @@
 *.xlsx
 *.zip
 
+# Notebooks shall be stored in .py or .R-format.
+# See https://adr.ssb.no/0020-lagringsformat-for-jupyter-notebooks/
+*.ipynb
+
+
 # The section below is from the GitHub .gitignore template for Python:
 # https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore
 
@@ -208,6 +213,3 @@ rsconnect/
 # Blaise specific ignores
 *.bdix
 *.bdbx
-
-# PyCharm
-.idea/

@@ -69,7 +69,7 @@ def latest_version_number(filepath: str) -> int:
         files = glob.glob(glob_pattern)
     if files:
         logger.info(f"Found this list of files: {files}")
-        latest_file = sorted(files)[-1]
+        latest_file = get_latest_fileversions(files)[-1]
     else:
         logger.warning(
             f"""Cant find any files with this name, setting existing version to v0 (should not exist, go straight to v1).
