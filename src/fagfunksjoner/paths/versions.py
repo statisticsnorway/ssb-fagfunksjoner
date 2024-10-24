@@ -49,9 +49,12 @@ def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
 
     for unique in uniques:
         # Collect all entries that match the current unique base name
-        entries = [x for x in infiles 
-                   if x.startswith(unique + "_v") and
-                   x.rsplit(".", 1)[0].rsplit("_v", 1)[-1].isdigit()]  # Characters after match is only digits
+        entries = [
+            x
+            for x in infiles
+            if x.startswith(unique + "_v")
+            and x.rsplit(".", 1)[0][len(unique + "_v") :].isdigit()
+        ]  # Characters after match is only digits
         unique_sorter = []
 
         for entry in entries:
@@ -67,6 +70,7 @@ def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
         # Sort the collected entries by version number and get the latest one
         if unique_sorter:
             latest_entry = max(unique_sorter, key=lambda x: x[0])[1]
+            logger.info(f"Choosing: {latest_entry.rsplit('/',1)[-1]}")
             result.append(latest_entry)
 
     return result
@@ -96,7 +100,9 @@ def latest_version_number(filepath: str) -> int:
     else:
         files = glob.glob(glob_pattern)
     if files:
-        logger.info(f"Found {len(files)} files: {files}")
+        logger.info(
+            f"Found {len(files)} files: {[x.rsplit('/', 1)[-1] for x in files]}"
+        )
         latest_file = get_latest_fileversions(files)[-1]
     else:
         logger.warning(
@@ -109,7 +115,7 @@ def latest_version_number(filepath: str) -> int:
     latest_version_int = int("".join([c for c in latest_version if c.isdigit()]))
 
     if latest_version_int - int(old_version[1:]) > 0:
-        logger.warning(
+        logger.info(
             f"""You specified a path with version {old_version}, but we found a version {latest_version_int}.
                        Are you sure you are working from the latest version?"""
         )

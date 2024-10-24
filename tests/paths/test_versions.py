@@ -85,6 +85,8 @@ def test_several_startswith():
         "gs://bucket/folder/nevner_verifisert_v2.parquet",
         "gs://bucket/folder/nevner_v3.parquet",
     ]
-    expected = ["gs://bucket/folder/nevner_verifisert_v12.parquet",
-                "gs://bucket/folder/nevner_v3.parquet",]
+    expected = [
+        "gs://bucket/folder/nevner_verifisert_v12.parquet",
+        "gs://bucket/folder/nevner_v3.parquet",
+    ]
     assert sorted(get_latest_fileversions(inputs)) == sorted(expected)
