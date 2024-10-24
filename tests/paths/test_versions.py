@@ -76,3 +76,15 @@ def test_next_version_path(mock_next_version_number):
     filepath = "gs://bucket/folder/file_v1.parquet"
     expected = "gs://bucket/folder/file_v2.parquet"
     assert next_version_path(filepath) == expected
+
+
+def test_several_startswith():
+    inputs = [
+        "gs://bucket/folder/nevner_verifisert_v1.parquet",
+        "gs://bucket/folder/nevner_verifisert_v12.parquet",
+        "gs://bucket/folder/nevner_verifisert_v2.parquet",
+        "gs://bucket/folder/nevner_v3.parquet",
+    ]
+    expected = ["gs://bucket/folder/nevner_verifisert_v12.parquet",
+                "gs://bucket/folder/nevner_v3.parquet",]
+    assert sorted(get_latest_fileversions(inputs)) == sorted(expected)

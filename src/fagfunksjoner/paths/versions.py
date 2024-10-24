@@ -49,7 +49,9 @@ def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
 
     for unique in uniques:
         # Collect all entries that match the current unique base name
-        entries = [x for x in infiles if x.startswith(unique + "_v")]
+        entries = [x for x in infiles 
+                   if x.startswith(unique + "_v") and
+                   x.rsplit(".", 1)[0].rsplit("_v", 1)[-1].isdigit()]  # Characters after match is only digits
         unique_sorter = []
 
         for entry in entries:
