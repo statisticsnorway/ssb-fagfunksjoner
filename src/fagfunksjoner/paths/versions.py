@@ -20,12 +20,14 @@ def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
     - Locally: https://docs.python.org/3/library/glob.html
 
     Args:
-        glob_list_path: List of strings that represents a filepath.
+        glob_list_path: List of strings or single string that represents a filepath.
             Recommend that the list is created with glob operation.
 
     Returns:
         list[str]: List of strings with unique filepaths and its latest versions
 
+    Raises:
+        TypeError: If parameter does not fit with type-narrowing to list of strings.
 
     Example::
 
@@ -40,7 +42,7 @@ def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
         infiles = glob_list_path
     else:
         raise TypeError("Expecting glob_list_path to be a str or a list of str.")
-    
+
     # Extract unique base names by splitting before the version part
     uniques = set(file.rsplit("_v", 1)[0] for file in infiles)
     result = []
