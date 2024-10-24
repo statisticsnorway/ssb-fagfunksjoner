@@ -47,7 +47,7 @@ from fagfunksjoner.paths import versions
 
 # %%
 files = fs.glob(f"{base_path}/{folder_name}/*.parquet")
-files
+files  # noqa: B018
 
 # %%
 versions.get_latest_fileversions(files)
