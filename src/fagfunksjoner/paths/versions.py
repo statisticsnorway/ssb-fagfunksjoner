@@ -11,7 +11,7 @@ from dapla import FileClient
 from fagfunksjoner.fagfunksjoner_logger import logger
 
 
-def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
+def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
     """Recieves a list of filenames with multiple versions, and returns the latest versions of the files.
 
     Recommend using glob operation to create the input list.
@@ -34,13 +34,20 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
             all_files = fs.glob("gs://dir/statdata_v*.parquet")
             latest_files = get_latest_fileversions(all_files)
     """
+    if isinstance(glob_list_path, str):
+        infiles = [glob_list_path]
+    elif isinstance(glob_list_path, list):
+        infiles = glob_list_path
+    else:
+        raise TypeError("Expecting glob_list_path to be a str or a list of str.")
+    
     # Extract unique base names by splitting before the version part
-    uniques = set(file.rsplit("_v", 1)[0] for file in glob_list_path)
+    uniques = set(file.rsplit("_v", 1)[0] for file in infiles)
     result = []
 
     for unique in uniques:
         # Collect all entries that match the current unique base name
-        entries = [x for x in glob_list_path if x.startswith(unique + "_v")]
+        entries = [x for x in infiles if x.startswith(unique + "_v")]
         unique_sorter = []
 
         for entry in entries:
@@ -85,7 +92,7 @@ def latest_version_number(filepath: str) -> int:
     else:
         files = glob.glob(glob_pattern)
     if files:
-        logger.info(f"Found this list of files: {files}")
+        logger.info(f"Found {len(files)} files: {files}")
         latest_file = get_latest_fileversions(files)[-1]
     else:
         logger.warning(
@@ -104,6 +111,21 @@ def latest_version_number(filepath: str) -> int:
         )
 
     return latest_version_int
+
+
+def latest_version_path(filepath: str) -> str:
+    """Finds the latest version of the specified file.
+
+    Args:
+        filepath: The address for the file.
+
+    Returns:
+        str: The file path in use of the highest version.
+    """
+    latest_number_int = latest_version_number(filepath)
+    file_no_version, _old_version, file_ext = split_path(filepath)
+    latest_path = f"{file_no_version}v{latest_number_int}{file_ext}"
+    return latest_path
 
 
 def next_version_number(filepath: str) -> int:
