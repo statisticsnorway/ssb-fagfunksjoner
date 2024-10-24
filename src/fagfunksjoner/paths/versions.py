@@ -34,20 +34,30 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
             all_files = fs.glob("gs://dir/statdata_v*.parquet")
             latest_files = get_latest_fileversions(all_files)
     """
-    uniques = set([file.rsplit("_v", 1)[0] for file in glob_list_path])
+    # Extract unique base names by splitting before the version part
+    uniques = set(file.rsplit("_v", 1)[0] for file in glob_list_path)
     result = []
+
     for unique in uniques:
-        entries = [x for x in glob_list_path if x.startswith(unique)]
+        # Collect all entries that match the current unique base name
+        entries = [x for x in glob_list_path if x.startswith(unique + "_v")]
         unique_sorter = []
+
         for entry in entries:
             try:
-                version_number = int(entry.split(".")[0].rsplit("_v", 1)[-1])
-                unique_sorter += [(version_number, entry,)]
+                # Extract version number from the file name
+                version_number = int(entry.split("_v")[-1].split(".")[0])
+                unique_sorter.append((version_number, entry))
             except ValueError as v:
-                logger.warning(f"Cannot extract file version from file stem {entry}: {v}")
+                logger.warning(
+                    f"Cannot extract file version from file stem {entry}: {v}"
+                )
+
+        # Sort the collected entries by version number and get the latest one
         if unique_sorter:
-            result += [sorted(unique_sorter)[-1][-1]]
-            
+            latest_entry = max(unique_sorter, key=lambda x: x[0])[1]
+            result.append(latest_entry)
+
     return result
 
 

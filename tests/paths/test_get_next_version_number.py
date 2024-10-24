@@ -49,7 +49,13 @@ def test_get_next_version_number(
     for case in test_cases:
         mock_file_system.glob.return_value = case["files"]
         path: str = case["filepath"]
-        result = next_version_number(path)
+
+        # Mocking input if no files are found
+        if not case["files"]:
+            with patch("builtins.input", return_value=str(case["expected"])):
+                result = next_version_number(path)
+        else:
+            result = next_version_number(path)
         assert (
             result == case["expected"]
         ), f"Expected {case['expected']} but got {result}"
