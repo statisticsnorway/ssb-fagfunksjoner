@@ -52,7 +52,7 @@ def saspy_session() -> saspy.SASsession:
     return saspy.SASsession(cfgname=cfgtype, cfgfile=cfgfile, encoding="latin1")
 
 
-def set_password(password: str) -> None:
+def set_password(encrypted_password: str) -> None:
     """Pass into this function, an encrypted version of your password.
 
     Get the encrypted password in SAS EG, running the following code
@@ -66,7 +66,7 @@ def set_password(password: str) -> None:
     Send this as the parameter into this function.
 
     Args:
-        password: Your password encrypted using SAS EG
+        encrypted_password: Your password encrypted using SAS EG
     """
     brukernavn = getpass.getuser()
     authpath = "/ssb/bruker/" + brukernavn + "/.authinfo"
@@ -83,7 +83,7 @@ def set_password(password: str) -> None:
                         "IOM_Prod_Grid1 user "
                         + brukernavn
                         + " password "
-                        + password
+                        + encrypted_password
                         + "\n"
                     )
                 else:
@@ -94,7 +94,9 @@ def set_password(password: str) -> None:
     # If file doesnt exist, write directly
     else:
         with open(authpath, "w") as f:
-            f.write("IOM_Prod_Grid1 user " + brukernavn + " password " + password)
+            f.write(
+                "IOM_Prod_Grid1 user " + brukernavn + " password " + encrypted_password
+            )
     os.chmod(authpath, 0o600)
 
 

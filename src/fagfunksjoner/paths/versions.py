@@ -9,10 +9,9 @@ import glob
 from dapla import FileClient
 
 from fagfunksjoner.fagfunksjoner_logger import logger
-from fagfunksjoner.prodsone.check_env import check_env
 
 
-def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
+def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
     """Recieves a list of filenames with multiple versions, and returns the latest versions of the files.
 
     Recommend using glob operation to create the input list.
@@ -21,12 +20,14 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
     - Locally: https://docs.python.org/3/library/glob.html
 
     Args:
-        glob_list_path: List of strings that represents a filepath.
+        glob_list_path: List of strings or single string that represents a filepath.
             Recommend that the list is created with glob operation.
 
     Returns:
         list[str]: List of strings with unique filepaths and its latest versions
 
+    Raises:
+        TypeError: If parameter does not fit with type-narrowing to list of strings.
 
     Example::
 
@@ -35,12 +36,44 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
             all_files = fs.glob("gs://dir/statdata_v*.parquet")
             latest_files = get_latest_fileversions(all_files)
     """
-    return [
-        sorted([file for file in glob_list_path if file.startswith(unique)])[-1]
-        for unique in sorted(
-            list({file[0] for file in [file.split("_v") for file in glob_list_path]})
-        )
-    ]
+    if isinstance(glob_list_path, str):
+        infiles = [glob_list_path]
+    elif isinstance(glob_list_path, list):
+        infiles = glob_list_path
+    else:
+        raise TypeError("Expecting glob_list_path to be a str or a list of str.")
+
+    # Extract unique base names by splitting before the version part
+    uniques = set(file.rsplit("_v", 1)[0] for file in infiles)
+    result = []
+
+    for unique in uniques:
+        # Collect all entries that match the current unique base name
+        entries = [
+            x
+            for x in infiles
+            if x.startswith(unique + "_v")
+            and x.rsplit(".", 1)[0][len(unique + "_v") :].isdigit()
+        ]  # Characters after match is only digits
+        unique_sorter = []
+
+        for entry in entries:
+            try:
+                # Extract version number from the file name
+                version_number = int(entry.split("_v")[-1].split(".")[0])
+                unique_sorter.append((version_number, entry))
+            except ValueError as v:
+                logger.warning(
+                    f"Cannot extract file version from file stem {entry}: {v}"
+                )
+
+        # Sort the collected entries by version number and get the latest one
+        if unique_sorter:
+            latest_entry = max(unique_sorter, key=lambda x: x[0])[1]
+            logger.info(f"Choosing: {latest_entry.rsplit('/',1)[-1]}")
+            result.append(latest_entry)
+
+    return result
 
 
 def latest_version_number(filepath: str) -> int:
@@ -54,37 +87,55 @@ def latest_version_number(filepath: str) -> int:
     Returns:
         int: The latest version number for the file.
     """
-    if filepath.startswith("gs://"):
-        filepath = filepath[5:]
-
     file_no_version, old_version, file_ext = split_path(filepath)
     glob_pattern = f"{file_no_version}v*{file_ext}"
 
-    if check_env(raise_err=False) == "DAPLA":
+    if (
+        filepath.startswith("gs://")
+        or filepath.startswith("http")
+        or filepath.startswith("ssb-")
+    ):
         fs = FileClient.get_gcs_file_system()
         files = fs.glob(glob_pattern)
     else:
         files = glob.glob(glob_pattern)
     if files:
-        logger.info(f"Found this list of files: {files}")
-        latest_file = sorted(files)[-1]
-    else:
         logger.info(
-            f"""Cant find any files with this name, setting existing version to v0 (should not exist, go straight to v1.
-                        Glob-pattern: {glob_pattern} Found files: {files}"""
+            f"Found {len(files)} files: {[x.rsplit('/', 1)[-1] for x in files]}"
         )
-        latest_file = f"{file_no_version}v0{file_ext}"
+        latest_file = get_latest_fileversions(files)[-1]
+    else:
+        logger.warning(
+            f"""Cant find any files with this name, glob-pattern: {glob_pattern} Found files: {files}"""
+        )
+        version_number = int(input("Which version number do you want to use?"))
+        latest_file = f"{file_no_version}v{version_number}{file_ext}"
 
     _file_no_version, latest_version, _file_ext = split_path(latest_file)
     latest_version_int = int("".join([c for c in latest_version if c.isdigit()]))
 
     if latest_version_int - int(old_version[1:]) > 0:
-        logger.warning(
+        logger.info(
             f"""You specified a path with version {old_version}, but we found a version {latest_version_int}.
                        Are you sure you are working from the latest version?"""
         )
 
     return latest_version_int
+
+
+def latest_version_path(filepath: str) -> str:
+    """Finds the latest version of the specified file.
+
+    Args:
+        filepath: The address for the file.
+
+    Returns:
+        str: The file path in use of the highest version.
+    """
+    latest_number_int = latest_version_number(filepath)
+    file_no_version, _old_version, file_ext = split_path(filepath)
+    latest_path = f"{file_no_version}v{latest_number_int}{file_ext}"
+    return latest_path
 
 
 def next_version_number(filepath: str) -> int:
@@ -98,7 +149,11 @@ def next_version_number(filepath: str) -> int:
     Returns:
         int: The next version number for the file.
     """
-    next_version_int = 1 + latest_version_number(filepath)
+    latest_version = latest_version_number(filepath)
+    if latest_version == 0:
+        next_version_int = 0
+    else:
+        next_version_int = 1 + latest_version
     return next_version_int
 
 
