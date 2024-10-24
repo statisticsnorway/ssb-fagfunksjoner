@@ -75,14 +75,21 @@ def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
 
     return result
 
+def get_version_number(filepath: str) -> int:
+    _file_no_version, version, _file_ext = split_path(filepath)
+    version_int = int("".join([c for c in version if c.isdigit()]))
 
-def latest_version_number(filepath: str) -> int:
+    return version_int
+
+
+def latest_version(filepath: str) -> str:
     """Function for finding latest version in use for a file.
 
     Args:
         filepath: GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
             eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet
             or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
+        get_path: Allows to retrieve the full path of the latest file version. Default is False.
 
     Returns:
         int: The latest version number for the file.
@@ -103,41 +110,31 @@ def latest_version_number(filepath: str) -> int:
         logger.info(
             f"Found {len(files)} files: {[x.rsplit('/', 1)[-1] for x in files]}"
         )
-        latest_file = get_latest_fileversions(files)[-1]
+        latest_file = get_latest_fileversions(files)[-1]        
+        return latest_file
     else:
         logger.warning(
-            f"""Cant find any files with this name, glob-pattern: {glob_pattern} Found files: {files}"""
+            f"""Cant find any files with this name, glob-pattern: {glob_pattern}"""
         )
-        version_number = int(input("Which version number do you want to use?"))
-        latest_file = f"{file_no_version}v{version_number}{file_ext}"
-
-    _file_no_version, latest_version, _file_ext = split_path(latest_file)
-    latest_version_int = int("".join([c for c in latest_version if c.isdigit()]))
-
-    if latest_version_int - int(old_version[1:]) > 0:
-        logger.info(
-            f"""You specified a path with version {old_version}, but we found a version {latest_version_int}.
-                       Are you sure you are working from the latest version?"""
-        )
-
-    return latest_version_int
+        return ""
+        
 
 
-def latest_version_path(filepath: str) -> str:
-    """Finds the latest version of the specified file.
+def latest_version_number(filepath: str) -> int:
+    """Function for finding latest version in use for a file.
 
     Args:
-        filepath: The address for the file.
+        filepath: GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
+            eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet
+            or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
+        get_path: Allows to retrieve the full path of the latest file version. Default is False.
 
     Returns:
-        str: The file path in use of the highest version.
+        int: The latest version number for the file.
     """
-    latest_number_int = latest_version_number(filepath)
-    file_no_version, _old_version, file_ext = split_path(filepath)
-    latest_path = f"{file_no_version}v{latest_number_int}{file_ext}"
-    return latest_path
-
-
+    return get_version_number(latest_version(filepath))
+    
+    
 def next_version_number(filepath: str) -> int:
     """Function for finding next version for a new file.
 
@@ -205,3 +202,18 @@ def split_path(filepath: str) -> tuple[str, str, str]:
     file_ext = f".{file_ext}"
 
     return file_no_version, version, file_ext
+
+#verify path
+
+    else:
+        
+        version_number = int(input("Which version number do you want to use?"))
+        latest_file = f"{file_no_version}v{version_number}{file_ext}"
+    
+    return latest_file
+
+    if version_int - int(old_version[1:]) > 0:
+        logger.info(
+            f"""You specified a path with version {old_version}, but we found a version {latest_version_int}.
+                       Are you sure you are working from the latest version?"""
+        )
