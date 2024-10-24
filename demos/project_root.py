@@ -15,12 +15,13 @@
 
 # %%
 from fagfunksjoner import ProjectRoot
+import os
+
+# %%
+print(os.getcwd())
 
 # %%
 proj_root = ProjectRoot()
 
 # %%
-proj_root.path
-
-# %%
-path_equals = "PosixPath('/home/onyxia/work/ssb-fagfunksjoner')"
+print(proj_root.path)
