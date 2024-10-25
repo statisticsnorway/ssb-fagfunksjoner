@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from fagfunksjoner.paths.versions import (
+    get_fileversions,
     get_latest_fileversions,
     latest_version_number,
     latest_version_path,
@@ -46,16 +47,20 @@ def test_latest_version_number(mock_glob, mock_get_gcs_file_system):
 
 
 # Test for next_version_number function
+@patch("fagfunksjoner.paths.versions.get_fileversions")
 @patch("fagfunksjoner.paths.versions.latest_version_number")
-def test_next_version_number(mock_latest_version_number):
+def test_next_version_number(mock_get_fileversions, mock_latest_version_number):
+    mock_get_fileversions.return_value = "gs://bucket/folder/file_v2.parquet"
     mock_latest_version_number.return_value = 2
     filepath = "gs://bucket/folder/file_v2.parquet"
     assert next_version_number(filepath) == 3
 
 
 # Test for next_version_path function
+@patch("fagfunksjoner.paths.versions.latest_version_path")
 @patch("fagfunksjoner.paths.versions.next_version_number")
-def test_next_version_path(mock_next_version_number):
+def test_next_version_path(mock_latest_version_path, mock_next_version_number):
+    mock_latest_version_path.return_value = "gs://bucket/folder/file_v1.parquet"
     mock_next_version_number.return_value = 2
     filepath = "gs://bucket/folder/file_v1.parquet"
     expected = "gs://bucket/folder/file_v2.parquet"
@@ -76,7 +81,13 @@ def test_several_startswith():
     assert sorted(get_latest_fileversions(inputs)) == sorted(expected)
 
 
-def test_without_version():
+@patch("fagfunksjoner.paths.versions.FileClient.get_gcs_file_system")
+def test_without_version(mock_get_gcs_file_system):
+    file_list = [
+        "gs://bucket/folder/nevner_v1.parquet",
+        "gs://bucket/folder/nevner_v2.parquet",
+    ]
+    mock_get_gcs_file_system.return_value.glob.return_value = file_list
     inputs = "gs://bucket/folder/nevner"
-    expected = "gs://bucket/folder/nevner_v3.parquet"
-    assert latest_version_path(inputs) == expected
+    expected = "gs://bucket/folder/nevner_v2.parquet"
+    assert get_fileversions(inputs) == expected
