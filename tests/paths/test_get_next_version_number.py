@@ -42,7 +42,7 @@ def test_get_next_version_number(
         {
             "filepath": "http://bucket/data/2023/data_file_v1.parquet",
             "files": [],
-            "expected": 0,
+            "expected": 1,
         },
     ]
 
