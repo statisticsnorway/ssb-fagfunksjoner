@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-import pytest
 
 from fagfunksjoner.paths.versions import (
     get_latest_fileversions,
@@ -76,6 +75,7 @@ def test_several_startswith():
         "gs://bucket/folder/nevner_v3.parquet",
     ]
     assert sorted(get_latest_fileversions(inputs)) == sorted(expected)
+
 
 def test_without_version():
     inputs = "gs://bucket/folder/nevner"
