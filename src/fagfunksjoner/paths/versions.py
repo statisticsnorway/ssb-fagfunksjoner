@@ -157,7 +157,7 @@ def construct_file_pattern(filepath: str, version_denoter: str = "*") -> str:
     return f"{filepath_no_version}_v{version_denoter}{file_ext}"
 
 
-def get_fileversions(filepath: str) -> list[str]:
+def get_fileversions(filepath: str) -> list[str] | None:
     """Retrieves a list of file versions matching a specified pattern.
 
     This function generates a glob pattern based on the provided file path and retrieves
@@ -278,7 +278,6 @@ def latest_version_number(filepath: str) -> int:
         filepath: GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
             eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet
             or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
-        get_path: Allows to retrieve the full path of the latest file version. Default is False.
 
     Returns:
         int: The latest version number for the file.
