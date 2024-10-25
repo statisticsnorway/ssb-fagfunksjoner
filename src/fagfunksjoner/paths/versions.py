@@ -157,7 +157,7 @@ def construct_file_pattern(filepath: str, version_denoter: str = "*") -> str:
     return f"{filepath_no_version}_v{version_denoter}{file_ext}"
 
 
-def get_fileversions(filepath: str) -> list[str] | list[None]:
+def get_fileversions(filepath: str) -> list[str]:
     """Retrieves a list of file versions matching a specified pattern.
 
     This function generates a glob pattern based on the provided file path and retrieves
