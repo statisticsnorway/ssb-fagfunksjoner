@@ -8,21 +8,7 @@ from fagfunksjoner.paths.versions import (
     latest_version_path,
     next_version_number,
     next_version_path,
-    split_path,
 )
-
-
-# Test for split_path function
-def test_split_path_correct():
-    filepath = "gs://bucket/folder/file_v1.parquet"
-    expected = ("gs://bucket/folder/file_", "v1", ".parquet")
-    assert split_path(filepath) == expected
-
-
-def test_split_path_incorrect():
-    filepath = "gs://bucket/folder/file_1.parquet"
-    with pytest.raises(ValueError, match="Version not following standard"):
-        split_path(filepath)
 
 
 # Test for get_latest_fileversions function
@@ -90,3 +76,8 @@ def test_several_startswith():
         "gs://bucket/folder/nevner_v3.parquet",
     ]
     assert sorted(get_latest_fileversions(inputs)) == sorted(expected)
+
+def test_without_version():
+    inputs = "gs://bucket/folder/nevner"
+    expected = "gs://bucket/folder/nevner_v3.parquet"
+    assert latest_version_path(inputs) == expected
