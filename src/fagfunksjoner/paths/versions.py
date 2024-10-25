@@ -157,7 +157,7 @@ def construct_file_pattern(filepath: str, version_denoter: str = "*") -> str:
     return f"{filepath_no_version}_v{version_denoter}{file_ext}"
 
 
-def get_fileversions(filepath: str) -> any:
+def get_fileversions(filepath: str) -> list[str] | list[None]:
     """Retrieves a list of file versions matching a specified pattern.
 
     This function generates a glob pattern based on the provided file path and retrieves
@@ -183,10 +183,10 @@ def get_fileversions(filepath: str) -> any:
     ):
         # Use a GCS file system client for cloud storage files.
         fs = FileClient.get_gcs_file_system()
-        files = fs.glob(glob_pattern)
+        files = list(fs.glob(glob_pattern))
     else:
         # Use the standard glob module for local files.
-        files = glob.glob(glob_pattern)
+        files = list(glob.glob(glob_pattern))
 
     # Extract the base file name from the glob pattern for logging purposes.
     base_file_name = get_file_name(glob_pattern)
@@ -195,13 +195,12 @@ def get_fileversions(filepath: str) -> any:
     if files:
         # Log the number of found versions and return the list of files.
         logger.info(f"Found {len(files)} versions of file: {base_file_name}")
-        return files
     else:
         # Log a warning if no files were found with the given pattern and return None.
         logger.warning(
             f"Can't find any files with this name, glob-pattern: {glob_pattern}."
         )
-        return None
+    return files
 
 
 def latest_version_path(filepath: str) -> str:
