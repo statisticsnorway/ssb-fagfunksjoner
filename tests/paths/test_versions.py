@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-
 from fagfunksjoner.paths.versions import (
     get_latest_fileversions,
     latest_version_number,
