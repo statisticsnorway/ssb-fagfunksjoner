@@ -28,10 +28,10 @@ def get_version_number(filepath: str) -> int:
         ValueError: If the filepath does not contain '_v' followed by digits.
     """
     # Extract the version number by splitting the string at '_v' and '.'
-    version_int = int(filepath.split("_v")[-1].split(".")[0])
+    version_str = filepath.split("_v")[-1].split(".")[0]
 
     # Check if '_v' is in the filepath and if the extracted version is a valid digit.
-    if "_v" not in filepath or not version_int.isdigit():
+    if "_v" not in filepath or not version_str.isdigit():
         err = (
             f"Filepath does not follow standard naming convention: '{filepath}'. "
             "Use '_v' followed by digits to denote file version."
@@ -40,7 +40,7 @@ def get_version_number(filepath: str) -> int:
         raise ValueError(err)
 
     # Return the version number as an integer.
-    return version_int
+    return int(version_str)
 
 
 def get_file_name(filepath: str) -> str:
