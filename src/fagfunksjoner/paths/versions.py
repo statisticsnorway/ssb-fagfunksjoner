@@ -278,7 +278,7 @@ def latest_version_number(filepath: str) -> int:
     Returns:
         int: The latest version number for the file.
     """
-    return get_version_number(latest_version_path(filepath))
+    return int(get_version_number(latest_version_path(filepath)))
 
 
 def next_version_number(filepath: str) -> int:
@@ -294,7 +294,7 @@ def next_version_number(filepath: str) -> int:
     """
     if get_fileversions(filepath):
         latest_version = latest_version_number(filepath)
-        next_version_int = 1 + latest_version
+        next_version_int = 1 + int(latest_version)
     else:
         next_version_int = 1
     return next_version_int
