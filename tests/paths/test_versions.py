@@ -89,5 +89,4 @@ def test_without_version(mock_get_gcs_file_system):
     ]
     mock_get_gcs_file_system.return_value.glob.return_value = file_list
     inputs = "gs://bucket/folder/nevner"
-    expected = "gs://bucket/folder/nevner_v2.parquet"
-    assert get_fileversions(inputs) == expected
+    assert get_fileversions(inputs) == file_list
