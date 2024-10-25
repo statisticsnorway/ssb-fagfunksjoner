@@ -170,10 +170,7 @@ def get_fileversions(filepath: str) -> list[str] | None:
         filepath (str): The input file path with a version indicator.
 
     Returns:
-        list[str]: A list of file paths matching the version pattern, or None if no matches are found.
-
-    Raises:
-        ValueError: If the input filepath is invalid or the file system client fails.
+        A list of file paths matching the version pattern, or None if no matches are found.
     """
     # Construct a file pattern with a wildcard version denoter using the input filepath.
     glob_pattern = construct_file_pattern(filepath)
