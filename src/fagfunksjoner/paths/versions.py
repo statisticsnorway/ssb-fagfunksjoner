@@ -293,8 +293,8 @@ def next_version_number(filepath: str) -> int:
         int: The next version number for the file.
     """
     if get_fileversions(filepath):
-        latest_version = latest_version_number(filepath)
-        next_version_int = 1 + int(latest_version)
+        current_version_int = int(latest_version_number(filepath))
+        next_version_int = 1 + current_version_int
     else:
         next_version_int = 1
     return next_version_int
