@@ -11,8 +11,62 @@ from dapla import FileClient
 from fagfunksjoner.fagfunksjoner_logger import logger
 
 
+def get_version_number(filepath: str) -> int:
+    """Extracts the version number from a given file path.
+
+    This function parses the file path to retrieve the version number, which should be indicated using '_v' followed by digits before the file extension.
+    For example, a valid file path would be 'file_v1.parquet'.
+    If the naming convention is not followed, a ValueError is raised.
+
+    Args:
+        filepath (str): The file path string containing the version information.
+
+    Returns:
+        int: The extracted version number as an integer.
+
+    Raises:
+        ValueError: If the filepath does not contain '_v' followed by digits.
+    """
+    # Extract the version number by splitting the string at '_v' and '.'
+    version_int = int(filepath.split("_v")[-1].split(".")[0])
+    
+    # Check if '_v' is in the filepath and if the extracted version is a valid digit.
+    if "_v" not in filepath or not version_int.isdigit():
+        err = (
+            f"Filepath does not follow standard naming convention: '{filepath}'. "
+            "Use '_v' followed by digits to denote file version."
+        )
+        # Raise a ValueError if the naming convention is not followed.
+        raise ValueError(err)
+    
+    # Return the version number as an integer.
+    return version_int
+
+
+def get_file_name(filepath: str) -> str:
+    """Extracts the base file name from a given file path, excluding the version number.
+
+    This function extracts the file name before the '_v' version indicator 
+    and removes any preceding directory path. For example, if the input is 
+    'path/to/file_v1.parquet', it will return 'file'.
+
+    Args:
+        filepath (str): The file path string containing the file name and version information.
+
+    Returns:
+        str: The base file name without the version number and directory path.
+    """
+    # Split the string at '_v' and take the first part (before the version number).
+    # Then, split again at the last '/' to isolate the base file name.
+    base_file_name = filepath.rsplit("_v", 1)[0].rsplit('/', 1)[-1]
+    
+    # Return the extracted base file name.
+    return base_file_name
+
+
+
 def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
-    """Recieves a list of filenames with multiple versions, and returns the latest versions of the files.
+    """Receives a list of filenames with multiple versions and returns the latest versions of the files.
 
     Recommend using glob operation to create the input list.
     See doc for glob operations:
@@ -24,7 +78,7 @@ def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
             Recommend that the list is created with glob operation.
 
     Returns:
-        list[str]: List of strings with unique filepaths and its latest versions
+        list[str]: List of strings with unique filepaths and their latest versions.
 
     Raises:
         TypeError: If parameter does not fit with type-narrowing to list of strings.
@@ -59,8 +113,8 @@ def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
 
         for entry in entries:
             try:
-                # Extract version number from the file name
-                version_number = int(entry.split("_v")[-1].split(".")[0])
+                # Extract version number using the get_version_number function
+                version_number = get_version_number(entry)
                 unique_sorter.append((version_number, entry))
             except ValueError as v:
                 logger.warning(
@@ -70,54 +124,146 @@ def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
         # Sort the collected entries by version number and get the latest one
         if unique_sorter:
             latest_entry = max(unique_sorter, key=lambda x: x[0])[1]
-            logger.info(f"Choosing: {latest_entry.rsplit('/',1)[-1]}")
+            logger.info(f"Choosing: {latest_entry.rsplit('/', 1)[-1]}")
             result.append(latest_entry)
 
     return result
 
-def get_version_number(filepath: str) -> int:
-    _file_no_version, version, _file_ext = split_path(filepath)
-    version_int = int("".join([c for c in version if c.isdigit()]))
 
-    return version_int
+def construct_file_pattern(filepath: str, version_denoter: str = "*") -> str:
+    """Constructs a file pattern for versioned file paths.
 
-
-def latest_version(filepath: str) -> str:
-    """Function for finding latest version in use for a file.
+    This function generates a file pattern by extracting the base file name and its extension,
+    allowing the version part to be replaced by a specified version denoter (default is '*').
+    If the filepath does not contain an extension, '.parquet' is assumed.
 
     Args:
-        filepath: GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
-            eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet
-            or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
-        get_path: Allows to retrieve the full path of the latest file version. Default is False.
+        filepath (str): The input file path with a version number.
+        version_denoter (str): A placeholder for the version number in the pattern (default is '*').
 
     Returns:
-        int: The latest version number for the file.
+        str: The constructed file pattern with the version denoter in place of the actual version.
     """
-    file_no_version, old_version, file_ext = split_path(filepath)
-    glob_pattern = f"{file_no_version}v*{file_ext}"
+    # Extract the file extension or assume '.parquet' if none is present.
+    file_ext = f".{filepath.rsplit('.', 1)[-1]}" if '.' in filepath else ".parquet"
+    
+    # Remove the version part if present, or strip the extension otherwise.
+    filepath_no_version = filepath.rsplit("_v", 1)[0] if "_v" in filepath else filepath.replace(file_ext, "")
+    
+    # Construct the file pattern by inserting the version denoter.
+    return f"{filepath_no_version}_v{version_denoter}{file_ext}"
 
+
+
+def get_fileversions(filepath: str) -> list[str]:
+    """Retrieves a list of file versions matching a specified pattern.
+
+    This function generates a glob pattern based on the provided file path and retrieves 
+    all matching versions. It supports both local files and files stored in Google Cloud 
+    Storage (GCS). If the filepath points to a cloud location (e.g., starting with 'gs://', 
+    'http', or 'ssb-'), it uses a GCS file system client to find matches; otherwise, it 
+    searches for files locally using the glob module.
+
+    Args:
+        filepath (str): The input file path with a version indicator.
+
+    Returns:
+        list[str]: A list of file paths matching the version pattern, or None if no matches are found.
+
+    Raises:
+        ValueError: If the input filepath is invalid or the file system client fails.
+    """
+    # Construct a file pattern with a wildcard version denoter using the input filepath.
+    glob_pattern = construct_file_pattern(filepath)
+    
+    # Determine the appropriate file system client based on the filepath's prefix.
     if (
         filepath.startswith("gs://")
         or filepath.startswith("http")
         or filepath.startswith("ssb-")
     ):
+        # Use a GCS file system client for cloud storage files.
         fs = FileClient.get_gcs_file_system()
         files = fs.glob(glob_pattern)
     else:
+        # Use the standard glob module for local files.
         files = glob.glob(glob_pattern)
+    
+    # Extract the base file name from the glob pattern for logging purposes.
+    base_file_name = get_file_name(glob_pattern)
+    
+    # Check if any files were found.
     if files:
-        logger.info(
-            f"Found {len(files)} files: {[x.rsplit('/', 1)[-1] for x in files]}"
-        )
-        latest_file = get_latest_fileversions(files)[-1]        
-        return latest_file
+        # Log the number of found versions and return the list of files.
+        logger.info(f"Found {len(files)} versions of file: {base_file_name}")
+        return files
     else:
+        # Log a warning if no files were found with the given pattern and return None.
         logger.warning(
-            f"""Cant find any files with this name, glob-pattern: {glob_pattern}"""
+            f"Can't find any files with this name, glob-pattern: {glob_pattern}."
         )
-        return ""
+        return None
+
+    
+def latest_version_path(filepath: str) -> str:
+    """Finds the path to the latest version of a specified file.
+
+    This function retrieves all versioned files matching the provided file path pattern 
+    and identifies the latest version. It supports both Google Cloud Storage (GCS) paths 
+    and local file paths, provided they follow the required naming convention with version 
+    numbers (e.g., '_v1'). If no versions are found, it defaults to returning a pattern 
+    representing version 1.
+
+    Args:
+        filepath (str): The full path of the file, either a GCS path or a local path.
+            It should follow the naming standard, including the version indicator.
+            Examples:
+                - 'ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet'
+                - '/ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet'
+
+    Returns:
+        str: The path to the latest version of the file. If no versions are found, returns
+             a pattern for version 1 of the file.
+    """
+    # Retrieve all file versions matching the given filepath pattern.
+    files = get_fileversions(filepath)
+    
+    # If versioned files are found:
+    if files:
+        # Get the latest file version based on the available files.
+        latest_file = get_latest_fileversions(files)[-1]
         
+        # Extract the version number from the latest file.
+        latest_version_number = get_version_number(latest_file)
+        
+        # Log the detected latest version number.
+        logger.info(f"Latest version of file is number {latest_version_number}.")
+        
+        # Check if the specified filepath contains a version number.
+        if "_v" in filepath:
+            # Extract the version number from the specified filepath.
+            specified_version = get_version_number(filepath)
+            
+            # Compare the specified version with the detected latest version.
+            if latest_version_number > specified_version:
+                # Warn the user if the specified version is not the latest.
+                logger.warning(
+                    f"You specified a path with version {specified_version}, but we found a version {latest_version_number}. "
+                    "Are you sure you are working from the latest version?"
+                )
+        
+        # Return the path to the latest version of the file.
+        return latest_file
+    
+    else:
+        # Construct a pattern for version 1 if no versions are found.
+        filepath_default = construct_file_pattern(filepath=filepath, version_denoter="1")
+        
+        # Inform the user that version 1 is being returned as a default.
+        logger.info("No versions of the file were found. Version 1 was returned.")
+        
+        # Return the default pattern for version 1.
+        return filepath_default
 
 
 def latest_version_number(filepath: str) -> int:
@@ -132,7 +278,7 @@ def latest_version_number(filepath: str) -> int:
     Returns:
         int: The latest version number for the file.
     """
-    return get_version_number(latest_version(filepath))
+    return get_version_number(latest_version_path(filepath))
     
     
 def next_version_number(filepath: str) -> int:
@@ -146,11 +292,12 @@ def next_version_number(filepath: str) -> int:
     Returns:
         int: The next version number for the file.
     """
-    latest_version = latest_version_number(filepath)
-    if latest_version == 0:
-        next_version_int = 0
-    else:
+    
+    if get_fileversions(filepath):
+        latest_version = latest_version_number(filepath)
         next_version_int = 1 + latest_version
+    else:
+        next_version_int = 1
     return next_version_int
 
 
@@ -170,50 +317,37 @@ def next_version_path(filepath: str) -> str:
 
     Example::
 
-        get_new_filename_and_path('gs://my-bucket/datasets/data_v1.parquet')
+        next_version_path('gs://my-bucket/datasets/data_v1.parquet')
         'gs://my-bucket/datasets/data_v2.parquet'
     """
+    # Get the path of the latest version of the specified file.
+    latest_file = latest_version_path(filepath)
+    
+    # Determine the next version number by incrementing the highest found version.
     next_version_number_int = next_version_number(filepath)
-    file_no_version, _old_version, file_ext = split_path(filepath)
-    new_path = f"{file_no_version}v{next_version_number_int}{file_ext}"
+    
+    # Extract the version number from the latest version of the file.
+    current_version_number_int = get_version_number(latest_file)
+    
+    # Split the latest file path at "_v" to get the part before the version number.
+    first_part = latest_file.rsplit("_v", 1)[0]
+    
+    # Replace the current version number with the next version number in the file path.
+    second_part = latest_file.rsplit("_v", 1)[-1].replace(
+        str(current_version_number_int), str(next_version_number_int)
+    )
+    
+    # Construct the new file path using the incremented version number.
+    new_path = f"{first_part}_v{second_part}"
+    
+    # Extract the base file name from the new path for logging purposes.
+    next_base_file_name = get_file_name(new_path)
+    
+    # Log the next version number of the file for reference.
+    logger.info(f"The next version of file {next_base_file_name} is {next_version_number_int}.")
+    
+    # Return the new file path with the incremented version number.
     return new_path
 
 
-def split_path(filepath: str) -> tuple[str, str, str]:
-    """Split the filepath into three pieces, version, file-extension and the rest.
-
-    Args:
-        filepath: The path you want split into pieces.
-
-    Raises:
-        ValueError: If the version-part doesnt follow the naming standard.
-
-    Returns:
-        tuple[str, str, str]: The parts of the path, for easy unpacking.
-    """
-    file_no_ext, file_ext = filepath.rsplit(".", 1)
-    file_no_version, version = file_no_ext.rsplit("_", 1)
-
-    if version[0] != "v" or not version[1:].isdigit():
-        err = f"Version not following standard: '{version}', should start with v and the rest should be digits. "
-        raise ValueError(err)
-
-    file_no_version = f"{file_no_version}_"
-    file_ext = f".{file_ext}"
-
-    return file_no_version, version, file_ext
-
-#verify path
-
-    else:
-        
-        version_number = int(input("Which version number do you want to use?"))
-        latest_file = f"{file_no_version}v{version_number}{file_ext}"
     
-    return latest_file
-
-    if version_int - int(old_version[1:]) > 0:
-        logger.info(
-            f"""You specified a path with version {old_version}, but we found a version {latest_version_int}.
-                       Are you sure you are working from the latest version?"""
-        )
