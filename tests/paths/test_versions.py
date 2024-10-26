@@ -34,19 +34,17 @@ def test_latest_version_number(mock_latest_version_path, mock_get_fileversions):
         "gs://bucket/folder/file_v2.parquet",
     ]
     mock_latest_version_path.return_value = "gs://bucket/folder/file_v2.parquet"
-
-    filepath = "gs://bucket/folder/file_v1.parquet"
-    assert latest_version_number(filepath) == 2
-    assert latest_version_path(filepath) == "gs://bucket/folder/file_v2.parquet"
+    filepath_gs = "gs://bucket/folder/file_v1.parquet"
+    assert latest_version_number(filepath_gs) == 2
+    assert latest_version_path(filepath_gs) == "gs://bucket/folder/file_v2.parquet"
     mock_get_fileversions.return_value = [
         "/local/folder/file_v1.parquet",
         "/local/folder/file_v2.parquet",
     ]
     mock_latest_version_path.return_value = "/local/folder/file_v2.parquet"
-    filepath = "/local/folder/file_v1.parquet"
-    assert latest_version_number(filepath) == 2
-    assert latest_version_path(filepath) == "/local/folder/file_v2.parquet"
-
+    filepath_local = "/local/folder/file_v1.parquet"
+    assert latest_version_number(filepath_local) == 2
+    assert latest_version_path(filepath_local) == "/local/folder/file_v2.parquet"
 
 # Test for next_version_number function
 @patch("fagfunksjoner.paths.versions.get_fileversions")
@@ -54,8 +52,9 @@ def test_latest_version_number(mock_latest_version_path, mock_get_fileversions):
 def test_next_version_number(mock_get_fileversions, mock_latest_version_path):
     mock_get_fileversions.return_value = ["gs://bucket/folder/file_v2.parquet"]
     mock_latest_version_path.return_value = "gs://bucket/folder/file_v2.parquet"
-    file_path = "gs://bucket/folder/file_v2.parquet"
-    assert next_version_number(file_path) == 3
+    filepath_gs = "gs://bucket/folder/file_v2.parquet"
+    assert next_version_number(filepath_gs) == 3
+
 
 
 # Test for next_version_path function
