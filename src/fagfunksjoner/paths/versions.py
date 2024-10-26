@@ -8,7 +8,7 @@ import glob
 
 from dapla import FileClient
 
-from fagfunksjoner.fagfunksjoner_logger import logger
+from fagfunksjoner.fagfunksjoner_logger import logger, silence_logger
 
 
 def get_version_number(filepath: str) -> int:
@@ -285,7 +285,7 @@ def latest_version_number(filepath: str) -> int:
     Returns:
         int: The latest version number for the file.
     """
-    return int(get_version_number(latest_version_path(filepath)))
+    return get_version_number(latest_version_path(filepath))
 
 
 def next_version_number(filepath: str) -> int:
@@ -300,7 +300,7 @@ def next_version_number(filepath: str) -> int:
         int: The next version number for the file.
     """
     # Get the list of file versions.
-    versions = get_fileversions(filepath)
+    versions = silence_logger(get_fileversions(filepath))
 
     if versions:
         # Extract the version number from the latest file.
@@ -309,6 +309,7 @@ def next_version_number(filepath: str) -> int:
         # Increment to get the next version number.
         next_version_int = current_version_int + 1
     else:
+        logger.info(f"Did not find any existing versions of the file: {versions}")
         # Default to version 1 if no versions exist.
         next_version_int = 1
 
@@ -334,11 +335,11 @@ def next_version_path(filepath: str) -> str:
         next_version_path('gs://my-bucket/datasets/data_v1.parquet')
         'gs://my-bucket/datasets/data_v2.parquet'
     """
-    # Get the path of the latest version of the specified file.
-    latest_file = latest_version_path(filepath)
-
     # Determine the next version number by incrementing the highest found version.
     next_version_number_int = next_version_number(filepath)
+
+    # Get the path of the latest version of the specified file.
+    latest_file = silence_logger(latest_version_path(filepath))
 
     # Extract the version number from the latest version of the file.
     current_version_number_int = get_version_number(latest_file)
