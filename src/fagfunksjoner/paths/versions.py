@@ -250,12 +250,8 @@ def latest_version_path(filepath: str) -> str:
                 raise ValueError(
                     f"Expected latest_files to contain strings, got {latest_files}"
                 )
-        elif isinstance(latest_files, str):
-            latest_file = latest_files
         else:
-            raise ValueError(
-                f"Expected a list of strings or a single string, got {type(latest_files)}: {latest_files}"
-            )
+            latest_file = latest_files
 
         # Extract the version number from the latest file.
         latest_version_number = get_version_number(latest_file)
