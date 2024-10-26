@@ -29,7 +29,7 @@ def get_version_number(filepath: str) -> int:
     """
     # Ensure the input is a string and extract the version part.
     if not isinstance(filepath, str):
-        raise ValueError(f"Expected a string for filepath, got {type(filepath)}")
+        raise ValueError(f"Expected a string for filepath, got {filepath}")
 
     # Extract the version number by splitting the string at '_v' and '.'
     version_str = filepath.split("_v")[-1].split(".")[0]
@@ -91,7 +91,7 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
             latest_files = get_latest_fileversions(all_files)
     """
     # Extract unique base names by splitting before the version part
-    uniques = set(file.rsplit("_v", 1)[0] for file in glob_list_path)
+    uniques = [file.rsplit("_v", 1)[0] for file in glob_list_path]
     result = []
 
     for unique in uniques:
@@ -117,7 +117,7 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
         # Sort the collected entries by version number and get the latest one
         if unique_sorter:
             latest_entry = max(unique_sorter, key=lambda x: x[0])[1]
-            logger.info(f"Choosing: {latest_entry.rsplit('/', 1)[-1]}")
+            logger.info(f"Latest version(s): {latest_entry.rsplit('/', 1)[-1]}")
             result.append(latest_entry)
 
     return result
