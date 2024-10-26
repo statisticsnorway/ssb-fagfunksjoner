@@ -91,7 +91,7 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
             latest_files = get_latest_fileversions(all_files)
     """
     # Extract unique base names by splitting before the version part
-    uniques = [file.rsplit("_v", 1)[0] for file in glob_list_path]
+    uniques = list(dict.fromkeys([file.rsplit("_v", 1)[0] for file in glob_list_path]))
     result = []
 
     for unique in uniques:
