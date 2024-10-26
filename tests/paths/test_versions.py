@@ -70,6 +70,18 @@ def test_next_version_number(mock_latest_version_path, mock_get_fileversions):
     assert next_version_number(filepath) == 3
 
 
+# Test for `latest_version_path` function to check if it defaults to '_v1'
+@patch("fagfunksjoner.paths.versions.get_fileversions")
+@patch("fagfunksjoner.paths.versions.construct_file_pattern")
+def test_latest_version_path_defaults_to_v1(
+    mock_construct_file_pattern, mock_get_fileversions
+):
+    mock_get_fileversions.return_value = []
+    mock_construct_file_pattern.return_value = "gs://bucket/folder/file_v1.parquet"
+    filepath = "gs://bucket/folder/file.parquet"
+    assert latest_version_path(filepath) == "gs://bucket/folder/file_v1.parquet"
+
+
 # Test for `next_version_path` function with Google Storage path
 @patch("fagfunksjoner.paths.versions.get_fileversions")
 @patch("fagfunksjoner.paths.versions.latest_version_path")
