@@ -27,6 +27,10 @@ def get_version_number(filepath: str) -> int:
     Raises:
         ValueError: If the filepath does not contain '_v' followed by digits.
     """
+    # Ensure the input is a string and extract the version part.
+    if not isinstance(filepath, str):
+        raise ValueError(f"Expected a string for filepath, got {type(filepath)}")
+
     # Extract the version number by splitting the string at '_v' and '.'
     version_str = filepath.split("_v")[-1].split(".")[0]
 
@@ -292,11 +296,19 @@ def next_version_number(filepath: str) -> int:
     Returns:
         int: The next version number for the file.
     """
-    if get_fileversions(filepath):
-        current_version_int = int(latest_version_number(filepath))
-        next_version_int = 1 + current_version_int
+    # Get the list of file versions.
+    versions = get_fileversions(filepath)
+
+    if versions:
+        # Extract the version number from the latest file.
+        latest_file = latest_version_path(filepath)
+        current_version_int = get_version_number(latest_file)
+        # Increment to get the next version number.
+        next_version_int = current_version_int + 1
     else:
+        # Default to version 1 if no versions exist.
         next_version_int = 1
+
     return next_version_int
 
 

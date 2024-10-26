@@ -50,7 +50,7 @@ def test_latest_version_number(mock_glob, mock_get_gcs_file_system):
 @patch("fagfunksjoner.paths.versions.get_fileversions")
 @patch("fagfunksjoner.paths.versions.latest_version_number")
 def test_next_version_number(mock_get_fileversions, mock_latest_version_number):
-    mock_get_fileversions.return_value = "gs://bucket/folder/file_v2.parquet"
+    mock_get_fileversions.return_value = ["gs://bucket/folder/file_v2.parquet"]
     mock_latest_version_number.return_value = 2
     filepath = "gs://bucket/folder/file_v2.parquet"
     assert next_version_number(filepath) == 3
