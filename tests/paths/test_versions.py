@@ -68,19 +68,20 @@ def test_latest_version_number(mock_latest_version_path, mock_get_fileversions):
 # Test for next_version_number function
 @patch("fagfunksjoner.paths.versions.get_fileversions")
 @patch("fagfunksjoner.paths.versions.latest_version_path")
-def test_next_version_number(mock_get_fileversions, mock_latest_version_path):
+def test_next_version_number(mock_get_fileversions, mock_latest_version_number):
     mock_get_fileversions.return_value = [
         "gs://bucket/folder/file_v1.parquet",
         "gs://bucket/folder/file_v2.parquet",
     ]
-    mock_latest_version_path.return_value = "gs://bucket/folder/file_v2.parquet"
+    mock_latest_version_number.return_value = 2
     filepath_gs = "gs://bucket/folder/file_v2.parquet"
     assert next_version_number(filepath_gs) == 3
 
 
 # Test for next_version_path function
-@patch("fagfunksjoner.paths.versions.latest_version_path")
 @patch("fagfunksjoner.paths.versions.next_version_number")
+@patch("fagfunksjoner.paths.versions.latest_version_path")
+@patch("fagfunksjoner.paths.versions.get_version_number")
 def test_next_version_path(
     mock_next_version_number, mock_latest_version_path, mock_get_version_number
 ):

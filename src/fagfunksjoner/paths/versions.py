@@ -304,8 +304,7 @@ def next_version_number(filepath: str) -> int:
 
     if versions:
         # Extract the version number from the latest file.
-        latest_file = latest_version_path(filepath)
-        current_version_int = get_version_number(latest_file)
+        current_version_int = latest_version_number(filepath)
         # Increment to get the next version number.
         next_version_int = current_version_int + 1
     else:
