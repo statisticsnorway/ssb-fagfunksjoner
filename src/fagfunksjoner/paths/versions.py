@@ -68,7 +68,7 @@ def get_file_name(filepath: str) -> str:
     return base_file_name
 
 
-def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
+def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
     """Receives a list of filenames with multiple versions and returns the latest versions of the files.
 
     Recommend using glob operation to create the input list.
@@ -77,14 +77,11 @@ def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
     - Locally: https://docs.python.org/3/library/glob.html
 
     Args:
-        glob_list_path: List of strings or single string that represents a filepath.
+        glob_list_path: List of strings that represents a filepath.
             Recommend that the list is created with glob operation.
 
     Returns:
         list[str]: List of strings with unique filepaths and their latest versions.
-
-    Raises:
-        TypeError: If parameter does not fit with type-narrowing to list of strings.
 
     Example::
 
@@ -93,22 +90,15 @@ def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
             all_files = fs.glob("gs://dir/statdata_v*.parquet")
             latest_files = get_latest_fileversions(all_files)
     """
-    if isinstance(glob_list_path, str):
-        infiles = [glob_list_path]
-    elif isinstance(glob_list_path, list):
-        infiles = glob_list_path
-    else:
-        raise TypeError("Expecting glob_list_path to be a str or a list of str.")
-
     # Extract unique base names by splitting before the version part
-    uniques = set(file.rsplit("_v", 1)[0] for file in infiles)
+    uniques = set(file.rsplit("_v", 1)[0] for file in glob_list_path)
     result = []
 
     for unique in uniques:
         # Collect all entries that match the current unique base name
         entries = [
             x
-            for x in infiles
+            for x in glob_list_path
             if x.startswith(unique + "_v")
             and x.rsplit(".", 1)[0][len(unique + "_v") :].isdigit()
         ]  # Characters after match is only digits
@@ -174,7 +164,7 @@ def get_fileversions(filepath: str) -> list[str]:
         filepath (str): The input file path with a version indicator.
 
     Returns:
-        A list of file paths matching the version pattern, or None if no matches are found.
+        A list of file paths matching the version pattern.
     """
     # Construct a file pattern with a wildcard version denoter using the input filepath.
     glob_pattern = construct_file_pattern(filepath)
@@ -187,24 +177,24 @@ def get_fileversions(filepath: str) -> list[str]:
     ):
         # Use a GCS file system client for cloud storage files.
         fs = FileClient.get_gcs_file_system()
-        files = list(fs.glob(glob_pattern))
+        files_list = fs.glob(glob_pattern)
     else:
         # Use the standard glob module for local files.
-        files = list(glob.glob(glob_pattern))
+        files_list = glob.glob(glob_pattern)
 
     # Extract the base file name from the glob pattern for logging purposes.
     base_file_name = get_file_name(glob_pattern)
 
     # Check if any files were found.
-    if files:
+    if files_list:
         # Log the number of found versions and return the list of files.
-        logger.info(f"Found {len(files)} versions of file: {base_file_name}")
+        logger.info(f"Found {len(files_list)} versions of file: {base_file_name}")
     else:
         # Log a warning if no files were found with the given pattern and return None.
         logger.warning(
             f"Can't find any files with this name, glob-pattern: {glob_pattern}."
         )
-    return files
+    return files_list
 
 
 def latest_version_path(filepath: str) -> str:
@@ -225,8 +215,7 @@ def latest_version_path(filepath: str) -> str:
              a pattern for version 1 of the file.
 
     Raises:
-        ValueError: If `get_latest_fileversions` returns an unexpected type (not a string
-                    or list of strings) or if the list does not contain any valid strings.
+        ValueError: If `get_latest_fileversions` returns a list of more than one file.
         ValueError: If the filepath does not follow the naming convention with '_v'
                     followed by digits to denote version, when a versioned file is required.
 
@@ -235,23 +224,20 @@ def latest_version_path(filepath: str) -> str:
         - '/ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet'
     """
     # Retrieve all file versions matching the given filepath pattern.
-    files = get_fileversions(filepath)
+    files_list = get_fileversions(filepath)
 
     # If versioned files are found:
-    if files:
+    if files_list:
         # Get the latest file version based on the available files.
-        latest_files = get_latest_fileversions(files)
+        latest_files_list = get_latest_fileversions(files_list)
 
-        # Check if the result is a list, and get the last item if so
-        if isinstance(latest_files, list):
-            if latest_files and isinstance(latest_files[-1], str):
-                latest_file = latest_files[-1]
-            else:
-                raise ValueError(
-                    f"Expected latest_files to contain strings, got {latest_files}"
-                )
-        else:
-            latest_file = latest_files
+        if len(latest_files_list) > 1:
+            list_print = [file.rsplit("/", 1) for file in latest_files_list]
+            raise ValueError(
+                f"The latest version returned more than one file: {list_print}"
+            )
+
+        latest_file = latest_files_list[0]
 
         # Extract the version number from the latest file.
         latest_version_number = get_version_number(latest_file)
