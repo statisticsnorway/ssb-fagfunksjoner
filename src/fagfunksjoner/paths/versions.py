@@ -300,7 +300,7 @@ def next_version_number(filepath: str) -> int:
         int: The next version number for the file.
     """
     # Get the list of file versions.
-    versions = silence_logger(get_fileversions(filepath))
+    versions = silence_logger(get_fileversions, filepath)
 
     if versions:
         # Extract the version number from the latest file.
@@ -339,7 +339,7 @@ def next_version_path(filepath: str) -> str:
     next_version_number_int = next_version_number(filepath)
 
     # Get the path of the latest version of the specified file.
-    latest_file = silence_logger(latest_version_path(filepath))
+    latest_file = silence_logger(latest_version_path, filepath)
 
     # Extract the version number from the latest version of the file.
     current_version_number_int = get_version_number(latest_file)
