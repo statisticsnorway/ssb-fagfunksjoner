@@ -26,21 +26,23 @@ def test_get_latest_fileversions():
 
 
 # Test for latest_version_number function
-@patch("fagfunksjoner.paths.versions.FileClient.get_gcs_file_system")
-@patch("fagfunksjoner.paths.versions.glob.glob")
-def test_latest_version_number(mock_glob, mock_get_gcs_file_system):
-    mock_get_gcs_file_system.return_value.glob.return_value = [
+@patch("fagfunksjoner.paths.versions.get_fileversions")
+@patch("fagfunksjoner.paths.versions.latest_version_path")
+def test_latest_version_number(mock_latest_version_path, mock_get_fileversions):
+    mock_get_fileversions.return_value = [
         "gs://bucket/folder/file_v1.parquet",
         "gs://bucket/folder/file_v2.parquet",
     ]
+    mock_latest_version_path.return_value = "gs://bucket/folder/file_v2.parquet"
+
     filepath = "gs://bucket/folder/file_v1.parquet"
     assert latest_version_number(filepath) == 2
     assert latest_version_path(filepath) == "gs://bucket/folder/file_v2.parquet"
-
-    mock_glob.return_value = [
+    mock_get_fileversions.return_value = [
         "/local/folder/file_v1.parquet",
         "/local/folder/file_v2.parquet",
     ]
+    mock_latest_version_path.return_value = "/local/folder/file_v2.parquet"
     filepath = "/local/folder/file_v1.parquet"
     assert latest_version_number(filepath) == 2
     assert latest_version_path(filepath) == "/local/folder/file_v2.parquet"
