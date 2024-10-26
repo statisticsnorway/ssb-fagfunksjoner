@@ -220,13 +220,19 @@ def latest_version_path(filepath: str) -> str:
         filepath (str): The full path of the file, either a GCS path or a local path.
             It should follow the naming standard, including the version indicator.
 
-    Examples:
-                - 'ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet'
-                - '/ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet'
-
     Returns:
         str: The path to the latest version of the file. If no versions are found, returns
              a pattern for version 1 of the file.
+
+    Raises:
+        ValueError: If `get_latest_fileversions` returns an unexpected type (not a string
+                    or list of strings) or if the list does not contain any valid strings.
+        ValueError: If the filepath does not follow the naming convention with '_v'
+                    followed by digits to denote version, when a versioned file is required.
+
+    Examples:
+        - 'ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet'
+        - '/ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet'
     """
     # Retrieve all file versions matching the given filepath pattern.
     files = get_fileversions(filepath)
