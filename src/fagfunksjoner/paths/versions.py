@@ -240,7 +240,7 @@ def latest_version_path(filepath: str) -> str:
     # If versioned files are found:
     if files:
         # Get the latest file version based on the available files.
-        latest_files = get_latest_fileversions(files)[-1]
+        latest_files = get_latest_fileversions(files)
 
         # Check if the result is a list, and get the last item if so
         if isinstance(latest_files, list):
