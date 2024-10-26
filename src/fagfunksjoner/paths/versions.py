@@ -194,7 +194,7 @@ def get_fileversions(filepath: str) -> list[str]:
         logger.warning(
             f"Can't find any files with this name, glob-pattern: {glob_pattern}."
         )
-    return files_list
+    return list(files_list)
 
 
 def latest_version_path(filepath: str) -> str:
@@ -237,7 +237,7 @@ def latest_version_path(filepath: str) -> str:
                 f"The latest version returned more than one file: {list_print}"
             )
 
-        latest_file = latest_files_list[-1]
+        latest_file = latest_files_list[0]
 
         # Extract the version number from the latest file.
         latest_version_number = get_version_number(latest_file)
