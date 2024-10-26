@@ -48,12 +48,12 @@ def test_latest_version_number(mock_glob, mock_get_gcs_file_system):
 
 # Test for next_version_number function
 @patch("fagfunksjoner.paths.versions.get_fileversions")
-@patch("fagfunksjoner.paths.versions.latest_version_number")
-def test_next_version_number(mock_get_fileversions, mock_latest_version_number):
+@patch("fagfunksjoner.paths.versions.latest_version_path")
+def test_next_version_number(mock_get_fileversions, mock_latest_version_path):
     mock_get_fileversions.return_value = ["gs://bucket/folder/file_v2.parquet"]
-    mock_latest_version_number.return_value = 2
-    filepath = "gs://bucket/folder/file_v2.parquet"
-    assert next_version_number(filepath) == 3
+    mock_latest_version_path.return_value = "gs://bucket/folder/file_v2.parquet"
+    file_path = "gs://bucket/folder/file_v2.parquet"
+    assert next_version_number(file_path) == 3
 
 
 # Test for next_version_path function
@@ -62,9 +62,9 @@ def test_next_version_number(mock_get_fileversions, mock_latest_version_number):
 def test_next_version_path(mock_latest_version_path, mock_next_version_number):
     mock_latest_version_path.return_value = "gs://bucket/folder/file_v1.parquet"
     mock_next_version_number.return_value = 2
-    filepath = "gs://bucket/folder/file_v1.parquet"
+    file_path = "gs://bucket/folder/file_v1.parquet"
     expected = "gs://bucket/folder/file_v2.parquet"
-    assert next_version_path(filepath) == expected
+    assert next_version_path(file_path) == expected
 
 
 def test_several_startswith():
