@@ -68,7 +68,7 @@ def get_file_name(filepath: str) -> str:
     return base_file_name
 
 
-def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
+def get_latest_fileversions(glob_list_path: list[str] | str) -> list[str]:
     """Receives a list of filenames with multiple versions and returns the latest versions of the files.
 
     Recommend using glob operation to create the input list.
@@ -77,11 +77,14 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
     - Locally: https://docs.python.org/3/library/glob.html
 
     Args:
-        glob_list_path: List of strings that represents a filepath.
+        glob_list_path: List of strings or single string that represents a filepath.
             Recommend that the list is created with glob operation.
 
     Returns:
         list[str]: List of strings with unique filepaths and their latest versions.
+
+    Raises:
+        TypeError: If parameter does not fit with type-narrowing to list of strings.
 
     Example::
 
@@ -90,15 +93,22 @@ def get_latest_fileversions(glob_list_path: list[str]) -> list[str]:
             all_files = fs.glob("gs://dir/statdata_v*.parquet")
             latest_files = get_latest_fileversions(all_files)
     """
+    if isinstance(glob_list_path, str):
+        infiles = [glob_list_path]
+    elif isinstance(glob_list_path, list):
+        infiles = glob_list_path
+    else:
+        raise TypeError("Expecting glob_list_path to be a str or a list of str.")
+
     # Extract unique base names by splitting before the version part
-    uniques = list(dict.fromkeys([file.rsplit("_v", 1)[0] for file in glob_list_path]))
+    uniques = list(dict.fromkeys([file.rsplit("_v", 1)[0] for file in infiles]))
     result = []
 
     for unique in uniques:
         # Collect all entries that match the current unique base name
         entries = [
             x
-            for x in glob_list_path
+            for x in infiles
             if x.startswith(unique + "_v")
             and x.rsplit(".", 1)[0][len(unique + "_v") :].isdigit()
         ]  # Characters after match is only digits
