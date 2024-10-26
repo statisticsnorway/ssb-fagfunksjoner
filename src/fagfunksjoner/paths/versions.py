@@ -235,17 +235,21 @@ def latest_version_path(filepath: str) -> str:
     if files:
         # Get the latest file version based on the available files.
         latest_files = get_latest_fileversions(files)[-1]
-        
+
         # Check if the result is a list, and get the last item if so
         if isinstance(latest_files, list):
             if latest_files and isinstance(latest_files[-1], str):
                 latest_file = latest_files[-1]
             else:
-                raise ValueError(f"Expected latest_files to contain strings, got {latest_files}")
+                raise ValueError(
+                    f"Expected latest_files to contain strings, got {latest_files}"
+                )
         elif isinstance(latest_files, str):
             latest_file = latest_files
         else:
-            raise ValueError(f"Expected a list of strings or a single string, got {type(latest_files)}: {latest_files}")
+            raise ValueError(
+                f"Expected a list of strings or a single string, got {type(latest_files)}: {latest_files}"
+            )
 
         # Extract the version number from the latest file.
         latest_version_number = get_version_number(latest_file)
