@@ -2,9 +2,20 @@ from __future__ import annotations
 
 import logging
 import sys
+from collections.abc import Callable
 from typing import Any
 
 from colorama import Back, Fore, Style
+
+
+def silence_logger(func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    """Silences INFO and WARNING logs for the duration of the function call."""
+    original_level = logger.level
+    logger.setLevel(logging.ERROR)  # Suppress INFO and WARNING messages
+    try:
+        return func(*args, **kwargs)
+    finally:
+        logger.setLevel(original_level)  # Restore original logging level
 
 
 class ColoredFormatter(logging.Formatter):
