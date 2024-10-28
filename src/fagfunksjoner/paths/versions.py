@@ -3,7 +3,7 @@
 The main purpose is fileversions according to Statistics Norway standards.
 The aim is to help versioning up and getting the latest version of paths in use on storage.
 
-The module is not targeted at files that do not follow the naming convention of versions, 
+The module is not targeted at files that do not follow the naming convention of versions,
 for example the __DOC.json-files, will not work, because they do not end with "_v1" before the file extension.
 """
 

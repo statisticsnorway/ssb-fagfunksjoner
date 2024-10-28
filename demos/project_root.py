@@ -14,8 +14,10 @@
 # ---
 
 # %%
-from fagfunksjoner import ProjectRoot
 import os
+
+from fagfunksjoner import ProjectRoot
+
 
 # %%
 print(os.getcwd())

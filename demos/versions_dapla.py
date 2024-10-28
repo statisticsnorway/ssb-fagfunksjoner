@@ -55,7 +55,9 @@ files  # noqa: B018
 versions.get_latest_fileversions(files)
 
 # %%
-versions.latest_version_path("/buckets/produkt/versions_paths_fagfunksjoner/file_v12__DOC")
+versions.latest_version_path(
+    "/buckets/produkt/versions_paths_fagfunksjoner/file_v12__DOC"
+)
 
 # %%
 versions.next_version_path(
