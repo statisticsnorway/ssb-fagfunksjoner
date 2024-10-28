@@ -28,6 +28,8 @@ folder_name = "versions_paths_fagfunksjoner"
 # %%
 testfile_paths = [
     "file_v1.parquet",
+    "file_v1__DOC.json",
+    "file_v12__DOC.json",
     "file_v2.parquet",
     "file_v11.parquet",
     "otherfile_v3.parquet",
@@ -46,11 +48,14 @@ from fagfunksjoner.paths import versions
 
 
 # %%
-files = fs.glob(f"{base_path}/{folder_name}/*.parquet")
+files = fs.glob(f"{base_path}/{folder_name}/*")
 files  # noqa: B018
 
 # %%
 versions.get_latest_fileversions(files)
+
+# %%
+versions.latest_version_path("/buckets/produkt/versions_paths_fagfunksjoner/file_v12__DOC")
 
 # %%
 versions.next_version_path(
@@ -59,7 +64,7 @@ versions.next_version_path(
 
 # %%
 versions.next_version_path(
-    "gs://ssb-dapla-felles-data-produkt-prod/versions_paths_fagfunksjoner/file_v1.parquet"
+    "gs://ssb-dapla-felles-data-produkt-prod/versions_paths_fagfunksjoner/otherfile_v1.parquet"
 )
 
 # %%
