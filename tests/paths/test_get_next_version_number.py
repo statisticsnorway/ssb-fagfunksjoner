@@ -15,35 +15,32 @@ def mock_file_system():
 
 
 @patch.object(FileClient, "get_gcs_file_system")
-@patch("fagfunksjoner.paths.versions.check_env")
 def test_get_next_version_number(
-    mock_check_env, mock_get_gcs_file_system: FileClient, mock_file_system: Callable
+    mock_get_gcs_file_system: FileClient, mock_file_system: Callable
 ):
-    # Configure the mock to return the mock file system
-    mock_check_env.return_value = "DAPLA"
     mock_get_gcs_file_system.return_value = mock_file_system
 
     # Test cases
     test_cases = [
         {
-            "filepath": "bucket/data/2023/data_file_v1.parquet",
+            "filepath": "ssb-bucket/data/2023/data_file_v1.parquet",
             "files": [
-                "bucket/data/2023/data_file.parquet",
-                "bucket/data/2023/data_file_v1.parquet",
-                "bucket/data/2023/data_file_v3.parquet",
+                "ssb-bucket/data/2023/data_file.parquet",
+                "ssb-bucket/data/2023/data_file_v1.parquet",
+                "ssb-bucket/data/2023/data_file_v3.parquet",
             ],
             "expected": 4,
         },
         {
-            "filepath": "bucket/data/2023/data_file_v1.parquet",
+            "filepath": "gs://bucket/data/2023/data_file_v1.parquet",
             "files": [
-                "bucket/data/2023/data_file.parquet"
-                "bucket/data/2023/data_file_v1.parquet"
+                "gs://bucket/data/2023/data_file.parquet"
+                "gs://bucket/data/2023/data_file_v1.parquet"
             ],
             "expected": 2,
         },
         {
-            "filepath": "bucket/data/2023/data_file_v1.parquet",
+            "filepath": "http://bucket/data/2023/data_file_v1.parquet",
             "files": [],
             "expected": 1,
         },
@@ -52,7 +49,13 @@ def test_get_next_version_number(
     for case in test_cases:
         mock_file_system.glob.return_value = case["files"]
         path: str = case["filepath"]
-        result = next_version_number(path)
+
+        # Mocking input if no files are found
+        if not case["files"]:
+            with patch("builtins.input", return_value=str(case["expected"])):
+                result = next_version_number(path)
+        else:
+            result = next_version_number(path)
         assert (
             result == case["expected"]
         ), f"Expected {case['expected']} but got {result}"
