@@ -21,95 +21,163 @@ AggFuncTypeDictSeries: TypeAlias = Mapping[HashableT, AggFuncTypeBase]
 def all_combos_agg(
     df: pd.DataFrame,
     groupcols: list[str],
-    aggargs: AggFuncTypeBase | AggFuncTypeDictSeries[str] | dict[str, list[str]],
+    valuecols: list[str] | None = None,
+    aggargs: (
+        AggFuncTypeBase | AggFuncTypeDictSeries[str] | dict[str, list[str]] | None
+    ) = None,
     fillna_dict: dict[str, Any] | None = None,
     keep_empty: bool = False,
     grand_total: dict[str, str] | str = "",
 ) -> pd.DataFrame:
     """Generate all aggregation levels for a set of columns in a dataframe.
 
+    Creates aggregations over all combinations of categorical variables specified in `groupcols`
+    and applies aggregation functions on `valuecols`. Allows for inclusion of grand totals
+    and customized fill values for missing groups, similar to "proc means" in SAS.
+
     Args:
-        df: dataframe to aggregate.
+        df: DataFrame to aggregate.
         groupcols: List of columns to group by.
-        aggargs: how to aggregate, is sent to the agg function in pandas, look at its documentation.
-        fillna_dict: Fills "totals" in the groupcols, by filling their NA values.
-            Send a dict with col names as keys, and string-values to put in cells as values.
-        keep_empty: Keep groups without observations through the process.
-            Removing them is default behaviour of Pandas
-        grand_total: Fill this value, if you want a grand total in your aggregations.
-            If you use a string, this will be input in the fields in the groupcol columns.
-            If you send a dict, like to the fillna_dict parameter, the values in the cells in the grand_total will reflect the values in the dict.
+        valuecols: List of columns to apply aggregation functions on. Defaults to None, in which case all numeric columns are used.
+        aggargs: Dictionary or function specifying aggregation for each column in `valuecols`. If None, defaults to 'sum' for each column in `valuecols`.
+        fillna_dict: Dictionary specifying values to fill NA in each column of `groupcols`. Useful for indicating totals in the final table.
+        keep_empty: If True, preserves empty groups in the output.
+        grand_total: Dictionary or string to indicate a grand total row. If a dictionary, the values are applied in each corresponding `groupcols`.
 
     Returns:
-        pd.DataFrame: with all the group-by columns, all the aggregation columns combined
-            with the aggregation functions, a column called aggregation_level which
-            separates the different aggregation levels, and a column called aggregation_ways which
-            counts the number of group columns used for the aggregation..
+        DataFrame with all aggregation levels, including:
+            - `groupcols`: group-by columns with filled total values as needed.
+            - `level`: indicates aggregation level.
+            - `ways`: counts the number of grouping columns used for each aggregation.
 
-    Known problems:
-        You should not use dataframes with multi-index columns as they cause trouble.
-
-    Examples::
-
-        import pandas as pd
-        from fagfunksjoner.data.pandas_combinations import all_combos_agg
-
-        data = {'alder': [20, 60, 33, 33, 20],
-                'kommune': ['0301', '3001', '0301', '5401', '0301'],
-                'kjonn': ['1', '2', '1', '2', '2'],
-                'inntekt': [1000000, 120000, 220000, 550000, 50000],
-                'formue': [25000, 50000, 33000, 44000, 90000]
-                }
-
-        pers = pd.DataFrame(data)
-
-        agg1 = all_combos_agg(pers, groupcols=['kjonn'], keep_empty=True, aggargs={'inntekt':['mean', 'sum']})
-        display(agg1)
-
-        agg2 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], aggargs={'inntekt':['mean', 'sum']})
-        display(agg2)
-
-        agg3 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], grand_total=True, grand_total='Grand total', aggargs={'inntekt':['mean', 'sum']})
-        display(agg3)
-        agg4 = all_combos_agg(pers, groupcols=['kjonn', 'alder'], fillna_dict={'kjonn': 'Total kjønn', 'alder': 'Total alder'}, aggargs={'inntekt':['mean', 'sum'], 'formue': ['count', 'min', 'max']}, grand_total="Total")
-        display(agg4)
-        pers['antall'] = 1
-        groupcols = pers.columns[0:3].tolist()
-        func_dict = {'inntekt':['mean', 'sum'], 'formue': ['sum', 'std', 'count']}
-        fillna_dict = {'kjonn': 'Total kjønn', 'alder': 'Total alder', 'kommune': 'Total kommune'}
-        agg5 = all_combos_agg(pers, groupcols=groupcols, aggargs=func_dict, fillna_dict=fillna_dict, grand_total=fillna_dict )
-        display(agg5)
+    Examples:
+        >>> data = pd.DataFrame({
+                'age': [20, 60, 33, 33, 20],
+                'region': ['0301', '3001', '0301', '5401', '0301'],
+                'gender': ['1', '2', '1', '2', '2'],
+                'income': [1000000, 120000, 220000, 550000, 50000],
+                'wealth': [25000, 50000, 33000, 44000, 90000]
+            })
+        >>> all_combos_agg(data, groupcols=['gender', 'age'], aggargs={'income': ['mean', 'sum']})
     """
-    dataframe, combos = prepare_combinations(df, groupcols, keep_empty)
-    all_levels = calculate_aggregates(dataframe, combos, aggargs, keep_empty)
+    df_cols, aggdict = check_column_arguments(df, groupcols, valuecols, aggargs)
+    dataframe = prepare_dataframe(df, df_cols, groupcols, keep_empty)
+    combos = prepare_combinations(groupcols)
+    all_levels = calculate_aggregates(dataframe, combos, aggdict, keep_empty)
     final_df = finalize_dataframe(
-        all_levels, df, groupcols, aggargs, grand_total, fillna_dict, keep_empty
+        all_levels, df, groupcols, aggdict, grand_total, fillna_dict, keep_empty
     )
     return final_df
 
 
-def prepare_combinations(
-    df: pd.DataFrame, groupcols: list[str], keep_empty: bool
-) -> tuple[pd.DataFrame, list[tuple[str, ...]]]:
-    """Prepare the dataframe and generate all possible combinations of group columns.
+def check_column_arguments(
+    df: pd.DataFrame,
+    groupcols: list[str],
+    valuecols: list[str] | None = None,
+    aggargs: (
+        AggFuncTypeBase | AggFuncTypeDictSeries[str] | dict[str, list[str]] | None
+    ) = None,
+) -> tuple[
+    list[str], AggFuncTypeBase | AggFuncTypeDictSeries[str] | dict[str, list[str]]
+]:
+    """Validate and set defaults for grouping and aggregation arguments.
+
+    Confirms that columns in `groupcols` and `valuecols` exist in `df`, assigns default
+    aggregations if none are provided, and ensures all columns are numeric if aggregations
+    are unspecified.
+
+    Args:
+        df: The input DataFrame to check.
+        groupcols: List of column names to group by.
+        valuecols: List of columns to aggregate. Defaults to None, in which case all numeric columns are used or the keys of `aggargs` if provided.
+        aggargs: Aggregation functions for `valuecols`. Defaults to 'sum' for all numeric columns.
+
+    Returns:
+        - required_columns: List of columns needed for grouping and aggregation.
+        - aggargs: Updated aggregation functions for each column in `valuecols`.
+
+    Raises:
+        ValueError: If a column in `groupcols` or `valuecols` is not in `df`.
+        ValueError: If any column in `valuecols` is non-numeric and lacks an aggregation function.
+
+    Example:
+        >>> data = pd.DataFrame({
+                'A': [1, 2, 3],
+                'B': [4, 5, 6],
+                'C': [7, 8, 9]
+            })
+        >>> check_column_arguments(data, groupcols=['A'], valuecols=['B', 'C'])
+        (['A', 'B', 'C'], {'B': 'sum', 'C': 'sum'})
+    """
+    default_aggregation = "sum"
+    numeric_columns = list(df.select_dtypes(include=[np.number]).columns)
+
+    if valuecols is None:
+        if isinstance(aggargs, dict) and aggargs:
+            valuecols = list(aggargs.keys())
+        elif aggargs is None:
+            valuecols = numeric_columns
+    valuecols = valuecols or []
+
+    required_columns = groupcols + valuecols  # No error expected here now
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        raise ValueError(
+            f"Columns {', '.join(missing_columns)} are not present in the dataframe!"
+        )
+
+    if isinstance(aggargs, dict) and aggargs:
+        for col, funcs in aggargs.items():
+            if isinstance(funcs, list) and len(funcs) == 1:
+                aggargs[col] = funcs[0]  # type: ignore[assignment]
+    elif aggargs is None:
+        non_numeric_cols = [col for col in valuecols if col not in numeric_columns]
+        if non_numeric_cols:
+            raise ValueError(
+                f"Columns {', '.join(non_numeric_cols)} in aggregation function are not numeric! Specify aggregation functions accordingly."
+            )
+        aggargs = {col: default_aggregation for col in valuecols}
+
+    return required_columns, aggargs
+
+
+def prepare_dataframe(
+    df: pd.DataFrame, groupcols: list[str], collist: list[str], keep_empty: bool
+) -> pd.DataFrame:
+    """Prepare DataFrame by selecting necessary columns and setting empty groups.
 
     Args:
         df: The dataframe to process.
         groupcols: List of columns to group by.
+        collist: List of all required columns for aggregation.
         keep_empty: Whether to keep groups without observations.
 
     Returns:
-        tuple[pd.DataFrame, list[tuple[str]]]: The prepared dataframe and list of group column combinations.
+        The DataFrame with required columns, optionally converted to category dtype.
     """
-    dataframe = df.copy()
+    dataframe = df[collist].copy()
     if keep_empty:
         dataframe = dataframe.astype({col: "category" for col in groupcols})
 
-    combos: list[tuple[str, ...]] = []
-    for r in range(len(groupcols) + 1, 0, -1):
-        combos += [tuple(combo) for combo in combinations(groupcols, r)]
+    return dataframe
 
-    return dataframe, combos
+
+def prepare_combinations(groupcols: list[str]) -> list[tuple[str, ...]]:
+    """Generate all possible combinations of group columns.
+
+    Args:
+        groupcols: List of columns to group by.
+
+    Returns:
+        List of tuples representing all group column combinations.
+    """
+    combos = [
+        tuple(combo)
+        for r in range(len(groupcols) + 1, 0, -1)
+        for combo in combinations(groupcols, r)
+    ]
+
+    return combos
 
 
 def calculate_aggregates(
@@ -132,12 +200,11 @@ def calculate_aggregates(
     all_levels = pd.DataFrame()
 
     for i, comb in enumerate(combos):
-        if keep_empty:
-            result_grps = df.groupby(list(comb), observed=False)
-        else:
-            result_grps = df.groupby(list(comb))
-
-        result = result_grps.agg(aggargs).reset_index(names=list(comb))  # type: ignore[arg-type]
+        result = (
+            df.groupby(list(comb), observed=keep_empty)
+            .agg(aggargs)  # type: ignore[arg-type]
+            .reset_index(names=list(comb))
+        )
         result["level"] = len(combos) - i
         result["ways"] = int(len(comb))
         all_levels = pd.concat([all_levels, result], ignore_index=True)
@@ -166,7 +233,7 @@ def finalize_dataframe(
         keep_empty: Whether to keep groups without observations.
 
     Returns:
-        pd.DataFrame: The finalized dataframe.
+        pd.DataFrame: Final DataFrame with all aggregations and filled values.
     """
     all_levels = flatten_col_multiindex(all_levels)
 
