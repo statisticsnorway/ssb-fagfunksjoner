@@ -25,15 +25,8 @@ def doc_data():
     )
 
 
-def test_simple_sum_fillna():
-    data_in = dataset1()
-    result = all_combos_agg(
-        data_in,
-        ["sex", "age"],
-        {"points": sum},
-        fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
-    )
-    data_out = pd.DataFrame(
+def data_out():
+    return pd.DataFrame(
         {
             "sex": {
                 0: "Begge kjoenn",
@@ -75,19 +68,10 @@ def test_simple_sum_fillna():
             "ways": {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 2, 6: 2, 7: 2, 8: 2, 9: 2},
         }
     )
-    assert result.equals(data_out)
 
 
-def test_fillna_dict_keep_empty():
-    data_in = dataset1()
-    result = all_combos_agg(
-        data_in,
-        ["sex", "age"],
-        {"points": sum},
-        fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
-        keep_empty=True,
-    )
-    data_out = pd.DataFrame(
+def data_out_keep_empty():
+    return pd.DataFrame(
         {
             "sex": {
                 0: "Begge kjoenn",
@@ -144,15 +128,64 @@ def test_fillna_dict_keep_empty():
             "ways": {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 2, 6: 2, 7: 2, 8: 2, 9: 2, 10: 2},
         }
     )
-    assert result.equals(data_out)
+
+
+def test_simple_sum_fillna():
+    data_in = dataset1()
+    result = all_combos_agg(
+        df=data_in,
+        groupcols=["sex", "age"],
+        aggargs={"points": sum},
+        fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
+    )
+
+    assert result.equals(data_out())
+
+
+def test_fillna_dict_keep_empty():
+    data_in = dataset1()
+    result = all_combos_agg(
+        df=data_in,
+        groupcols=["sex", "age"],
+        aggargs={"points": sum},
+        fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
+        keep_empty=True,
+    )
+
+    assert result.equals(data_out_keep_empty())
+
+
+def test_agg_simplified():
+    data_in = dataset1()
+    result = all_combos_agg(
+        df=data_in,
+        groupcols=["sex", "age"],
+        valuecols=["points"],
+        fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
+        keep_empty=True,
+    )
+
+    assert result.equals(data_out_keep_empty())
+
+
+def test_agg_nospecs():
+    data_in = dataset1()
+    result = all_combos_agg(
+        df=data_in,
+        groupcols=["sex", "age"],
+        fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
+        keep_empty=True,
+    )
+
+    assert result.equals(data_out_keep_empty())
 
 
 def test_grand_total():
     data_in = dataset1()
     result = all_combos_agg(
-        data_in,
-        ["sex", "age"],
-        {"points": sum},
+        df=data_in,
+        groupcols=["sex", "age"],
+        aggargs={"points": sum},
         fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
         keep_empty=True,
         grand_total="I alt",
@@ -166,7 +199,7 @@ def test_grand_total():
 
 def test_fromdoc_1():
     result = all_combos_agg(
-        doc_data(),
+        df=doc_data(),
         groupcols=["kjonn"],
         keep_empty=True,
         aggargs={"inntekt": ["mean", "sum"]},
@@ -177,7 +210,9 @@ def test_fromdoc_1():
 
 def test_fromdoc_2():
     result = all_combos_agg(
-        doc_data(), groupcols=["kjonn", "alder"], aggargs={"inntekt": ["mean", "sum"]}
+        df=doc_data(),
+        groupcols=["kjonn", "alder"],
+        aggargs={"inntekt": ["mean", "sum"]},
     )
     assert len(result) == 10
     assert len(result.columns) == 6
@@ -185,7 +220,7 @@ def test_fromdoc_2():
 
 def test_fromdoc_3():
     result = all_combos_agg(
-        doc_data(),
+        df=doc_data(),
         groupcols=["kjonn", "alder"],
         grand_total="Grand total",
         aggargs={"inntekt": ["mean", "sum"], "formue": ["sum"]},
@@ -196,7 +231,7 @@ def test_fromdoc_3():
 
 def test_fromdoc_4():
     result = all_combos_agg(
-        doc_data(),
+        df=doc_data(),
         groupcols=["kjonn", "alder"],
         fillna_dict={"kjonn": "Total kjønn", "alder": "Total alder"},
         aggargs={"inntekt": ["mean", "sum"], "formue": ["count", "min", "max"]},
@@ -216,7 +251,7 @@ def test_fromdoc_5():
         "kommune": "Total kommune",
     }
     result = all_combos_agg(
-        data_in,
+        df=data_in,
         groupcols=groupcols,
         aggargs=func_dict,
         fillna_dict=fillna_dict,
