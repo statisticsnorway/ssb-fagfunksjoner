@@ -11,6 +11,8 @@ from typing import Any, TypeAlias, TypeVar
 import numpy as np
 import pandas as pd
 
+from fagfunksjoner.fagfunksjoner_logger import logger
+
 
 # Having trouble importing these from pandas._typing
 AggFuncTypeBase: TypeAlias = Callable[[Any], Any] | str | np.ufunc
@@ -60,12 +62,24 @@ def all_combos_agg(
             })
         >>> all_combos_agg(data, groupcols=['gender', 'age'], aggargs={'income': ['mean', 'sum']})
     """
-    df_cols, aggdict = check_column_arguments(df, groupcols, valuecols, aggargs)
-    dataframe = prepare_dataframe(df, df_cols, groupcols, keep_empty)
-    combos = prepare_combinations(groupcols)
-    all_levels = calculate_aggregates(dataframe, combos, aggdict, keep_empty)
+    df_cols, aggdict = check_column_arguments(
+        df=df, groupcols=groupcols, valuecols=valuecols, aggargs=aggargs
+    )
+    dataframe = prepare_dataframe(
+        df=df, groupcols=groupcols, collist=df_cols, keep_empty=keep_empty
+    )
+    combinations = prepare_combinations(groupcols=groupcols)
+    calculated_aggregates = calculate_aggregates(
+        df=dataframe, combos=combinations, aggargs=aggdict, keep_empty=keep_empty
+    )
     final_df = finalize_dataframe(
-        all_levels, df, groupcols, aggdict, grand_total, fillna_dict, keep_empty
+        all_levels=calculated_aggregates,
+        df=dataframe,
+        groupcols=groupcols,
+        aggargs=aggdict,
+        grand_total=grand_total,
+        fillna_dict=fillna_dict,
+        keep_empty=keep_empty,
     )
     return final_df
 
@@ -117,7 +131,9 @@ def check_column_arguments(
             valuecols = list(aggargs.keys())
         elif aggargs is None:
             valuecols = numeric_columns
-    valuecols = valuecols or []
+        else:
+            logger.warning(f"Did not find which columns to aggregate from: {aggargs}.")
+            valuecols = []
 
     required_columns = groupcols + valuecols  # No error expected here now
     missing_columns = [col for col in required_columns if col not in df.columns]
@@ -126,11 +142,7 @@ def check_column_arguments(
             f"Columns {', '.join(missing_columns)} are not present in the dataframe!"
         )
 
-    if isinstance(aggargs, dict) and aggargs:
-        for col, funcs in aggargs.items():
-            if isinstance(funcs, list) and len(funcs) == 1:
-                aggargs[col] = funcs[0]  # type: ignore[assignment]
-    elif aggargs is None:
+    if aggargs is None:
         non_numeric_cols = [col for col in valuecols if col not in numeric_columns]
         if non_numeric_cols:
             raise ValueError(
@@ -201,7 +213,7 @@ def calculate_aggregates(
 
     for i, comb in enumerate(combos):
         result = (
-            df.groupby(list(comb), observed=keep_empty)
+            df.groupby(list(comb), observed=not keep_empty)
             .agg(aggargs)  # type: ignore[arg-type]
             .reset_index(names=list(comb))
         )
@@ -271,12 +283,21 @@ def handle_grand_total(
     Returns:
         pd.DataFrame: The modified original dataset that now should contain the grand totals.
     """
-    cat_groupcols = df[groupcols].select_dtypes("category").columns
+    cat_groupcols = all_levels[groupcols].select_dtypes(include="category").columns
+
     if len(cat_groupcols):
         for col in cat_groupcols:
-            all_levels[col] = all_levels[col].add_categories(grand_total)
+            if isinstance(grand_total, dict):
+                if col in grand_total:
+                    all_levels[col] = all_levels[col].cat.add_categories(
+                        [grand_total[col]]
+                    )
+            else:
+                all_levels[col] = all_levels[col].cat.add_categories([grand_total])
+    else:
+        all_levels[groupcols] = all_levels[groupcols].astype("object")
 
-    gt: pd.Series | pd.DataFrame = df.agg(aggargs)  # type: ignore[type-arg, arg-type]
+    gt = df.agg(aggargs)  # type: ignore[type-arg, arg-type]
     if isinstance(gt, pd.DataFrame):
         gt_df = flatten_col_multiindex(pd.DataFrame(gt.unstack()).T)
     else:
@@ -284,14 +305,18 @@ def handle_grand_total(
 
     gt_df["level"] = 0
     gt_df["ways"] = 0
+
     if isinstance(grand_total, str):
-        gt_df[groupcols] = grand_total
+        for col in groupcols:
+            gt_df[col] = grand_total
     elif isinstance(grand_total, dict):
-        for col, val in grand_total.items():
-            gt_df[col] = val
+        for col in groupcols:
+            gt_df[col] = grand_total.get(col, None)
 
     gt_df = gt_df[all_levels.columns]
+
     all_levels = pd.concat([all_levels, gt_df], ignore_index=True)
+
     return all_levels
 
 
