@@ -295,7 +295,7 @@ def handle_grand_total(
 
     if isinstance(gt, pd.Series):
         gt_df = flatten_col_multiindex(gt.to_frame().T)
-    else:
+    else:  # type: ignore[unreachable]
         gt_df = flatten_col_multiindex(gt.unstack().to_frame().T)
 
     gt_df["level"] = 0
