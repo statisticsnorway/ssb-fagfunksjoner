@@ -298,10 +298,13 @@ def handle_grand_total(
         all_levels[groupcols] = all_levels[groupcols].astype("object")
 
     gt = df.agg(aggargs)  # type: ignore[type-arg, arg-type]
-    if isinstance(gt, pd.DataFrame):
-        gt_df = flatten_col_multiindex(pd.DataFrame(gt.unstack()).T)
+
+    if isinstance(gt, pd.Series):
+        gt_df = flatten_col_multiindex(gt.to_frame().T)
+    elif isinstance(gt, pd.DataFrame):
+        gt_df = flatten_col_multiindex(gt.unstack().to_frame().T)
     else:
-        gt_df = flatten_col_multiindex(pd.DataFrame(gt).T)
+        raise TypeError("Unexpected type for gt; expected Series or DataFrame.")
 
     gt_df["level"] = 0
     gt_df["ways"] = 0
@@ -314,9 +317,7 @@ def handle_grand_total(
             gt_df[col] = grand_total.get(col, None)
 
     gt_df = gt_df[all_levels.columns]
-
     all_levels = pd.concat([all_levels, gt_df], ignore_index=True)
-
     return all_levels
 
 
