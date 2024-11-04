@@ -65,9 +65,7 @@ def all_combos_agg(
     df_cols, aggdict = check_column_arguments(
         df=df, groupcols=groupcols, valuecols=valuecols, aggargs=aggargs
     )
-    dataframe = prepare_dataframe(
-        df=df, groupcols=groupcols, collist=df_cols, keep_empty=keep_empty
-    )
+    dataframe = prepare_dataframe(df=df, groupcols=groupcols, collist=df_cols)
     combinations = prepare_combinations(groupcols=groupcols)
     calculated_aggregates = calculate_aggregates(
         df=dataframe, combos=combinations, aggargs=aggdict, keep_empty=keep_empty
@@ -154,7 +152,7 @@ def check_column_arguments(
 
 
 def prepare_dataframe(
-    df: pd.DataFrame, groupcols: list[str], collist: list[str], keep_empty: bool
+    df: pd.DataFrame, groupcols: list[str], collist: list[str]
 ) -> pd.DataFrame:
     """Prepare DataFrame by selecting necessary columns and setting empty groups.
 
@@ -162,14 +160,12 @@ def prepare_dataframe(
         df: The dataframe to process.
         groupcols: List of columns to group by.
         collist: List of all required columns for aggregation.
-        keep_empty: Whether to keep groups without observations.
 
     Returns:
         The DataFrame with required columns, optionally converted to category dtype.
     """
     dataframe = df[collist].copy()
-    if keep_empty:
-        dataframe = dataframe.astype({col: "category" for col in groupcols})
+    dataframe = dataframe.astype({col: "category" for col in groupcols})
 
     return dataframe
 
@@ -282,32 +278,25 @@ def handle_grand_total(
 
     Returns:
         pd.DataFrame: The modified original dataset that now should contain the grand totals.
-        
-    Raise:
-        TypeError: If aggregation of the dataframe does not return a dataframe or series. 
-    """
-    cat_groupcols = all_levels[groupcols].select_dtypes(include="category").columns
 
-    if len(cat_groupcols):
-        for col in cat_groupcols:
-            if isinstance(grand_total, dict):
-                if col in grand_total:
-                    all_levels[col] = all_levels[col].cat.add_categories(
-                        [grand_total[col]]
-                    )
+    Raises:
+        ValueError: If 'grand_total' is not a string or a dictionary.
+    """
+    for col in groupcols:
+        if isinstance(grand_total, dict):
+            if col in grand_total:
+                all_levels[col] = all_levels[col].cat.add_categories([grand_total[col]])
             else:
                 all_levels[col] = all_levels[col].cat.add_categories([grand_total])
-    else:
-        all_levels[groupcols] = all_levels[groupcols].astype("object")
+        else:
+            all_levels[col] = all_levels[col].astype("object")
 
     gt = df.agg(aggargs)  # type: ignore[type-arg, arg-type]
 
     if isinstance(gt, pd.Series):
         gt_df = flatten_col_multiindex(gt.to_frame().T)
-    elif isinstance(gt, pd.DataFrame):
-        gt_df = flatten_col_multiindex(gt.unstack().to_frame().T)
     else:
-        raise TypeError("Unexpected type for gt; expected Series or DataFrame.")
+        gt_df = flatten_col_multiindex(gt.unstack().to_frame().T)
 
     gt_df["level"] = 0
     gt_df["ways"] = 0
@@ -315,12 +304,16 @@ def handle_grand_total(
     if isinstance(grand_total, str):
         for col in groupcols:
             gt_df[col] = grand_total
+        gt_df = gt_df[all_levels.columns]
     elif isinstance(grand_total, dict):
         for col in groupcols:
             gt_df[col] = grand_total.get(col, None)
+        gt_df = gt_df[all_levels.columns]
+    else:
+        raise ValueError("grand_total must be a string or a dictionary")
 
-    gt_df = gt_df[all_levels.columns]
     all_levels = pd.concat([all_levels, gt_df], ignore_index=True)
+
     return all_levels
 
 
@@ -358,7 +351,14 @@ def flatten_col_multiindex(df: pd.DataFrame, sep: str = "_") -> pd.DataFrame:
         pd.DataFrame: The DataFrame with the flattened column headers.
     """
     if isinstance(df.columns, pd.MultiIndex):
-        df.columns = pd.Index(
-            [sep.join(col).strip().strip(sep) for col in df.columns.values]
+        pd.Index(
+            [
+                (
+                    sep.join(filter(None, map(str, col))).strip(sep)
+                    if isinstance(col, tuple)
+                    else str(col)
+                )
+                for col in df.columns.values
+            ]
         )
     return df

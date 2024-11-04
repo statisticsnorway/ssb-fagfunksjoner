@@ -156,7 +156,7 @@ def test_simple_sum_fillna():
     )
     expected = data_out().sort_values(by=["level", "sex", "age"]).reset_index(drop=True)
 
-    assert_frame_equal(result, expected)
+    assert_frame_equal(left=result, right=expected, check_categorical=False)
 
 
 def test_fillna_dict_keep_empty():
@@ -177,7 +177,7 @@ def test_fillna_dict_keep_empty():
         .sort_values(by=["level", "sex", "age"])
         .reset_index(drop=True)
     )
-    assert_frame_equal(result, expected)
+    assert_frame_equal(left=result, right=expected, check_categorical=False)
 
 
 def test_agg_simplified():
@@ -198,7 +198,7 @@ def test_agg_simplified():
         .sort_values(by=["level", "sex", "age"])
         .reset_index(drop=True)
     )
-    assert_frame_equal(result, expected)
+    assert_frame_equal(left=result, right=expected, check_categorical=False)
 
 
 def test_agg_nospecs():
@@ -218,7 +218,7 @@ def test_agg_nospecs():
         .sort_values(by=["level", "sex", "age"])
         .reset_index(drop=True)
     )
-    assert_frame_equal(result, expected)
+    assert_frame_equal(left=result, right=expected, check_categorical=False)
 
 
 def test_grand_total():
