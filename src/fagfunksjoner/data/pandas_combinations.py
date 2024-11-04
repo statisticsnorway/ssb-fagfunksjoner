@@ -282,6 +282,9 @@ def handle_grand_total(
 
     Returns:
         pd.DataFrame: The modified original dataset that now should contain the grand totals.
+        
+    Raise:
+        TypeError: If aggregation of the dataframe does not return a dataframe or series. 
     """
     cat_groupcols = all_levels[groupcols].select_dtypes(include="category").columns
 
