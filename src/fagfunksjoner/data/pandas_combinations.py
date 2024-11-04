@@ -295,8 +295,8 @@ def handle_grand_total(
 
     if isinstance(gt, pd.Series):
         gt_df = flatten_col_multiindex(gt.to_frame().T)
-    else:  # type: ignore[unreachable]
-        gt_df = flatten_col_multiindex(gt.unstack().to_frame().T)
+    else:
+        gt_df = flatten_col_multiindex(gt.unstack().to_frame().T)  # type: ignore[unreachable]
 
     gt_df["level"] = 0
     gt_df["ways"] = 0
