@@ -1,20 +1,29 @@
 import pandas as pd
+from pandas.testing import assert_frame_equal
 
 from fagfunksjoner.data.pandas_combinations import all_combos_agg
 
 
+def convert_to_category(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    """Convert specified columns of a DataFrame to categorical type."""
+    for col in columns:
+        df[col] = df[col].astype("category")
+    return df
+
+
 def dataset1():
-    return pd.DataFrame(
+    df = pd.DataFrame(
         {
             "sex": ["Mann", "Kvinne", "Mann", "Mann", "Kvinne", "Mann"],
             "age": ["40", "50", "60", "50", "60", "40"],
             "points": [100, 90, 80, 70, 60, 50],
         }
     )
+    return convert_to_category(df, ["sex", "age"])
 
 
 def doc_data():
-    return pd.DataFrame(
+    df = pd.DataFrame(
         {
             "alder": [20, 60, 33, 33, 20],
             "kommune": ["0301", "3001", "0301", "5401", "0301"],
@@ -23,17 +32,11 @@ def doc_data():
             "formue": [25000, 50000, 33000, 44000, 90000],
         }
     )
+    return convert_to_category(df, ["kommune", "kjonn"])
 
 
-def test_simple_sum_fillna():
-    data_in = dataset1()
-    result = all_combos_agg(
-        data_in,
-        ["sex", "age"],
-        {"points": sum},
-        fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
-    )
-    data_out = pd.DataFrame(
+def data_out():
+    df = pd.DataFrame(
         {
             "sex": {
                 0: "Begge kjoenn",
@@ -75,19 +78,11 @@ def test_simple_sum_fillna():
             "ways": {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 2, 6: 2, 7: 2, 8: 2, 9: 2},
         }
     )
-    assert result.equals(data_out)
+    return convert_to_category(df, ["sex", "age"])
 
 
-def test_fillna_dict_keep_empty():
-    data_in = dataset1()
-    result = all_combos_agg(
-        data_in,
-        ["sex", "age"],
-        {"points": sum},
-        fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
-        keep_empty=True,
-    )
-    data_out = pd.DataFrame(
+def data_out_keep_empty():
+    df = pd.DataFrame(
         {
             "sex": {
                 0: "Begge kjoenn",
@@ -144,15 +139,94 @@ def test_fillna_dict_keep_empty():
             "ways": {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 2, 6: 2, 7: 2, 8: 2, 9: 2, 10: 2},
         }
     )
-    assert result.equals(data_out)
+    return convert_to_category(df, ["sex", "age"])
+
+
+def test_simple_sum_fillna():
+    data_in = dataset1()
+    result = (
+        all_combos_agg(
+            df=data_in,
+            groupcols=["sex", "age"],
+            aggargs={"points": sum},
+            fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
+        )
+        .sort_values(by=["level", "sex", "age"])
+        .reset_index(drop=True)
+    )
+    expected = data_out().sort_values(by=["level", "sex", "age"]).reset_index(drop=True)
+
+    assert_frame_equal(left=result, right=expected, check_categorical=False)
+
+
+def test_fillna_dict_keep_empty():
+    data_in = dataset1()
+    result = (
+        all_combos_agg(
+            df=data_in,
+            groupcols=["sex", "age"],
+            aggargs={"points": sum},
+            fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
+            keep_empty=True,
+        )
+        .sort_values(by=["level", "sex", "age"])
+        .reset_index(drop=True)
+    )
+    expected = (
+        data_out_keep_empty()
+        .sort_values(by=["level", "sex", "age"])
+        .reset_index(drop=True)
+    )
+    assert_frame_equal(left=result, right=expected, check_categorical=False)
+
+
+def test_agg_simplified():
+    data_in = dataset1()
+    result = (
+        all_combos_agg(
+            df=data_in,
+            groupcols=["sex", "age"],
+            valuecols=["points"],
+            fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
+            keep_empty=True,
+        )
+        .sort_values(by=["level", "sex", "age"])
+        .reset_index(drop=True)
+    )
+    expected = (
+        data_out_keep_empty()
+        .sort_values(by=["level", "sex", "age"])
+        .reset_index(drop=True)
+    )
+    assert_frame_equal(left=result, right=expected, check_categorical=False)
+
+
+def test_agg_nospecs():
+    data_in = dataset1()
+    result = (
+        all_combos_agg(
+            df=data_in,
+            groupcols=["sex", "age"],
+            fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
+            keep_empty=True,
+        )
+        .sort_values(by=["level", "sex", "age"])
+        .reset_index(drop=True)
+    )
+    expected = (
+        data_out_keep_empty()
+        .sort_values(by=["level", "sex", "age"])
+        .reset_index(drop=True)
+    )
+    assert_frame_equal(left=result, right=expected, check_categorical=False)
 
 
 def test_grand_total():
     data_in = dataset1()
     result = all_combos_agg(
-        data_in,
-        ["sex", "age"],
-        {"points": sum},
+        df=data_in,
+        groupcols=["sex", "age"],
+        aggargs={"points": sum},
         fillna_dict={"sex": "Begge kjoenn", "age": "Alle aldre"},
         keep_empty=True,
         grand_total="I alt",
@@ -166,7 +240,7 @@ def test_grand_total():
 
 def test_fromdoc_1():
     result = all_combos_agg(
-        doc_data(),
+        df=doc_data(),
         groupcols=["kjonn"],
         keep_empty=True,
         aggargs={"inntekt": ["mean", "sum"]},
@@ -177,7 +251,9 @@ def test_fromdoc_1():
 
 def test_fromdoc_2():
     result = all_combos_agg(
-        doc_data(), groupcols=["kjonn", "alder"], aggargs={"inntekt": ["mean", "sum"]}
+        df=doc_data(),
+        groupcols=["kjonn", "alder"],
+        aggargs={"inntekt": ["mean", "sum"]},
     )
     assert len(result) == 10
     assert len(result.columns) == 6
@@ -185,7 +261,7 @@ def test_fromdoc_2():
 
 def test_fromdoc_3():
     result = all_combos_agg(
-        doc_data(),
+        df=doc_data(),
         groupcols=["kjonn", "alder"],
         grand_total="Grand total",
         aggargs={"inntekt": ["mean", "sum"], "formue": ["sum"]},
@@ -196,7 +272,7 @@ def test_fromdoc_3():
 
 def test_fromdoc_4():
     result = all_combos_agg(
-        doc_data(),
+        df=doc_data(),
         groupcols=["kjonn", "alder"],
         fillna_dict={"kjonn": "Total kjønn", "alder": "Total alder"},
         aggargs={"inntekt": ["mean", "sum"], "formue": ["count", "min", "max"]},
@@ -216,7 +292,7 @@ def test_fromdoc_5():
         "kommune": "Total kommune",
     }
     result = all_combos_agg(
-        data_in,
+        df=data_in,
         groupcols=groupcols,
         aggargs=func_dict,
         fillna_dict=fillna_dict,
