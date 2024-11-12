@@ -15,8 +15,11 @@ def test_check_env_dapla():
 
 
 def test_check_env_prod():
-    with mock.patch("os.path.isdir", return_value=True):
-        assert check_env.check_env() == "PROD"
+    with mock.patch(
+        "dapla.auth.AuthClient.get_dapla_region", return_value=""
+    ):
+        with mock.patch("os.path.isdir", return_value=True):
+            assert check_env.check_env() == "PROD"
 
 
 def test_check_env_unknown():
