@@ -379,10 +379,12 @@ def make_single_dataframe_record(
                 None,
             )
             if attr_index is not None:
-                record[attr.id] = attr.values[series_val.attributes[attr_index]]["name"]
-                record[attr.id + "_id"] = attr.values[
-                    series_val.attributes[attr_index]
-                ]["id"]
+                if (len(attr.values) - 1) < series_val.attributes[attr_index]:
+                    new_index = len(attr.values) - 1
+                else:
+                    new_index = series_val.attributes[attr_index]
+                record[attr.id] = attr.values[new_index]["name"]
+                record[attr.id + "_id"] = attr.values[new_index]["id"]
     return record
 
 
