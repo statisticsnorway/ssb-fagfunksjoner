@@ -1,7 +1,7 @@
 import os
-import pytest
-import subprocess
 from unittest.mock import patch
+
+import pytest
 
 from fagfunksjoner.paths.user import find_email, find_user, verify_ssbmail
 
@@ -45,7 +45,9 @@ def test_find_email_git_user(setup_env):
 def test_find_email_getpass_user(setup_env):
     os.environ.pop("DAPLA_USER", None)
     os.environ.pop("JUPYTERHUB_USER", None)
-    with patch("subprocess.run") as mock_subprocess, patch("getpass.getuser") as mock_getuser:
+    with patch("subprocess.run") as mock_subprocess, patch(
+        "getpass.getuser"
+    ) as mock_getuser:
         mock_subprocess.return_value.stdout = "invalid_email"
         mock_getuser.return_value = "jkl"
         assert find_email() == "jkl@ssb.no"
@@ -54,10 +56,14 @@ def test_find_email_getpass_user(setup_env):
 def test_find_email_raises_value_error(setup_env):
     os.environ.pop("DAPLA_USER", None)
     os.environ.pop("JUPYTERHUB_USER", None)
-    with patch("subprocess.run") as mock_subprocess, patch("getpass.getuser") as mock_getuser:
+    with patch("subprocess.run") as mock_subprocess, patch(
+        "getpass.getuser"
+    ) as mock_getuser:
         mock_subprocess.return_value.stdout = "invalid_email"
         mock_getuser.return_value = "invalid_user"
-        with pytest.raises(ValueError, match="Cant find the users email or tbf in the system."):
+        with pytest.raises(
+            ValueError, match="Cant find the users email or tbf in the system."
+        ):
             find_email()
 
 
