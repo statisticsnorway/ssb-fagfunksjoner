@@ -14,11 +14,17 @@
 
 # %%
 import fagfunksjoner
-fagfunksjoner.__version__
+
+
+print(fagfunksjoner.__version__)
 
 # %%
+from IPython.display import display
+
 from fagfunksjoner.api.valuta import download_exchange_rates
+
+
 exchange_rates = download_exchange_rates()
-exchange_rates.df
+display(exchange_rates.df)
 
 # %%
