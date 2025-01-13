@@ -4,17 +4,16 @@ One of the main uses will be importing local functions in a notebook based proje
 As notebooks run from the folder they are opened from, not root, and functions usually will be .py files located in other folders than the notebooks.
 """
 
+import inspect
 import os
 from pathlib import Path
+import sys
 from types import TracebackType
 from typing import Any
 
 import toml
 
 from fagfunksjoner.fagfunksjoner_logger import logger
-
-
-START_DIR = None
 
 
 class ProjectRoot:
@@ -39,7 +38,8 @@ class ProjectRoot:
 
     def __enter__(self) -> None:
         """Entering the context manager navigates to the project root."""
-        navigate_root()
+        os.chdir(self.path)
+        sys.path.append(str(self.path))
 
     def __exit__(
         self,
@@ -51,7 +51,8 @@ class ProjectRoot:
 
         THEN raises any errors.
         """
-        return_to_work_dir()
+        os.chdir(self.workdir)
+        sys.path.pop(sys.path.index(str(self.path)))
         if exc_type is not None:
             logger.warning(traceback)
             raise exc_type(exc_value)
@@ -72,28 +73,27 @@ class ProjectRoot:
         return load_toml(config_file)
 
 
-def navigate_root() -> Path:
-    """Changes the current working directory to the project root.
+def get_exec_path() -> Path:
+    """Get the python path being executed.
 
-    Saves the folder it start from in the global variable (in this module) START_DIR
-
-    Returns:
-        Path: The starting directory, where you are currently, as a pathlib Path.
-            Changing the current working directory to root (different than returned)
-            as a side-effect.
+    Will not work with Jupyter notebooks since there is no __file__ attribute.
     """
-    global START_DIR
-    START_DIR = os.getcwd()
-    os.chdir(find_root())
-    return Path(START_DIR)
+    frame = inspect.currentframe()
+    # navigate to topmost frame
+    while frame:
+        prev_frame = frame.f_back
+        if not prev_frame:
+            break
+        frame = prev_frame
+    return Path(frame.f_locals["__file__"])
 
 
 def find_root() -> Path:
     """Finds the root of the project, based on the hidden folder ".git".
 
     Which you usually should have only in your project root.
-    Changes the current working directory back and forth,
-    but should end up in the original starting directory.
+
+    Does not change the working directory.
 
     Returns:
         Path: The project root folder.
@@ -102,27 +102,19 @@ def find_root() -> Path:
         OSError: If the file specified is not found in the current folder,
             the specified path, or the project root.
     """
-    global START_DIR
-    START_DIR = os.getcwd()
-    for _ in range(len(Path(START_DIR).parents)):
-        if ".git" in os.listdir():
-            break
-        os.chdir("../")
-    else:
-        os.chdir(START_DIR)
-        raise OSError("Couldnt find .git navigating out from current folder.")
-    project_root = os.getcwd()
-    os.chdir(START_DIR)
-    return Path(project_root)
+    try:
+        file_name = get_exec_path()
+        wd = file_name.parent
+    except KeyError:
+        file_name = Path(os.getcwd())
+        wd = file_name
 
-
-def return_to_work_dir() -> None:
-    """Navigate back to the last recorded START_DIR."""
-    global START_DIR
-    if START_DIR:
-        os.chdir(START_DIR)
-    else:
-        logger.info("START_DIR not set, assuming you never left the working dir")
+    while True:
+        if ".git" in os.listdir(wd):
+            return wd
+        if len(wd.parts) == 1:
+            raise OSError(f"Couldnt find .git navigating out from {file_name}")
+        wd = wd.parent
 
 
 def load_toml(config_file: str) -> dict[Any, Any]:
