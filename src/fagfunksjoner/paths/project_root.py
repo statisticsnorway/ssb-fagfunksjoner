@@ -4,7 +4,6 @@ One of the main uses will be importing local functions in a notebook based proje
 As notebooks run from the folder they are opened from, not root, and functions usually will be .py files located in other folders than the notebooks.
 """
 
-import inspect
 import os
 from pathlib import Path
 import sys
@@ -14,6 +13,9 @@ from typing import Any
 import toml
 
 from fagfunksjoner.fagfunksjoner_logger import logger
+
+
+START_DIR = None
 
 
 class ProjectRoot:
@@ -52,7 +54,8 @@ class ProjectRoot:
         THEN raises any errors.
         """
         os.chdir(self.workdir)
-        sys.path.pop(sys.path.index(str(self.path)))
+        last_index = max(i for i, x in enumerate(sys.path) if x == str(self.path))
+        sys.path.pop(last_index)
         if exc_type is not None:
             logger.warning(traceback)
             raise exc_type(exc_value)
@@ -74,18 +77,10 @@ class ProjectRoot:
 
 
 def get_exec_path() -> Path:
-    """Get the python path being executed.
-
-    Will not work with Jupyter notebooks since there is no __file__ attribute.
-    """
-    frame = inspect.currentframe()
-    # navigate to topmost frame
-    while frame:
-        prev_frame = frame.f_back
-        if not prev_frame:
-            break
-        frame = prev_frame
-    return Path(frame.f_locals["__file__"])
+    """Get the path of the Python file or notebooks being executed."""
+    if "ipykernel" in sys.argv[0]:
+        return Path(os.environ["JPY_SESSION_NAME"])
+    return Path(os.path.abspath(sys.argv[0]))
 
 
 def find_root() -> Path:
@@ -102,12 +97,17 @@ def find_root() -> Path:
         OSError: If the file specified is not found in the current folder,
             the specified path, or the project root.
     """
-    try:
-        file_name = get_exec_path()
-        wd = file_name.parent
-    except KeyError:
-        file_name = Path(os.getcwd())
-        wd = file_name
+    global START_DIR
+    if START_DIR is not None:
+        file_name = START_DIR
+        wd = START_DIR
+    else:
+        try:
+            file_name = get_exec_path()
+            wd = file_name.parent
+        except KeyError:
+            file_name = os.getcwd()
+            wd = Path(file_name)
 
     while True:
         if ".git" in os.listdir(wd):
