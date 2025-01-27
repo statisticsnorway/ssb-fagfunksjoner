@@ -6,7 +6,8 @@ and can help differentiate between the different places we develop code.
 
 import os
 
-from dapla.auth import AuthClient, DaplaRegion
+from dapla.auth import AuthClient
+from dapla.const import DaplaRegion
 
 
 def check_env(raise_err: bool = True) -> str:
