@@ -67,7 +67,6 @@ repos:
         entry: darglint
         language: system
         types: [python]
-        stages: [manual]
       - id: ruff
         name: ruff
         entry: ruff check --fix --exit-non-zero-on-fix

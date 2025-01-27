@@ -2,7 +2,7 @@ import os
 from unittest import mock
 
 import pytest
-from dapla.auth import DaplaRegion
+from dapla.const import DaplaRegion
 
 from fagfunksjoner.prodsone import check_env
 
