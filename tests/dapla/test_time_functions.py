@@ -2,7 +2,7 @@ import datetime as dt
 
 import pytest
 
-from fagfunksjoner.dapla.standards.time import (
+from fagfunksjoner.dapla.standards.time_functions import (
     bimester,
     date,
     date_time,

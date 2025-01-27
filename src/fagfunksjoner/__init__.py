@@ -57,15 +57,15 @@ from fagfunksjoner.prodsone.saspy_ssb import saspy_df_from_path, saspy_session
 
 __all__ = [
     "ProjectRoot",
-    "next_version_path",
-    "get_latest_fileversions",
     "all_combos_agg",
     "auto_dtype",
     "check_env",
+    "get_latest_fileversions",
     "linux_shortcuts",
-    "saspy_session",
-    "saspy_df_from_path",
-    "view_dataframe",
+    "next_version_path",
     "open_path_datadok",
     "open_path_metapath_datadok",
+    "saspy_df_from_path",
+    "saspy_session",
+    "view_dataframe",
 ]
