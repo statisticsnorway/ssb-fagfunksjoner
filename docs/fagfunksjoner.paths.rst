@@ -20,6 +20,14 @@ fagfunksjoner.paths.project\_root module
    :undoc-members:
    :show-inheritance:
 
+fagfunksjoner.paths.user module
+-------------------------------
+
+.. automodule:: fagfunksjoner.paths.user
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 fagfunksjoner.paths.versions module
 -----------------------------------
 

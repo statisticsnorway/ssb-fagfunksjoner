@@ -70,3 +70,6 @@ add_module_names = False
 
 # The code will always be Python?
 highlight_language = "python"
+
+# Include documentation from bot __init__-method and class documentation
+autoclass_content = "both"

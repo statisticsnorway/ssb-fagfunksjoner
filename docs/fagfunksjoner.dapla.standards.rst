@@ -1,21 +1,11 @@
 fagfunksjoner.dapla.standards package
 =====================================
 
-Submodules
-----------
 
-fagfunksjoner.dapla.standards.time module
------------------------------------------
+fagfunksjoner.dapla.standards.time\_functions module
+----------------------------------------------------
 
-.. automodule:: fagfunksjoner.dapla.standards.time
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: fagfunksjoner.dapla.standards
+.. automodule:: fagfunksjoner.dapla.standards.time_functions
    :members:
    :undoc-members:
    :show-inheritance:
