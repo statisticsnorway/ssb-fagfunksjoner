@@ -10,6 +10,30 @@ and the following command::
     --input process-data-json-schema.json --output process_data.py
 
 Minor modifications were made to the generated code after creation.
+
+Examples:
+    The example below shows how to log process data.
+
+    >>> from fagfunksjoner.log.process_data import ProcessData
+    >>> from fagfunksjoner.log.statlogger import LoggerType, StatLogger
+    >>> from datetime import datetime
+    >>> import logging
+    >>> import json
+    >>>
+    >>> root_logger = StatLogger(loggers=[LoggerType.JSONL_EXTRA_ONLY])
+    >>> logger = logging.getLogger(__name__)
+    >>>
+    >>> process_data = ProcessData(
+    >>>     statistics_name="metstat",
+    >>>     data_target="gs://ssb-tip-tutorials-data-produkt-prod/metstat/inndata/frost/weather_stations_v1.parquet",
+    >>>     data_period="2025-01-21T08:45:45+0100",
+    >>>     unit_id="komm_nr",
+    >>>     change_event="A",
+    >>>     change_event_reason="OTHER_SOURCE",
+    >>>     change_datetime=datetime.now().astimezone(),
+    >>> )
+    >>> process_data_dict = json.loads(process_data.model_dump_json())
+    >>> logger.info("Log processdata", extra={"data": process_data_dict})
 """
 
 from __future__ import annotations
