@@ -63,9 +63,21 @@ class TestStatLogger:
         # Act
         logger1 = StatLogger(log_file=log_file)
         logger2 = StatLogger(log_file=log_file)
+        get_logger1 = logger1.getLogger()
+        get_logger2 = logger2.getLogger()
 
         # Assert
         assert logger2 is logger1
+        assert get_logger1 is get_logger2
+
+    # Initialization with invalid logger types raises TypeError
+    def test_initialization_with_invalid_logger_types(self):
+        # Attempt to initialize StatLogger with invalid logger types
+        invalid_loggers = [LoggerType.JSONL, 123, None]
+
+        # Expect a TypeError to be raised
+        with pytest.raises(TypeError, match="All loggers must be of type LoggerType."):
+            StatLogger(loggers=invalid_loggers)
 
     # JSONL logging creates separate file with JSON formatted logs when enabled
     def test_jsonl_logging_creates_separate_file(self, tmp_path) -> None:

@@ -40,6 +40,8 @@ Examples:
 
     Create log messages in your code:
 
+    >>> import logging
+    >>>
     >>> logger = logging.getLogger(__name__)
     >>> logger.info("This is an info message")
     >>> logger.warning("This is a warning message")
