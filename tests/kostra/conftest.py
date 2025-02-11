@@ -7,7 +7,7 @@ import pytest
 @pytest.fixture
 def mock_klass_classification():
     with patch(
-        "fagfunksjoner.kostra.kostra_kommunekorr.KlassClassification"
+        "fagfunksjoner.kostra.kommunekorr.KlassClassification"
     ) as MockKlassClassification:
         instance = MockKlassClassification.return_value
         instance.get_codes.return_value.data = pd.DataFrame(
@@ -26,7 +26,7 @@ def mock_klass_classification():
 @pytest.fixture
 def mock_klass_correspondence():
     MockKlassCorrespondence = patch(
-        "fagfunksjoner.kostra.kostra_kommunekorr.KlassCorrespondence"
+        "fagfunksjoner.kostra.kommunekorr.KlassCorrespondence"
     )
 
     def mock_init(
