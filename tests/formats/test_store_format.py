@@ -3,7 +3,6 @@ import shutil
 import unittest
 from pathlib import Path
 
-
 from fagfunksjoner.formats import store_format
 
 

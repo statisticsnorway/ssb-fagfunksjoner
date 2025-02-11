@@ -19,9 +19,6 @@ frmt2 = dict(
 
 frmt1 = SsbFormat(frmt1)
 
-
-frmt1
-
 name = "test_format_1"
 path = "/home/onyxia/work/ssb-fagfunksjoner/demos/test_data/"
 frmt1.store(path + name, force=True)

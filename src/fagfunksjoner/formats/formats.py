@@ -248,9 +248,6 @@ def store_format(
         anyformat (dict[str, str]): Dictionary containing format information.
             The values of the dictionary are the dict contents of the formats.¨
         output_path (str): Path to store the format data. Not including the filename itself, only the base folder.
-
-    Raises:
-        NotImplementedError: If the provided formats structure is neither nested nor unnested dictionaries of strings.
     """
     if not isinstance(output_path, Path):
         output_path = Path(output_path)
