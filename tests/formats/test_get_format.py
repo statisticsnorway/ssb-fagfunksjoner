@@ -1,10 +1,11 @@
 import json
 import os
 import shutil
-from pathlib import Path
-from fagfunksjoner.formats import get_format
-from fagfunksjoner import SsbFormat
 import unittest
+from pathlib import Path
+
+from fagfunksjoner import SsbFormat
+from fagfunksjoner.formats import get_format
 
 
 class TestGetFormat(unittest.TestCase):
@@ -19,14 +20,18 @@ class TestGetFormat(unittest.TestCase):
         frmt1 = {
             "file": dict(
                 zip(
-                    [f"key{i}" for i in range(1, 6)], [f"value{j}" for j in range(1, 6)]
+                    [f"key{i}" for i in range(1, 6)],
+                    [f"value{j}" for j in range(1, 6)],
+                    strict=False,
                 )
             )
         }
         frmt2 = {
             "anotherfile": dict(
                 zip(
-                    [f"{i}" for i in range(1, 6)], [f"category{j}" for j in range(1, 6)]
+                    [f"{i}" for i in range(1, 6)],
+                    [f"category{j}" for j in range(1, 6)],
+                    strict=False,
                 )
             )
         }
@@ -38,7 +43,7 @@ class TestGetFormat(unittest.TestCase):
 
     # @mock.patch("ssb_utdanning.format.formats.get_path", side_effect=mock_get_path)
     def test_get_format(self) -> None:
-        frmt = get_format(self.path/self.test_files[0])
+        frmt = get_format(self.path / self.test_files[0])
         assert isinstance(frmt, SsbFormat)
         assert frmt == self.dictionaries[0]
 

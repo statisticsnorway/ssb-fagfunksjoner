@@ -1,12 +1,13 @@
-from fagfunksjoner.fagfunksjoner_logger import logger
-from typing import Any
-from pandas._libs.missing import NAType
-from pathlib import Path
-import pandas as pd
 import json
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+from pandas._libs.missing import NAType
 
 
 SSBFORMAT_INPUT_TYPE = dict[str | int, Any] | dict[str, Any]
+
 
 class SsbFormat(dict[Any, Any]):
     """Custom dictionary class designed to handle specific formatting conventions."""
@@ -220,9 +221,8 @@ class SsbFormat(dict[Any, Any]):
         # store_format({format_name: self}, output_path)
         store_format(self, output_path)
 
-def get_format(
-    filepath: str | Path | None = ""
-) -> SsbFormat | None:
+
+def get_format(filepath: str | Path | None = "") -> SsbFormat | None:
     """Retrieves the format from a json-format-file from path.
 
     Args:
@@ -237,8 +237,9 @@ def get_format(
         ord_dict = json.load(format_json)
     return SsbFormat(ord_dict)
 
+
 def store_format(
-    anyformat: SsbFormat | dict[Any,Any],
+    anyformat: SsbFormat | dict[Any, Any],
     output_path: str | Path,
 ) -> None:
     """Takes a nested or unnested dictionary and saves it to prodsone-folder as a timestamped json.
@@ -255,9 +256,7 @@ def store_format(
         output_path = Path(output_path)
     if not isinstance(anyformat, SsbFormat):
         anyformat = SsbFormat(anyformat)
-    if str(output_path).endswith('.json'):
-        output_path = str(output_path).rsplit('.',1)[0]
-    with open(
-        str(output_path) + ".json", "w"
-    ) as json_file:
+    if str(output_path).endswith(".json"):
+        output_path = str(output_path).rsplit(".", 1)[0]
+    with open(str(output_path) + ".json", "w") as json_file:
         json.dump(anyformat, json_file)

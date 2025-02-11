@@ -1,10 +1,13 @@
-from fagfunksjoner import SsbFormat
-from pathlib import Path
 import os
 import shutil
+import unittest
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-import unittest
+
+from fagfunksjoner import SsbFormat
+
 
 class TestSsbFormat(unittest.TestCase):
     def setUp(self) -> None:
@@ -100,12 +103,12 @@ class TestSsbFormat(unittest.TestCase):
     def test_store(self) -> None:
         ssb_format = SsbFormat(self.range_dict)
         assert len(os.listdir(self.path)) == 0
-        format_name = '/test_format'
-        ssb_format.store(output_path=str(self.path)+format_name, force=True)
+        format_name = "/test_format"
+        ssb_format.store(output_path=str(self.path) + format_name, force=True)
         assert len(os.listdir(self.path)) == 1
-        assert Path(str(self.path)+format_name+'.json').exists()
-        ssb_format.store(output_path=str(self.path)+format_name+'2', force=True)
-        assert Path(str(self.path)+format_name+'2.json').exists()
+        assert Path(str(self.path) + format_name + ".json").exists()
+        ssb_format.store(output_path=str(self.path) + format_name + "2", force=True)
+        assert Path(str(self.path) + format_name + "2.json").exists()
 
     def tearDown(self) -> None:
         # Clean up test files and folders after tests
