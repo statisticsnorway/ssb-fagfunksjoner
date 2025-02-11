@@ -1,5 +1,5 @@
-from klass import KlassCorrespondence, KlassClassification
 import pandas as pd
+from klass import KlassClassification, KlassCorrespondence
 from requests.exceptions import HTTPError
 
 
