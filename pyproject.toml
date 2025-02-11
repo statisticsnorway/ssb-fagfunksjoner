@@ -39,6 +39,7 @@ types-beautifulsoup4 = ">=4.12.0.20240511"
 types-colorama = ">=0.4.15.20240205"
 types-openpyxl = ">=3.1.5.20240719"
 pyarrow-stubs = ">=10.0.1.9"
+ssb-klass-python = "^1.0.0"
 
 
 
