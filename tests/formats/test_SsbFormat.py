@@ -4,6 +4,7 @@ import os
 import shutil
 import numpy as np
 import pandas as pd
+import unittest
 
 class TestSsbFormat(unittest.TestCase):
     def setUp(self) -> None:
@@ -96,11 +97,6 @@ class TestSsbFormat(unittest.TestCase):
 
         assert ssb_format["nonexistent_key"] == "rest"
 
-    # @mock.patch(
-    #     "ssb_utdanning.format.formats.is_different_from_last_time",
-    #     side_effect=mock_is_different_from_last_time,
-    # )
-    # def test_store(self, mock_get: mock.MagicMock) -> None:
     def test_store(self) -> None:
         ssb_format = SsbFormat(self.range_dict)
         assert len(os.listdir(self.path)) == 0
@@ -108,23 +104,9 @@ class TestSsbFormat(unittest.TestCase):
         ssb_format.store(output_path=str(self.path)+format_name, force=True)
         assert len(os.listdir(self.path)) == 1
         assert Path(str(self.path)+format_name+'.json').exists()
-        ssb_format.store(output_path=str(self.path)+format_name+'2.json', force=True)
+        ssb_format.store(output_path=str(self.path)+format_name+'2', force=True)
         assert Path(str(self.path)+format_name+'2.json').exists()
 
     def tearDown(self) -> None:
         # Clean up test files and folders after tests
         shutil.rmtree(self.path, ignore_errors=True)
-
-# +
-# if __name__ == '__main__':
-#     test = TestSsbFormat()
-#     test.setUp()
-#     test.test_initialization()
-#     test.test_setitem_method()
-#     test.test_missing_method()
-#     test.test_store_ranges_method()
-#     test.test_look_in_ranges_method()
-#     test.test_int_str_confuse()
-#     test.test_check_if_na()
-#     test.test_NaNs()
-#     test.test_store()

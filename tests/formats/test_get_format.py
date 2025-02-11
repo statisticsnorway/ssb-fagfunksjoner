@@ -4,9 +4,10 @@ import shutil
 from pathlib import Path
 from fagfunksjoner.formats import get_format
 from fagfunksjoner import SsbFormat
+import unittest
 
 
-class TestGetFormat():
+class TestGetFormat(unittest.TestCase):
     def setUp(self) -> None:
         # Create a temporary folder and add test JSON files for testing
         template_dir = Path(os.getcwd())
@@ -44,8 +45,3 @@ class TestGetFormat():
     def tearDown(self) -> None:
         # Clean up test files and folders after tests
         shutil.rmtree(self.path, ignore_errors=True)
-
-# if __name__=='__main__':
-    # test = TestGetFormat()
-    # test.setUp()
-    # test.test_get_format()
