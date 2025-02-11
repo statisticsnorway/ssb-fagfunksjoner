@@ -2,9 +2,9 @@ from klass import KlassCorrespondence, KlassClassification
 import pandas as pd
 from requests.exceptions import HTTPError
 
+
 def kostra_kommunekorr(year: str) -> pd.DataFrame:
-    """
-    Fetches and compiles data on correspondences between municipalities and related classifications for a given year.
+    """Fetches and compiles data on correspondences between municipalities and related classifications for a given year.
 
     The function retrieves the following:
       - Municipality classification (KLASS 131) and manually adds Longyearbyen.
@@ -73,7 +73,7 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
     )
 
     # Manually add Longyearbyen
-    df_longyear = pd.DataFrame({'komnr': ['2111'], 'komnavn': ['Longyearbyen']})
+    df_longyear = pd.DataFrame({"komnr": ["2111"], "komnavn": ["Longyearbyen"]})
     kom = pd.concat([kom, df_longyear], ignore_index=True)
 
     # Retrieve the correspondence between municipality and KOSTRA group (KLASS 112)
@@ -82,18 +82,17 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
             source_classification_id="131",
             target_classification_id="112",
             from_date=from_date,
-            to_date=to_date
+            to_date=to_date,
         )
-        kom_kostragr = (
-            korresp_kostra.data.rename(columns={
+        kom_kostragr = korresp_kostra.data.rename(
+            columns={
                 "sourceCode": "komnr",
                 "targetCode": "kostragr",
                 "targetName": "kostragrnavn",
                 "validFrom": "kostra_validFrom",
-                "validTo": "kostra_validTo"
-            })
-            .drop(columns=["sourceName", "sourceShortName", "targetShortName"])
-        )
+                "validTo": "kostra_validTo",
+            }
+        ).drop(columns=["sourceName", "sourceShortName", "targetShortName"])
     except HTTPError as e:
         if e.response.status_code == 404:
             raise ValueError(
@@ -107,18 +106,17 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
         source_classification_id="131",
         target_classification_id="104",
         from_date=from_date,
-        to_date=to_date
+        to_date=to_date,
     )
-    kom_fyl = (
-        korresp_fyl.data.rename(columns={
+    kom_fyl = korresp_fyl.data.rename(
+        columns={
             "sourceCode": "komnr",
             "targetCode": "fylknr",
             "targetName": "fylknavn",
             "validFrom": "fylk_validFrom",
-            "validTo": "fylk_validTo"
-        })
-        .drop(columns=["sourceName", "sourceShortName", "targetShortName"])
-    )
+            "validTo": "fylk_validTo",
+        }
+    ).drop(columns=["sourceName", "sourceShortName", "targetShortName"])
 
     # Merge the data
     kom = pd.merge(kom, kom_kostragr, on="komnr", how="left")
@@ -127,30 +125,34 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
     # Check for duplicate municipality numbers and raise an error if found
     if kom.duplicated("komnr").sum() > 0:
         duplicates = list(kom[kom.duplicated("komnr")]["komnavn"])
-        raise ValueError("Duplicates detected for municipality numbers: " + ", ".join(duplicates))
+        raise ValueError(
+            "Duplicates detected for municipality numbers: " + ", ".join(duplicates)
+        )
 
-    kom = kom[kom['komnr'] != '9999'].copy()
+    kom = kom[kom["komnr"] != "9999"].copy()
 
     # Add extra columns for county data and national categorization
-    kom['fylknr_eka'] = "EKA" + kom['fylknr'].str[:2]
-    kom['fylknr_eka_m_tekst'] = kom['fylknr_eka'] + " " + kom['fylknavn']
-    kom['landet'] = "EAK Landet"
-    kom['landet_u_oslo'] = "EAKUO Landet uten Oslo"
-    kom.loc[kom['komnr'] == "0301", "landet_u_oslo"] = pd.NA
+    kom["fylknr_eka"] = "EKA" + kom["fylknr"].str[:2]
+    kom["fylknr_eka_m_tekst"] = kom["fylknr_eka"] + " " + kom["fylknavn"]
+    kom["landet"] = "EAK Landet"
+    kom["landet_u_oslo"] = "EAKUO Landet uten Oslo"
+    kom.loc[kom["komnr"] == "0301", "landet_u_oslo"] = pd.NA
 
-    return kom[[
-        "komnr", 
-        "komnavn", 
-        "fylknr", 
-        "fylknavn", 
-        "fylknr_eka", 
-        "fylknr_eka_m_tekst", 
-        "fylk_validFrom", 
-        "fylk_validTo", 
-        "kostragr", 
-        "kostragrnavn", 
-        "kostra_validFrom", 
-        "kostra_validTo", 
-        "landet", 
-        "landet_u_oslo"
-    ]]
+    return kom[
+        [
+            "komnr",
+            "komnavn",
+            "fylknr",
+            "fylknavn",
+            "fylknr_eka",
+            "fylknr_eka_m_tekst",
+            "fylk_validFrom",
+            "fylk_validTo",
+            "kostragr",
+            "kostragrnavn",
+            "kostra_validFrom",
+            "kostra_validTo",
+            "landet",
+            "landet_u_oslo",
+        ]
+    ]
