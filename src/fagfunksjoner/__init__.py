@@ -53,6 +53,7 @@ from fagfunksjoner.paths.project_root import ProjectRoot
 from fagfunksjoner.paths.versions import get_latest_fileversions, next_version_path
 from fagfunksjoner.prodsone.check_env import check_env, linux_shortcuts
 from fagfunksjoner.prodsone.saspy_ssb import saspy_df_from_path, saspy_session
+from fagfunksjoner.formats.formats import SsbFormat
 
 
 __all__ = [
@@ -68,4 +69,5 @@ __all__ = [
     "saspy_df_from_path",
     "saspy_session",
     "view_dataframe",
+    "SsbFormat"
 ]
