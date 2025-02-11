@@ -4,7 +4,7 @@ from fagfunksjoner.kostra import kostra_kommunekorr
 
 
 def test_kostra_kommunekorr(mock_klass_classification, mock_klass_correspondence):
-    year = 2023
+    year = "2023"
     result = kostra_kommunekorr(year)
     assert isinstance(result, pd.DataFrame)
     assert result.shape[0] == 7

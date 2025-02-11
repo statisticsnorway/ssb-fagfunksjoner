@@ -66,7 +66,7 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
     to_date = f"{year}-12-31"
 
     kom = (
-        KlassClassification(131, language="nb", include_future=False)
+        KlassClassification("131", language="nb", include_future=False)
         .get_codes(from_date=from_date, to_date=to_date)
         .data[["code", "name"]]
         .rename(columns={"code": "komnr", "name": "komnavn"})
