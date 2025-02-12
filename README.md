@@ -96,6 +96,7 @@ Perform mapping using SsbFormat. Behaves like a dictionary. Has functionality fo
 ```python
 from fagfunksjoner import SsbFormat
 
+
 age_frmt = {
 'low-18': '-18',
 '19-25': '19-25',
@@ -109,21 +110,25 @@ age_frmt = {
 # convert dictionary to SsbFormat
 ssb_age_frmt = SsbFormat(age_frmt)
 
-# perform mapping of age using ranges in format. 
+# perform mapping of age using ranges in format.
 df['age_group'] = df['age'].map(ssb_age_frmt)
 
 print(df['age_group'].value_counts())
 
 # save format
 from fagfunksjoner.formats import store_format
+
+
 store_format(path+'format_name_p2025-02.json')
 
-# or 
+# or
 # NB! after performing range mapping using SsbFormat. The dictionary will be long. You should save a short version. Inspect the dictionary before saving/storing.
 ssb_age_frmt.store(path + 'format_name_p2025-02.json', force=True)
 
 # read format/import format (dictionary saved as .json) as SsbFormat
 from fagfunksjoner.formats import get_format
+
+
 some_frmt = get_format(path+'format_name.json')
 ```
 
