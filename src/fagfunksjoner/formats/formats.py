@@ -222,11 +222,11 @@ class SsbFormat(dict[Any, Any]):
         store_format(self, output_path)
 
 
-def get_format(filepath: str | Path | None = "") -> SsbFormat | None:
+def get_format(filepath: str | Path) -> SsbFormat | None:
     """Retrieves the format from a json-format-file from path.
 
     Args:
-        filepath (str): Send in the full path to the format directly, this will ignore the name and date args.
+        filepath (str|Path): Send in the full path to the format directly.
 
     Returns:
         dict or defaultdict: The formatted dictionary or defaultdict for the specified format and date. If the format contains a "other" key, a defaultdict will be returned. If the
