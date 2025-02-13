@@ -33,8 +33,8 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
             - fylke_navn: County name.
             - fylke_nr_eka: County number prefixed with "EKA".
             - fylke_nr_eka_m_tekst: Combination of fylke_nr_eka and fylke_navn.
-            - fylk_validFrom: Start date for county classification validity.
-            - fylk_validTo: End date for county classification validity.
+            - fylke_validFrom: Start date for county classification validity.
+            - fylke_validTo: End date for county classification validity.
             - kostra_gr: KOSTRA group number.
             - kostra_gr_navn: KOSTRA group name.
             - kostra_validFrom: Start date for KOSTRA group validity.
@@ -113,8 +113,8 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
             "sourceCode": "kom_nr",
             "targetCode": "fylke_nr",
             "targetName": "fylke_navn",
-            "validFrom": "fylk_validFrom",
-            "validTo": "fylk_validTo",
+            "validFrom": "fylke_validFrom",
+            "validTo": "fylke_validTo",
         }
     ).drop(columns=["sourceName", "sourceShortName", "targetShortName"])
 
@@ -146,8 +146,8 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
             "fylke_navn",
             "fylke_nr_eka",
             "fylke_nr_eka_m_tekst",
-            "fylk_validFrom",
-            "fylk_validTo",
+            "fylke_validFrom",
+            "fylke_validTo",
             "kostra_gr",
             "kostra_gr_navn",
             "kostra_validFrom",
