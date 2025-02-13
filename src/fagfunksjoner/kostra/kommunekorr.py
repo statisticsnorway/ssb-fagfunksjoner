@@ -13,12 +13,12 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
 
     The retrieved data is merged into a single DataFrame containing information on:
       - Municipality number (kom_nr) and name (kom_navn)
-      - County number (fylk_nr) and name (fylk_navn)
+      - County number (fylke_nr) and name (fylk_navn)
       - KOSTRA group number (kostra_gr) and name (kostra_gr_navn)
       - Validity start and end dates for both KOSTRA group and county classifications.
       - Additional columns:
-          - 'fylk_nr_eka': county number prefixed with "EKA".
-          - 'fylk_nr_eka_m_tekst': concatenation of 'fylk_nr_eka' and the county name.
+          - 'fylke_nr_eka': county number prefixed with "EKA".
+          - 'fylke_nr_eka_m_tekst': concatenation of 'fylke_nr_eka' and the county name.
           - 'landet': a static label "EAK Landet".
           - 'landet_u_oslo': a static label "EAKUO Landet uten Oslo" (set to NaN for Oslo, municipality code "0301").
 
@@ -29,10 +29,10 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
         pd.DataFrame: A DataFrame with the following columns:
             - kom_nr: Municipality number.
             - kom_navn: Municipality name.
-            - fylk_nr: County number.
+            - fylke_nr: County number.
             - fylk_navn: County name.
-            - fylk_nr_eka: County number prefixed with "EKA".
-            - fylk_nr_eka_m_tekst: Combination of fylk_nr_eka and fylk_navn.
+            - fylke_nr_eka: County number prefixed with "EKA".
+            - fylke_nr_eka_m_tekst: Combination of fylke_nr_eka and fylk_navn.
             - fylk_validFrom: Start date for county classification validity.
             - fylk_validTo: End date for county classification validity.
             - kostra_gr: KOSTRA group number.
@@ -51,7 +51,7 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
         >>> df['verdi'] = 1000
         >>> groups = [
         ...     ['kom_nr', 'kom_navn'],
-        ...     ['fylk_nr', 'fylk_navn'],
+        ...     ['fylke_nr', 'fylk_navn'],
         ...     ['kostra_gr', 'kostra_gr_navn'],
         ...     ['landet_u_oslo'],
         ...     ['landet']
@@ -111,7 +111,7 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
     kom_fyl = korresp_fyl.data.rename(
         columns={
             "sourceCode": "kom_nr",
-            "targetCode": "fylk_nr",
+            "targetCode": "fylke_nr",
             "targetName": "fylk_navn",
             "validFrom": "fylk_validFrom",
             "validTo": "fylk_validTo",
@@ -132,8 +132,8 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
     kom = kom[kom["kom_nr"] != "9999"].copy()
 
     # Add extra columns for county data and national categorization
-    kom["fylk_nr_eka"] = "EKA" + kom["fylk_nr"].str[:2]
-    kom["fylk_nr_eka_m_tekst"] = kom["fylk_nr_eka"] + " " + kom["fylk_navn"]
+    kom["fylke_nr_eka"] = "EKA" + kom["fylke_nr"].str[:2]
+    kom["fylke_nr_eka_m_tekst"] = kom["fylke_nr_eka"] + " " + kom["fylk_navn"]
     kom["landet"] = "EAK Landet"
     kom["landet_u_oslo"] = "EAKUO Landet uten Oslo"
     kom.loc[kom["kom_nr"] == "0301", "landet_u_oslo"] = pd.NA
@@ -142,10 +142,10 @@ def kostra_kommunekorr(year: str) -> pd.DataFrame:
         [
             "kom_nr",
             "kom_navn",
-            "fylk_nr",
+            "fylke_nr",
             "fylk_navn",
-            "fylk_nr_eka",
-            "fylk_nr_eka_m_tekst",
+            "fylke_nr_eka",
+            "fylke_nr_eka_m_tekst",
             "fylk_validFrom",
             "fylk_validTo",
             "kostra_gr",
