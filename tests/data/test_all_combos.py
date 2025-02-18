@@ -1,7 +1,11 @@
+import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from fagfunksjoner.data.pandas_combinations import all_combos_agg
+from fagfunksjoner.data.pandas_combinations import (
+    all_combos_agg,
+    all_combos_agg_inclusive,
+)
 
 
 def convert_to_category(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
@@ -300,3 +304,92 @@ def test_fromdoc_5():
     )
     assert len(result) == 27
     assert len(result.columns) == 10
+
+
+def test_combos_inclusive():
+    # Define the categorical bins based on the metadata
+    gender_bins = {"1": "Menn", "2": "Kvinner"}
+
+    # Generate synthetic data
+    np.random.seed(42)
+    num_samples = 100
+
+    synthetic_data = pd.DataFrame(
+        {
+            "Tid": np.random.choice(["2021", "2022", "2023"], num_samples),
+            "UtdanningOppl": np.random.choice(list(range(1, 19)), num_samples),
+            "Kjonn": np.random.choice(list(gender_bins.keys()), num_samples),
+            "Alder": np.random.randint(15, 67, num_samples),  # Ages between 15 and 66
+            "syss_student": np.random.choice(["01", "02", "03", "04"], num_samples),
+            "n": 1,
+        }
+    )
+
+    cat_mappings = {
+        "Alder": {
+            "15-24": range(15, 25),
+            "25-34": range(25, 35),
+            "35-44": range(35, 45),
+            "45-54": range(45, 55),
+            "55-66": range(55, 67),
+            "15-21": range(15, 22),
+            "22-30": range(22, 31),
+            "31-40": range(31, 41),
+            "41-50": range(41, 51),
+            "51-66": range(51, 67),
+            "15-30": range(15, 31),
+            "31-45": range(31, 46),
+            "46-66": range(46, 67),
+        },
+        "syss_student": {
+            "01-02": ["01", "02"],
+            "03-04": ["03", "04"],
+            "02": ["02"],
+            "04": ["04"],
+        },
+        "Kjonn": {
+            "Menn": ["1"],
+            "Kvinner": ["2"],
+        },
+    }
+
+    totalcodes = {"Alder": "Total", "syss_student": "Total", "Kjonn": "Begge"}
+
+    tbl = all_combos_agg_inclusive(
+        synthetic_data,
+        groupcols=["Kjonn"],
+        category_mappings=cat_mappings,
+        totalcodes=totalcodes,
+        valuecols=["n"],
+        aggargs={"n": "sum"},
+        grand_total=True,
+    )
+
+    # add totals to cat_mappings for comparison in loop
+    cat_mappings["Alder"]["Total"] = range(0, 100)
+    cat_mappings["syss_student"]["Total"] = ["01", "02", "03", "04"]
+    cat_mappings["Kjonn"]["Begge"] = ["1", "2"]
+
+    cat_alder = cat_mappings["Alder"]
+    cat_student = cat_mappings["syss_student"]
+    cat_kjonn = cat_mappings["Kjonn"]
+
+    for alder in cat_alder:
+        for student in cat_student:
+            for kjonn in cat_kjonn:
+                query = synthetic_data.loc[
+                    (synthetic_data["Alder"].isin(cat_alder[alder]))
+                    & (synthetic_data["syss_student"].isin(cat_student[student]))
+                    & (synthetic_data["Kjonn"].isin(cat_kjonn[kjonn])),
+                    :,
+                ]
+                n_observed = query.shape[0]
+                n_predicted = tbl.loc[
+                    (tbl["Alder"] == alder)
+                    & (tbl["syss_student"] == student)
+                    & (tbl["Kjonn"] == kjonn),
+                    "n",
+                ].values
+                n_predicted = 0 if len(n_predicted) == 0 else n_predicted[0]
+
+                assert n_observed == n_predicted
