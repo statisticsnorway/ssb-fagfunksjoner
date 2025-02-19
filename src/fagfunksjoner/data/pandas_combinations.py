@@ -561,7 +561,9 @@ def all_combos_agg_inclusive(
         for var in pivot_vars:
             total_df[var] = totalcodes[var]
         tbl = pd.concat((tbl, total_df.groupby(pivot_vars).agg(aggargs).reset_index()))
-        tbl = tbl.reset_index(drop=True)
+        tbl = tbl.reset_index(
+            drop=True
+        ).drop_duplicates()  # drop duplicates if grand_total is already in the data
 
     if keep_empty:
         all_combos: list[Any] = list(product(*[tbl[v].unique() for v in pivot_vars]))

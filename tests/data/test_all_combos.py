@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
@@ -347,10 +349,6 @@ def test_combos_inclusive():
             "02": ["02"],
             "04": ["04"],
         },
-        "Kjonn": {
-            "Menn": ["1"],
-            "Kvinner": ["2"],
-        },
     }
 
     totalcodes = {"Alder": "Total", "syss_student": "Total", "Kjonn": "Begge"}
@@ -363,12 +361,17 @@ def test_combos_inclusive():
         valuecols=["n"],
         aggargs={"n": "sum"},
         grand_total=True,
+        keep_empty=True,
     )
 
-    # add totals to cat_mappings for comparison in loop
+    # add totals and kjønn to cat_mappings for comparison in loop
     cat_mappings["Alder"]["Total"] = range(0, 100)
     cat_mappings["syss_student"]["Total"] = ["01", "02", "03", "04"]
-    cat_mappings["Kjonn"]["Begge"] = ["1", "2"]
+    cat_mappings["Kjonn"] = {
+        "1": ["1"],
+        "2": ["2"],
+        "Begge": ["1", "2"],
+    }
 
     cat_alder = cat_mappings["Alder"]
     cat_student = cat_mappings["syss_student"]
@@ -384,12 +387,16 @@ def test_combos_inclusive():
                     :,
                 ]
                 n_observed = query.shape[0]
+                print(
+                    f"alder: {alder}, student: {student}, kjonn: {kjonn}, n_observed: {n_observed}"
+                )
                 n_predicted = tbl.loc[
                     (tbl["Alder"] == alder)
                     & (tbl["syss_student"] == student)
                     & (tbl["Kjonn"] == kjonn),
                     "n",
-                ].values
-                n_predicted = 0 if len(n_predicted) == 0 else n_predicted[0]
+                ].values[0]
+
+                n_predicted = 0 if math.isnan(n_predicted) else n_predicted
 
                 assert n_observed == n_predicted
