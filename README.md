@@ -91,6 +91,47 @@ tab = all_combos_agg(vgogjen,
                      fillna_dict=ialt_koder)
 ```
 
+Perform mapping using SsbFormat. Behaves like a dictionary. Has functionality for mapping ranges and 'other'-category and detecting different types of NaN-values.
+
+```python
+from fagfunksjoner import SsbFormat
+
+
+age_frmt = {
+'low-18': '-18',
+'19-25': '19-25',
+'26-35': '26-35',
+'36-45': '36-45',
+'46-55': '46-55',
+'56-high': '56+',
+'other': 'missing'
+}
+
+# convert dictionary to SsbFormat
+ssb_age_frmt = SsbFormat(age_frmt)
+
+# perform mapping of age using ranges in format.
+df['age_group'] = df['age'].map(ssb_age_frmt)
+
+print(df['age_group'].value_counts())
+
+# save format
+from fagfunksjoner.formats import store_format
+
+
+store_format(path+'format_name_p2025-02.json')
+
+# or
+# NB! after performing range mapping using SsbFormat. The dictionary will be long. You should save a short version. Inspect the dictionary before saving/storing.
+ssb_age_frmt.store(path + 'format_name_p2025-02.json', force=True)
+
+# read format/import format (dictionary saved as .json) as SsbFormat
+from fagfunksjoner.formats import get_format
+
+
+some_frmt = get_format(path+'format_name.json')
+```
+
 ### Opening archive-files based on Datadok-api in prodsone
 We have "flat files", which are not comma seperated. These need metadata to correctly open. In SAS we do this with "lastescript". But there is an API to old Datadok in prodsone, so these functions let you just specify a path, and attempt to open the flat files directly into pandas, with the metadata also available.
 
@@ -109,9 +150,6 @@ archive_object.datatypes  # The datatypes the archivdata ended up having?
 archive_object.widths  # Width of each column in the flat file
 
 ```
-
-
-
 ### Operation to Oracle database
 
 Remember that any credidential values to the database should not be stored
