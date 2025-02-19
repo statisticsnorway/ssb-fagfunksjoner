@@ -24,6 +24,7 @@ Subpackages
    fagfunksjoner.api
    fagfunksjoner.dapla
    fagfunksjoner.data
+   fagfunksjoner.log
    fagfunksjoner.paths
    fagfunksjoner.prodsone
 
