@@ -45,6 +45,8 @@ poetry add ssb-fagfunksjoner
 ```
 
 ## Usage
+
+### Environment / Pathing
 Check if you are on Dapla or in prodsone.
 ```python
 from fagfunksjoner import check_env
@@ -62,6 +64,7 @@ with ProjectRoot():
     ... # Do your local imports here...
 ```
 
+### Sasfiles
 
 Setting up password with saspy
 ```python
@@ -72,8 +75,24 @@ saspy_ssb.set_password() # Follow the instructions to set the password
 saspy_ssb.saspy_df_from_path("path")
 ```
 
+### Logger that follows SSB standards
+```python
+import logging
 
-Aggregate on all combinations of codes in certain columns (maybe before sending to statbank? Like proc means?)
+from fagfunksjoner import StatLogger
+
+
+# Ved å opprette StatLogger så "hijacker" den den vanlige loggeren
+root_logger = StatLogger(log_file="custom_log_file.log")
+# I tillegg sørger vi for at den ikke blir ryddet bort av Python, ved å assigne den til en variabel?
+
+logger = logging.getLogger(__name__)
+logger.info("This is an info message")
+```
+
+### Aggregation / Categories
+
+Aggregate on all exclusive combinations of codes in certain columns (maybe before sending to statbank? Like proc means?)
 ```python
 from fagfunksjoner import all_combos_agg
 
@@ -91,7 +110,58 @@ tab = all_combos_agg(vgogjen,
                      fillna_dict=ialt_koder)
 ```
 
-Perform mapping using SsbFormat. Behaves like a dictionary. Has functionality for mapping ranges and 'other'-category and detecting different types of NaN-values.
+To aggregate on NON-EXCLUSIVE combinations of codes in certain columns, use the slightly less process-effective
+
+```python
+from fagfunksjoner import all_combos_agg_inclusive
+
+
+category_mappings = {
+    "Alder": {
+        "15-24": range(15, 25),
+        "25-34": range(25, 35),
+        "35-44": range(35, 45),
+        "45-54": range(45, 55),
+        "55-66": range(55, 67),
+        "15-21": range(15, 22),
+        "22-30": range(22, 31),
+        "31-40": range(31, 41),
+        "41-50": range(41, 51),
+        "51-66": range(51, 67),
+        "15-30": range(15, 31),
+        "31-45": range(31, 46),
+        "46-66": range(46, 67),
+    },
+    "syss_student": {
+        "01": ["01", "02"],
+        "02": ["03", "04"],
+        "03": ["02"],
+        "04": ["04"],
+    },
+    "Kjonn": {
+        "Menn": ["1"],
+        "Kvinner": ["2"],
+    }
+}
+
+totalcodes = {
+    "Alder": "Total",
+    "syss_student": "Total",
+    "Kjonn": "Begge"
+}
+all_combos_agg_inclusive(
+    synthetic_data,
+    groupcols = [],
+    category_mappings=category_mappings,
+    totalcodes=totalcodes,
+    valuecols = ["n"],
+    aggargs={"n": "sum"},
+    grand_total=True)
+```
+
+
+
+Perform mapping using SsbFormat. Behaves like a dictionary. Has functionality for mapping ranges and 'other'-category and detecting different types of NaN-values. Does not handle non-exclusive / overlapping categories, please only use for exclusive categories.
 
 ```python
 from fagfunksjoner import SsbFormat
