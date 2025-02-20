@@ -46,10 +46,11 @@ from fagfunksjoner.data.datadok_extract import (
     open_path_datadok,
     open_path_metapath_datadok,
 )
-from fagfunksjoner.data.pandas_combinations import all_combos_agg
+from fagfunksjoner.data.pandas_combinations import all_combos_agg, all_combos_agg_inclusive
 from fagfunksjoner.data.pandas_dtypes import auto_dtype
 from fagfunksjoner.data.view_dataframe import view_dataframe
 from fagfunksjoner.formats.formats import SsbFormat
+from fagfunksjoner.log.statlogger import StatLogger
 from fagfunksjoner.paths.project_root import ProjectRoot
 from fagfunksjoner.paths.versions import get_latest_fileversions, next_version_path
 from fagfunksjoner.prodsone.check_env import check_env, linux_shortcuts
@@ -59,7 +60,9 @@ from fagfunksjoner.prodsone.saspy_ssb import saspy_df_from_path, saspy_session
 __all__ = [
     "ProjectRoot",
     "SsbFormat",
+    "StatLogger",
     "all_combos_agg",
+    "all_combos_agg_inclusive",
     "auto_dtype",
     "check_env",
     "get_latest_fileversions",
