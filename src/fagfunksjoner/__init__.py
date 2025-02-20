@@ -46,7 +46,10 @@ from fagfunksjoner.data.datadok_extract import (
     open_path_datadok,
     open_path_metapath_datadok,
 )
-from fagfunksjoner.data.pandas_combinations import all_combos_agg, all_combos_agg_inclusive
+from fagfunksjoner.data.pandas_combinations import (
+    all_combos_agg,
+    all_combos_agg_inclusive,
+)
 from fagfunksjoner.data.pandas_dtypes import auto_dtype
 from fagfunksjoner.data.view_dataframe import view_dataframe
 from fagfunksjoner.formats.formats import SsbFormat

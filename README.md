@@ -78,9 +78,12 @@ saspy_ssb.saspy_df_from_path("path")
 ### Logger that follows SSB standards
 ```python
 import logging
+
 from fagfunksjoner import StatLogger
+
+
 # Ved å opprette StatLogger så "hijacker" den den vanlige loggeren
-root_logger = StatLogger(log_file="custom_log_file.log")  
+root_logger = StatLogger(log_file="custom_log_file.log")
 # I tillegg sørger vi for at den ikke blir ryddet bort av Python, ved å assigne den til en variabel?
 
 logger = logging.getLogger(__name__)
@@ -107,7 +110,7 @@ tab = all_combos_agg(vgogjen,
                      fillna_dict=ialt_koder)
 ```
 
-To aggregate on NON-EXCLUSIVE combinations of codes in certain columns, use the slightly less process-effective 
+To aggregate on NON-EXCLUSIVE combinations of codes in certain columns, use the slightly less process-effective
 
 ```python
 from fagfunksjoner import all_combos_agg_inclusive
