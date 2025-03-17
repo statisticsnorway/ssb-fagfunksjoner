@@ -218,7 +218,7 @@ def calculate_aggregates(
             .reset_index(names=list(comb))
         )
         result["level"] = len(combos) - i
-        result["ways"] = int(len(comb))
+        result["ways"] = len(comb)
         all_levels = pd.concat([all_levels, result], ignore_index=True)
 
     return all_levels
