@@ -121,14 +121,15 @@ class SsbFormat(dict[Any, Any]):
             self.ranges[(bottom_float, top_float)] = value
 
     def look_in_ranges(self, key: str | int | float | NAType | None) -> None | Any:
-        """Looks for the specified key within the stored ranges.
+        """Returns the mapping value for the key if it falls within any defined range.
 
-        Args:
-            key: Key to search within the stored ranges.
-
-        Returns:
-            The value associated with the range containing the key, if found; otherwise, None.
+        The method attempts to convert the key to a float and then checks if it lies within
+        any of the stored range intervals. If the key is None, NA, or not of a convertible type,
+        the method returns None.
         """
+        if key is None or pd.isna(key) or not isinstance(key, str | int | float):
+            return None
+
         try:
             key_value = float(key)
         except (ValueError, TypeError):
