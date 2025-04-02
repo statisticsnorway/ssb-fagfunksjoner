@@ -5,12 +5,12 @@ from typing import Any
 import pandas as pd
 from pandas._libs.missing import NAType
 
+
 SSBFORMAT_INPUT_TYPE = dict[str | int, Any] | dict[str, Any]
 
+
 class SsbFormat(dict[Any, Any]):
-    """Custom dictionary class designed to handle specific formatting conventions,
-    including mapping intervals (defined as range strings) even when they map to the same value.
-    """
+    """Custom dictionary class designed to handle specific formatting conventions, including mapping intervals (defined as range strings) even when they map to the same value."""
 
     def __init__(self, start_dict: SSBFORMAT_INPUT_TYPE | None = None) -> None:
         """Initializes the SsbFormat instance.
@@ -91,7 +91,7 @@ class SsbFormat(dict[Any, Any]):
 
     def store_ranges(self) -> None:
         """Stores ranges by converting range-string keys into tuple keys.
-        
+
         For example, a key "0-18" with value "A" will be stored as
         {(0.0, 18.0): "A"}.
         """
@@ -114,7 +114,9 @@ class SsbFormat(dict[Any, Any]):
         if (bottom_str.isdigit() or bottom_str.lower() == "low") and (
             top_str.isdigit() or top_str.lower() == "high"
         ):
-            bottom_float = float("-inf") if bottom_str.lower() == "low" else float(bottom_str)
+            bottom_float = (
+                float("-inf") if bottom_str.lower() == "low" else float(bottom_str)
+            )
             top_float = float("inf") if top_str.lower() == "high" else float(top_str)
             self.ranges[(bottom_float, top_float)] = value
 
@@ -164,7 +166,11 @@ class SsbFormat(dict[Any, Any]):
 
         If a key matching 'other' in any other case is found, its value is reassigned to 'other'.
         """
-        keys_to_update = [k for k in self if isinstance(k, str) and k.lower() == "other" and k != "other"]
+        keys_to_update = [
+            k
+            for k in self
+            if isinstance(k, str) and k.lower() == "other" and k != "other"
+        ]
         for k in keys_to_update:
             value = self[k]
             del self[k]
