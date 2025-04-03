@@ -104,15 +104,22 @@ class SsbFormat(dict[Any, Any]):
         """Converts a range-string key to a tuple of floats and stores it.
 
         Args:
-            key: Key to be converted to a tuple of floats.
-            value (Any): Value to be associated with the converted range.
+            key (str): A string representing a range in the format "lower-upper". The lower bound should be
+                       either a digit or "low" and the upper bound a digit or "high".
+            value (Any): The value to be associated with the converted range in the ranges dictionary.
+
+        Raises:
+            ValueError: If either the lower or upper bound contains a '.' character, indicating a float-like
+                        value instead of an integer-like value.
         """
         parts = key.split("-")
         if len(parts) != 2:
             return
         bottom_str, top_str = parts[0].strip(), parts[1].strip()
-        if '.' in bottom_str or '.' in top_str:
-            raise ValueError(f"Ranges must be int-like values not float-like {bottom_str}-{top_str}")
+        if "." in bottom_str or "." in top_str:
+            raise ValueError(
+                f"Ranges must be int-like values not float-like {bottom_str}-{top_str}"
+            )
         if (bottom_str.isdigit() or bottom_str.lower() == "low") and (
             top_str.isdigit() or top_str.lower() == "high"
         ):
