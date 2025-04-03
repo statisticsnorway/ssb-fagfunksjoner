@@ -111,6 +111,8 @@ class SsbFormat(dict[Any, Any]):
         if len(parts) != 2:
             return
         bottom_str, top_str = parts[0].strip(), parts[1].strip()
+        if '.' in bottom_str or '.' in top_str:
+            raise ValueError(f"Ranges must be int-like values not float-like {bottom_str}-{top_str}")
         if (bottom_str.isdigit() or bottom_str.lower() == "low") and (
             top_str.isdigit() or top_str.lower() == "high"
         ):
