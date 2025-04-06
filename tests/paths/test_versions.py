@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import patch
 
 from fagfunksjoner.paths.versions import (
@@ -45,6 +46,29 @@ def test_latest_version_path_local(mock_get_fileversions):
     ]
     filepath = "/local/folder/file_v1.parquet"
     assert latest_version_path(filepath) == "/local/folder/file_v2.parquet"
+
+
+# Test for `latest_version_path` function with local path
+@patch("fagfunksjoner.paths.versions.get_fileversions")
+def test_latest_version_path_local_doc_json(mock_get_fileversions):
+    mock_get_fileversions.return_value = [
+        "/local/folder/file_v1__DOC.json",
+        "/local/folder/file_v2__DOC.json",
+    ]
+    filepath = "/local/folder/file_v1__DOC.json"
+    assert latest_version_path(filepath) == "/local/folder/file_v2__DOC.json"
+
+
+# Test for `latest_version_path` function with local path
+@patch("fagfunksjoner.paths.versions.get_fileversions")
+def test_latest_version_path_local_path(mock_get_fileversions):
+    mock_get_fileversions.return_value = [
+        Path("/local/folder/file_v1.parquet"),
+        Path("/local/folder/file_v2.parquet"),
+    ]
+    filepath = Path("/local/folder/file_v1.parquet")
+    assert isinstance(latest_version_path(filepath), Path)
+    assert latest_version_path(filepath) == Path("/local/folder/file_v2.parquet")
 
 
 # Test for `latest_version_number` function with Google Storage path
