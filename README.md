@@ -81,7 +81,7 @@ import logging
 
 from fagfunksjoner import StatLogger
 
-
+0
 # Ved å opprette StatLogger så "hijacker" den den vanlige loggeren
 root_logger = StatLogger(log_file="custom_log_file.log")
 # I tillegg sørger vi for at den ikke blir ryddet bort av Python, ved å assigne den til en variabel?
