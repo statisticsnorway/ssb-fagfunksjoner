@@ -93,7 +93,7 @@ def make_klass_xml_codelist(
         root_name="versjon",
         row_name="element",
         namespaces={
-            "ns1": "http://klass.ssb.no/version",
+            "ns1": "https://klass.ssb.no/version",
         },
         prefix="ns1",
     )
