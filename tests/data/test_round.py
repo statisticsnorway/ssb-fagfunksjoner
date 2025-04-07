@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.fagfunksjoner.data.round import round_up
+from fagfunksjoner.data.round_ssb import round_up
 
 
 def test_round_up_float():

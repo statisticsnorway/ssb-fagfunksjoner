@@ -52,7 +52,7 @@ from fagfunksjoner.data.pandas_combinations import (
     all_combos_agg_inclusive,
 )
 from fagfunksjoner.data.pandas_dtypes import auto_dtype
-from fagfunksjoner.data.round import round_up
+from fagfunksjoner.data.round_ssb import round_up
 from fagfunksjoner.data.view_dataframe import view_dataframe
 from fagfunksjoner.formats.formats import SsbFormat
 from fagfunksjoner.log.statlogger import StatLogger
