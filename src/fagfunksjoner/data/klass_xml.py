@@ -1,3 +1,8 @@
+"""This module contains functions to create a xml file that can be loaded in the KLASS UI.
+
+It passes data trhough a pandas DataFrame from a list of codes and names, to an XML from the pandas dataframe.
+"""
+
 import pandas as pd
 
 
@@ -46,14 +51,12 @@ def make_klass_df_codelist(
         "gyldig_til",
     ]
 
-    data = {col: [None] * len(codes) for col in cols}
-    data["kode"] = codes
-    if names_bokmaal is not None:
-        data["navn_bokmål"] = names_bokmaal
-    if names_nynorsk is not None:
-        data["navn_nynorsk"] = names_nynorsk
-    if names_engelsk is not None:
-        data["navn_engelsk"] = names_engelsk
+    data = {col: [None] * len(codes) for col in cols} | {
+        "kode": codes,
+        "navn_bokmål": names_bokmaal,
+        "navn_nynorsk": names_nynorsk,
+        "navn_engelsk": names_engelsk,
+    }
 
     return pd.DataFrame({name: data for name, data in data.items()})
 

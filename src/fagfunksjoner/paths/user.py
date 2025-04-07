@@ -1,4 +1,5 @@
-# +
+"""Extract user information from the environment."""
+
 import getpass
 import os
 import subprocess
@@ -63,6 +64,3 @@ def verify_ssbmail(user: str | None) -> str | None:
     if "@" not in user and len(user) == 3:
         return user + "@ssb.no"
     return None
-
-
-# -

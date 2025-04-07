@@ -1,6 +1,10 @@
-import pytest
 import pandas as pd
-from src.fagfunksjoner.data.klass_xml import make_klass_df_codelist, make_klass_xml_codelist
+import pytest
+
+from src.fagfunksjoner.data.klass_xml import (
+    make_klass_df_codelist,
+    make_klass_xml_codelist,
+)
 
 
 def test_make_klass_df_codelist_success():
@@ -22,6 +26,11 @@ def test_make_klass_df_codelist_success():
     assert list(df["navn_bokmål"]) == names_bokmaal
     assert list(df["navn_nynorsk"]) == names_nynorsk
     assert list(df["navn_engelsk"]) == names_engelsk
+
+    # Make sure columns are in correct spot
+    assert ["kode", "forelder", "navn_bokmål", "navn_nynorsk", "navn_engelsk"] == list(
+        df.columns[:5]
+    )
 
 
 def test_make_klass_df_codelist_missing_names():
@@ -47,7 +56,9 @@ def test_make_klass_df_codelist_missing_required_names():
     """Test that a ValueError is raised when both names_bokmaal and names_nynorsk are None."""
     codes = [1, 2, 3]
 
-    with pytest.raises(ValueError, match="Must have content in names_bokmaal or names_nynorsk"):
+    with pytest.raises(
+        ValueError, match="Must have content in names_bokmaal or names_nynorsk"
+    ):
         make_klass_df_codelist(
             codes=codes,
             names_bokmaal=None,
@@ -61,7 +72,9 @@ def test_make_klass_df_codelist_mismatched_lengths():
     codes = [1, 2, 3]
     names_bokmaal = ["Name1", "Name2"]
 
-    with pytest.raises(ValueError, match="Length of the entered names must match the length of codes."):
+    with pytest.raises(
+        ValueError, match="Length of the entered names must match the length of codes."
+    ):
         make_klass_df_codelist(
             codes=codes,
             names_bokmaal=names_bokmaal,
@@ -96,10 +109,10 @@ def test_make_klass_xml_codelist_success(tmp_path):
 
     # Check that the XML file was created
     assert xml_path.exists()
-    with open(xml_path, "r", encoding="utf-8") as f:
+    with open(xml_path, encoding="utf-8") as f:
         xml_content = f.read()
-        assert "<versjon>" in xml_content
-        assert "<element>" in xml_content
+        assert "xml version=" in xml_content
+        assert "<ns1:element>" in xml_content
         assert "Name1" in xml_content
         assert "Namn1" in xml_content
         assert "Name1_EN" in xml_content
@@ -110,7 +123,9 @@ def test_make_klass_xml_codelist_missing_required_names(tmp_path):
     codes = [1, 2, 3]
     xml_path = tmp_path / "klass.xml"
 
-    with pytest.raises(ValueError, match="Must have content in names_bokmaal or names_nynorsk"):
+    with pytest.raises(
+        ValueError, match="Must have content in names_bokmaal or names_nynorsk"
+    ):
         make_klass_xml_codelist(
             path=str(xml_path),
             codes=codes,
