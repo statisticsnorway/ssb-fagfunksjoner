@@ -199,16 +199,20 @@ def construct_file_pattern(filepath: str | Path, version_denoter: str = "*") -> 
         else file_str.replace(file_ext, "")
     )
     # Compensate for what might be after the version, like "__DOC" in metadata files
+    extras = ""
     if "_v" in file_str:
-        after_v = file_str.rsplit("_v", 1)[1]
+        after_v = file_str.rsplit("_v", 1)[1].rsplit(".", 1)[0]
         # Find the first non-digit character in the version part to separate it from any extras.
-        i = [c.isdigit() for c in after_v].index(False)
-        extras = after_v[i:]
-    else:
-        extras = ""
+        look_for_non_digit = [c.isdigit() for c in after_v]
+        if False in look_for_non_digit:
+            i = look_for_non_digit.index(False)
+            extras = after_v[i:]
+        
 
     # Construct the file pattern by inserting the version denoter.
-    return f"{filepath_no_version}_v{version_denoter}{extras}{file_ext}"
+    glob_pattern = f"{filepath_no_version}_v{version_denoter}{extras}{file_ext}"
+    print(f"DEBUG: glob_pattern = {glob_pattern}")  # Add this line for debugging
+    return glob_pattern
 
 
 @overload
@@ -236,7 +240,6 @@ def get_fileversions(filepath: str | Path) -> list[str] | list[Path]:
     file_str = str(filepath)
     # Construct a file pattern with a wildcard version denoter using the input filepath.
     glob_pattern = construct_file_pattern(file_str)
-
     # Determine the appropriate file system client based on the filepath's prefix.
     if (
         file_str.startswith("gs://")
@@ -304,11 +307,13 @@ def latest_version_path(filepath: str | Path) -> str | Path:
     file_str = str(filepath)
     # Retrieve all file versions matching the given filepath pattern.
     files_list = get_fileversions(file_str)
+    logger.info(f"Files_list: {files_list}")
 
     # If versioned files are found:
     if files_list:
         # Get the latest file version based on the available files.
         latest_files_list = get_latest_fileversions(files_list)
+        logger.info(f"Latest_files_list: {latest_files_list}")
 
         if len(latest_files_list) > 1:
             list_print = [file.rsplit("/", 1) for file in latest_files_list]
