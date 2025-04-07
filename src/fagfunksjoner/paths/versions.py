@@ -207,7 +207,6 @@ def construct_file_pattern(filepath: str | Path, version_denoter: str = "*") -> 
         if False in look_for_non_digit:
             i = look_for_non_digit.index(False)
             extras = after_v[i:]
-        
 
     # Construct the file pattern by inserting the version denoter.
     glob_pattern = f"{filepath_no_version}_v{version_denoter}{extras}{file_ext}"

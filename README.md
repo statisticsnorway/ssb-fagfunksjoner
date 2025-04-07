@@ -96,6 +96,7 @@ logger.info("This is an info message")
 ```python
 from fagfunksjoner import make_klass_xml_codelist
 
+
 make_klass_xml_codelist(path="kjoenn.xml",
     codes=["1", "2"],
     names_bokmaal=["Mann", "Kvinne"])
@@ -106,7 +107,9 @@ make_klass_xml_codelist(path="kjoenn.xml",
 
 ```python
 import pandas as pd
+
 from fagfunksjoner import round_up
+
 
 print(round(2.5, 0), round_up(2.5, 0))
 
