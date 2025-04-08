@@ -90,6 +90,43 @@ logger = logging.getLogger(__name__)
 logger.info("This is an info message")
 ```
 
+
+
+### Export XMLs that can be imported into the KLASS UI
+```python
+from fagfunksjoner import make_klass_xml_codelist
+
+
+make_klass_xml_codelist(path="kjoenn.xml",
+    codes=["1", "2"],
+    names_bokmaal=["Mann", "Kvinne"])
+```
+
+
+### Round data UP
+
+```python
+import pandas as pd
+
+from fagfunksjoner import round_up
+
+
+print(round(2.5, 0), round_up(2.5, 0))
+
+round_up(pd.Series([1.5, 2.5, 3.5]), 0)  # Datatype blir Int64 når man runder til 0 desimaler
+round_up(pd.Series([1.15, 2.15, 3.15]), 1)  # Datatype blir Float64 når man runder til mer enn 0 desimaler
+
+df = pd.DataFrame(
+    {"col1": [1.5, 2.5, 1.2345, 1.2355],
+    "col2": [3.5, 4.5, 5.6789, 6.7891]}
+    ).astype({"col1": "Float64", "col2": "Float64"})
+rounded = round_up(df, decimal_places=0, col_names="col1")  # Avrunder kun col1, den endrer datatype til Int64
+
+rounded2 = round_up(df, col_names={"col1": 1, "col2": 2})  # Avrunder col1 til 1 desimal, col2 til 2 desimaler
+
+```
+
+
 ### Aggregation / Categories
 
 Aggregate on all exclusive combinations of codes in certain columns (maybe before sending to statbank? Like proc means?)
@@ -159,7 +196,7 @@ all_combos_agg_inclusive(
     grand_total=True)
 ```
 
-
+### "Formats" like in SAS
 
 Perform mapping using SsbFormat. Behaves like a dictionary. Has functionality for mapping ranges and 'other'-category and detecting different types of NaN-values. Does not handle non-exclusive / overlapping categories, please only use for exclusive categories.
 
@@ -203,6 +240,7 @@ some_frmt = get_format(path+'format_name.json')
 ```
 
 ### Opening archive-files based on Datadok-api in prodsone
+
 We have "flat files", which are not comma seperated. These need metadata to correctly open. In SAS we do this with "lastescript". But there is an API to old Datadok in prodsone, so these functions let you just specify a path, and attempt to open the flat files directly into pandas, with the metadata also available.
 
 ```python
@@ -220,6 +258,9 @@ archive_object.datatypes  # The datatypes the archivdata ended up having?
 archive_object.widths  # Width of each column in the flat file
 
 ```
+
+
+
 ### Operation to Oracle database
 
 Remember that any credidential values to the database should not be stored
