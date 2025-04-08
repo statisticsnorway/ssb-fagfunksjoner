@@ -144,10 +144,11 @@ def get_latest_fileversions(
             )
 
     result = _get_entries_by_uniques(uniques, infiles)
-    
+
     if was_path:
         return [Path(file) for file in result]
     return result
+
 
 def _get_entries_by_uniques(uniques: set[str], infiles: list[str]) -> list[str]:
     result: list[str] = []
@@ -177,6 +178,7 @@ def _get_entries_by_uniques(uniques: set[str], infiles: list[str]) -> list[str]:
             logger.info(f"Latest version(s): {latest_entry.rsplit('/', 1)[-1]}")
             result.append(latest_entry)
     return result
+
 
 def construct_file_pattern(filepath: str | Path, version_denoter: str = "*") -> str:
     """Constructs a file pattern for versioned file paths.
