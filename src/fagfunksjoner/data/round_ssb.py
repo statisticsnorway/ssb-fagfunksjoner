@@ -78,9 +78,13 @@ def round_up(
             f"Got {type(data)} instead."
         )
 
+
 def _apply_rounding(data: pd_Series, decimal_places: int) -> pd_Series:
     """Helper function to apply rounding and set dtype."""
-    return _set_dtype_from_decimal_places(data.apply(_round, decimals=decimal_places), decimal_places)
+    return _set_dtype_from_decimal_places(
+        data.apply(_round, decimals=decimal_places), decimal_places
+    )
+
 
 def _set_dtype_from_decimal_places(
     data: pd_Series,
