@@ -143,6 +143,13 @@ def get_latest_fileversions(
                 f"File {file} does not follow the naming convention with '_v' for versioning."
             )
 
+    result = _get_entries_by_uniques(uniques, infiles)
+    
+    if was_path:
+        return [Path(file) for file in result]
+    return result
+
+def _get_entries_by_uniques(uniques: set[str], infiles: list[str]) -> list[str]:
     result: list[str] = []
     for unique in uniques:
         # Collect all entries that match the current unique base name
@@ -169,10 +176,7 @@ def get_latest_fileversions(
             latest_entry = max(unique_sorter, key=lambda x: x[0])[1]
             logger.info(f"Latest version(s): {latest_entry.rsplit('/', 1)[-1]}")
             result.append(latest_entry)
-    if was_path:
-        return [Path(file) for file in result]
     return result
-
 
 def construct_file_pattern(filepath: str | Path, version_denoter: str = "*") -> str:
     """Constructs a file pattern for versioned file paths.
