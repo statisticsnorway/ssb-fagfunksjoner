@@ -53,36 +53,40 @@ def round_up(
     Raises:
         TypeError: If data is not a DataFrame, Series, int, float, or NAType.
     """
-    if isinstance(data, pd.DataFrame):
-        if isinstance(col_names, dict):
-            # Handle dictionary of column names and decimal places
-            for col, dec in col_names.items():
-                if col in data.columns:
-                    data[col] = _apply_rounding(data[col], dec)
-        elif isinstance(col_names, (list | str)):
-            # Handle list or single column name
-            col_names = [col_names] if isinstance(col_names, str) else col_names
-            for col in col_names:
-                if col in data.columns:
-                    data[col] = _apply_rounding(data[col], decimal_places)
+    if isinstance(col_names, dict) and isinstance(data, pd.DataFrame):
+        # Assuming col_names is a dictionary with column names as keys and decimal places as values
+        for col, dec in col_names.items():
+            if col in data.columns:
+                data[col] = _set_dtype_from_decimal_places(
+                    data[col].apply(_round, decimals=dec), dec
+                )
+        return data
+    elif isinstance(col_names, list) and isinstance(data, pd.DataFrame):
+        # Assuming col_names is a list of column names
+        for col in col_names:
+            if col in data.columns:
+                data[col] = _set_dtype_from_decimal_places(
+                    data[col].apply(_round, decimals=decimal_places), decimal_places
+                )
+        return data
+    elif isinstance(col_names, str) and isinstance(data, pd.DataFrame):
+        # Assuming col_names is a single column name
+        if col_names in data.columns:
+            data[col_names] = _set_dtype_from_decimal_places(
+                data[col_names].apply(_round, decimals=decimal_places), decimal_places
+            )
         return data
     elif isinstance(data, pd.Series):
-        # Handle Series
-        return _apply_rounding(data, decimal_places)
-    elif isinstance(data, (int | float | pd._libs.missing.NAType)):
-        # Handle scalar values
-        return _round(data, decimals=decimal_places)
-    else:
-        raise TypeError(
-            "data must be a DataFrame, Series, int, float, or NAType. "
-            f"Got {type(data)} instead."
+        # If data is a Series, round it directly
+        data = _set_dtype_from_decimal_places(
+            data.apply(_round, decimals=decimal_places), decimal_places
         )
-
-
-def _apply_rounding(data: pd_Series, decimal_places: int) -> pd_Series:
-    """Helper function to apply rounding and set dtype."""
-    return _set_dtype_from_decimal_places(
-        data.apply(_round, decimals=decimal_places), decimal_places
+        return data
+    elif isinstance(data, int | float | pd._libs.missing.NAType):
+        return _round(data, decimals=decimal_places)
+    raise TypeError(
+        "data must be a DataFrame, Series, int, float, or NAType. "
+        f"Got {type(data)} instead."
     )
 
 
