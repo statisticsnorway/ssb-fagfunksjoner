@@ -1,13 +1,16 @@
-import os
 import json
-import tempfile
-import pytest
 from datetime import datetime
 
 import pandas as pd
+import pytest
 from pydantic import ValidationError
 
-from fagfunksjoner.kvalitetsindikator.qual_ind import QualityIndicator, QualIndLogger, highlight_rel_change
+from fagfunksjoner.kvalitetsindikator.qual_ind import (
+    QualIndLogger,
+    QualityIndicator,
+    highlight_rel_change,
+)
+
 
 def test_required_fields():
     # Missing required field 'title'
@@ -133,15 +136,17 @@ def test_compare_periods(tmp_path):
     logger = QualIndLogger(log_dir, year=2025, month=5)
     df = logger.compare_periods("ind", n_periods=3)
     assert df["period"].tolist() == ["2025-03", "2025-04", "2025-05"]
-    assert pd.isna(df.loc[0, "rel_change"] )
+    assert pd.isna(df.loc[0, "rel_change"])
     assert pytest.approx((110 - 90) / 90) == df.loc[1, "rel_change"]
 
 
 def test_highlight_rel_change_styles():
-    df = pd.DataFrame({
-        "indicator": ["a", "a"],
-        "rel_change": [0.2, 0.05],
-    })
+    df = pd.DataFrame(
+        {
+            "indicator": ["a", "a"],
+            "rel_change": [0.2, 0.05],
+        }
+    )
     styler = highlight_rel_change(df, {"a": 0.1})
     rendered = styler.to_html()
     assert "background-color: orange" in rendered
