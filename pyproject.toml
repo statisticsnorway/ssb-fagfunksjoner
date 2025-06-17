@@ -16,7 +16,7 @@ Changelog = "https://github.com/statisticsnorway/ssb-fagfunksjoner/releases"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-dapla-toolbelt = ">=3.0.2"
+dapla-toolbelt = ">=4.0.0"
 ipykernel = ">=6.15.3"
 pandas = ">=2.0.0"
 requests = ">=2.31.0"
