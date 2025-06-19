@@ -2,27 +2,28 @@ import os
 from unittest import mock
 
 import pytest
-from dapla.const import DaplaRegion
+from dapla_auth_client.const import DaplaRegion
 
 from fagfunksjoner.prodsone import check_env
 
 
 def test_check_env_dapla():
     with mock.patch(
-        "dapla.auth.AuthClient.get_dapla_region", return_value=DaplaRegion.DAPLA_LAB
+        "dapla_auth_client.AuthClient.get_dapla_region",
+        return_value=DaplaRegion.DAPLA_LAB,
     ):
         assert check_env.check_env() == "DAPLA"
 
 
 def test_check_env_prod():
-    with mock.patch("dapla.auth.AuthClient.get_dapla_region", return_value=""):
+    with mock.patch("dapla_auth_client.AuthClient.get_dapla_region", return_value=""):
         with mock.patch("os.path.isdir", return_value=True):
             assert check_env.check_env() == "PROD"
 
 
 def test_check_env_unknown():
     with mock.patch(
-        "dapla.auth.AuthClient.get_dapla_region", side_effect=AttributeError
+        "dapla_auth_client.AuthClient.get_dapla_region", side_effect=AttributeError
     ):
         with mock.patch("os.path.isdir", return_value=False):
             assert check_env.check_env(raise_err=False) == "UNKNOWN"
@@ -30,7 +31,7 @@ def test_check_env_unknown():
 
 def test_check_env_raises_error():
     with mock.patch(
-        "dapla.auth.AuthClient.get_dapla_region", side_effect=AttributeError
+        "dapla_auth_client.AuthClient.get_dapla_region", side_effect=AttributeError
     ):
         with mock.patch("os.path.isdir", return_value=False):
             try:

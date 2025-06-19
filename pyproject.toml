@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ssb-fagfunksjoner"
-version = "1.1.0"
+version = "1.1.1"
 description = "Fellesfunksjoner for ssb i Python"
 authors = ["SSB-pythonistas <ssb-pythonistas@ssb.no>"]
 license = "MIT"
@@ -16,7 +16,8 @@ Changelog = "https://github.com/statisticsnorway/ssb-fagfunksjoner/releases"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-dapla-toolbelt = ">=3.0.2"
+dapla-toolbelt = ">=4.0.0"
+dapla-auth-client = ">=1.0.0"
 ipykernel = ">=6.15.3"
 pandas = ">=2.0.0"
 requests = ">=2.31.0"
@@ -42,6 +43,7 @@ types-openpyxl = ">=3.1.5.20240719"
 pyarrow-stubs = ">=10.0.1.9"
 nox = ">=2025.2.9"
 nox-poetry = ">=1.1.0"
+types-python-dateutil = "^2.9.0.20250516"
 
 [tool.poetry.group.dev.dependencies]
 pygments = ">=2.10.0"
