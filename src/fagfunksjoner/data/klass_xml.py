@@ -163,5 +163,5 @@ def make_klass_xml_codelist(
             )
     filled_cols = {PARAM_COLS[k]: v for k, v in cols_names.items() if v}
     data = {col: [None] * len(codes) for col in PARAM_COLS.values()} | filled_cols
-    df = pd.DataFrame({name: data for name, data in data.items()})
+    df = pd.DataFrame(data)
     return klass_dataframe_to_xml_codelist(df, path)
