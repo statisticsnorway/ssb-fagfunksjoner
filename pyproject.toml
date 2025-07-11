@@ -78,7 +78,7 @@ tests = ["tests", "*/tests"]
 
 [tool.coverage.run]
 branch = true
-source = ["fagfunksjoner", "tests"]
+source = ["src"]
 relative_files = true
 
 [tool.coverage.report]
