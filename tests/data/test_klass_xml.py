@@ -148,10 +148,22 @@ def test_make_klass_xml_codelist_all_fields(tmp_path):
         shortname_bokmaal=["HO", "UA", "UB"],
         shortname_nynorsk=["HO", "UA", "UB"],
         shortname_engelsk=["MA", "SA", "SB"],
-        notes_bokmaal=["Overordnet kategori", "Del av hovedområdet", "Del av hovedområdet"],
-        notes_nynorsk=["Overordna kategori", "Del av hovudområdet", "Del av hovudområdet"],
+        notes_bokmaal=[
+            "Overordnet kategori",
+            "Del av hovedområdet",
+            "Del av hovedområdet",
+        ],
+        notes_nynorsk=[
+            "Overordna kategori",
+            "Del av hovudområdet",
+            "Del av hovudområdet",
+        ],
         notes_engelsk=["Top-level category", "Part of main area", "Part of main area"],
-        valid_from=["2025-01-01", "2025-01-01", "2025-01-01"],  # ISO format to test parsing
+        valid_from=[
+            "2025-01-01",
+            "2025-01-01",
+            "2025-01-01",
+        ],  # ISO format to test parsing
         valid_to=["2030-12-31", "2030-12-31", "2030-12-31"],
     )
 
