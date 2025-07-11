@@ -133,3 +133,30 @@ def test_make_klass_xml_codelist_missing_required_names(tmp_path):
             names_nynorsk=None,
             names_engelsk=None,
         )
+
+
+def test_make_klass_xml_codelist_all_fields(tmp_path):
+    xml_output_path = tmp_path / "full_klass_codelist.xml"
+
+    df = make_klass_xml_codelist(
+        path=str(xml_output_path),
+        codes=["100", "110", "120"],
+        parent=[None, "100", "100"],
+        names_bokmaal=["Hovedområde", "Underområde A", "Underområde B"],
+        names_nynorsk=["Hovudområde", "Underområde A", "Underområde B"],
+        names_engelsk=["Main Area", "Subarea A", "Subarea B"],
+        shortname_bokmaal=["HO", "UA", "UB"],
+        shortname_nynorsk=["HO", "UA", "UB"],
+        shortname_engelsk=["MA", "SA", "SB"],
+        notes_bokmaal=["Overordnet kategori", "Del av hovedområdet", "Del av hovedområdet"],
+        notes_nynorsk=["Overordna kategori", "Del av hovudområdet", "Del av hovudområdet"],
+        notes_engelsk=["Top-level category", "Part of main area", "Part of main area"],
+        valid_from=["2025-01-01", "2025-01-01", "2025-01-01"],  # ISO format to test parsing
+        valid_to=["2030-12-31", "2030-12-31", "2030-12-31"],
+    )
+
+    assert xml_output_path.exists()
+    assert isinstance(df, pd.DataFrame)
+    assert list(df["gyldig_fra"].unique()) == ["01.01.2025"]
+    assert list(df["gyldig_til"].unique()) == ["31.12.2030"]
+    assert df["forelder"].iloc[1] == "100"
