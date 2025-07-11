@@ -92,76 +92,6 @@ def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame
     return output_df
 
 
-def make_klass_df_codelist(
-    codes: list[str | int],
-    names_bokmaal: list[str | None] | None = None,
-    names_nynorsk: list[str | None] | None = None,
-    names_engelsk: list[str | None] | None = None,
-    parent: list[str | None] | None = None,
-    shortname_bokmaal: list[str | None] | None = None,
-    shortname_nynorsk: list[str | None] | None = None,
-    shortname_engelsk: list[str | None] | None = None,
-    notes_bokmaal: list[str | None] | None = None,
-    notes_nynorsk: list[str | None] | None = None,
-    notes_engelsk: list[str | None] | None = None,
-    valid_from: list[str | None] | None = None,
-    valid_to: list[str | None] | None = None,
-) -> pd.DataFrame:
-    """Make a pandas Dataframe from lists of codes and names.
-
-    Args:
-        codes: List of codes.
-        names_bokmaal: List of names in Bokmål.
-        names_nynorsk: List of names in Nynorsk.
-        names_engelsk: List of names in English.
-        parent: List of parent codes that applies to the codes (for hierarchical codelists).
-        shortname_bokmaal: Shortname in Bokmål.
-        shortname_nynorsk: Shortname in Nynorsk.
-        shortname_engelsk: Shortname in English.
-        notes_bokmaal: Notes in Bokmål.
-        notes_nynorsk: Notes in Nynorsk.
-        notes_engelsk: Notes in English.
-        valid_from: Valid from date.
-        valid_to: Valid to date.
-
-    Returns:
-        pd.DataFrame: Dataframe with columns for codes and names.
-
-    Raises:
-        ValueError: If the length of codes and other columns do not match.
-    """
-    if names_bokmaal is None and names_nynorsk is None:
-        raise ValueError("Must have content in names_bokmaal or names_nynorsk")
-
-    # Normalize date formats to dd.MM.yyyy which is what KLASS prefers
-    valid_from_str = format_dates(valid_from)
-    valid_to_str = format_dates(valid_to)
-
-    cols_names = {
-        "codes": codes,
-        "names_bokmaal": names_bokmaal,
-        "names_nynorsk": names_nynorsk,
-        "names_engelsk": names_engelsk,
-        "parent": parent,
-        "shortname_bokmaal": shortname_bokmaal,
-        "shortname_nynorsk": shortname_nynorsk,
-        "shortname_engelsk": shortname_engelsk,
-        "notes_bokmaal": notes_bokmaal,
-        "notes_nynorsk": notes_nynorsk,
-        "notes_engelsk": notes_engelsk,
-        "valid_from": valid_from_str,
-        "valid_to": valid_to_str,
-    }
-    for name in cols_names.values():
-        if name and len(codes) != len(name):
-            raise ValueError(
-                "Length of the entered names must match the length of codes."
-            )
-    filled_cols = {PARAM_COLS[k]: v for k, v in cols_names.items() if v}
-    data = {col: [None] * len(codes) for col in PARAM_COLS.values()} | filled_cols
-    return pd.DataFrame({name: data for name, data in data.items()})
-
-
 def make_klass_xml_codelist(
     path: str,
     codes: list[str | int],
@@ -200,20 +130,38 @@ def make_klass_xml_codelist(
 
     Returns:
         pd.DataFrame: Dataframe with columns for codes and names.
+
+    Raises:
+        ValueError: If the length of the lists sent in are not the same
     """
-    df = make_klass_df_codelist(
-        codes=codes,
-        names_bokmaal=names_bokmaal,
-        names_nynorsk=names_nynorsk,
-        names_engelsk=names_engelsk,
-        parent=parent,
-        shortname_bokmaal=shortname_bokmaal,
-        shortname_nynorsk=shortname_nynorsk,
-        shortname_engelsk=shortname_engelsk,
-        notes_bokmaal=notes_bokmaal,
-        notes_nynorsk=notes_nynorsk,
-        notes_engelsk=notes_engelsk,
-        valid_from=valid_from,
-        valid_to=valid_to,
-    )
+    if names_bokmaal is None and names_nynorsk is None:
+        raise ValueError("Must have content in names_bokmaal or names_nynorsk")
+
+    # Normalize date formats to dd.MM.yyyy which is what KLASS prefers
+    valid_from_str = format_dates(valid_from)
+    valid_to_str = format_dates(valid_to)
+
+    cols_names = {
+        "codes": codes,
+        "names_bokmaal": names_bokmaal,
+        "names_nynorsk": names_nynorsk,
+        "names_engelsk": names_engelsk,
+        "parent": parent,
+        "shortname_bokmaal": shortname_bokmaal,
+        "shortname_nynorsk": shortname_nynorsk,
+        "shortname_engelsk": shortname_engelsk,
+        "notes_bokmaal": notes_bokmaal,
+        "notes_nynorsk": notes_nynorsk,
+        "notes_engelsk": notes_engelsk,
+        "valid_from": valid_from_str,
+        "valid_to": valid_to_str,
+    }
+    for name in cols_names.values():
+        if name and len(codes) != len(name):
+            raise ValueError(
+                "Length of the entered names must match the length of codes."
+            )
+    filled_cols = {PARAM_COLS[k]: v for k, v in cols_names.items() if v}
+    data = {col: [None] * len(codes) for col in PARAM_COLS.values()} | filled_cols
+    df = pd.DataFrame({name: data for name, data in data.items()})
     return klass_dataframe_to_xml_codelist(df, path)
