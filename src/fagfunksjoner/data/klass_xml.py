@@ -6,6 +6,7 @@ It passes data through a pandas DataFrame from a list of codes and names, to an 
 import pandas as pd
 from dateutil import parser
 
+
 PARAM_COLS = {  # Order is important?
     "codes": "kode",
     "parent": "forelder",
@@ -38,6 +39,7 @@ def format_dates(dates: list[str | None]) -> list[str | None]:
             except Exception as e:
                 raise ValueError(f"Invalid date format: {date}") from e
     return formatted
+
 
 def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame:
     """Write a klass-xml for a codelist down to a path.
@@ -132,7 +134,7 @@ def make_klass_df_codelist(
         valid_from = format_dates(valid_from)
     if valid_to:
         valid_to = format_dates(valid_to)
-    
+
     cols_names = {
         "codes": codes,
         "names_bokmaal": names_bokmaal,

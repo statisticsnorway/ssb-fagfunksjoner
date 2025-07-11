@@ -1,5 +1,6 @@
 from fagfunksjoner.data.klass_xml import make_klass_xml_codelist
 
+
 # ### Using the main parameters
 
 # Define your classification codes and names
@@ -19,7 +20,7 @@ df = make_klass_xml_codelist(
     codes=codes,
     names_bokmaal=names_bokmaal,
     names_nynorsk=names_nynorsk,
-    names_engelsk=names_engelsk
+    names_engelsk=names_engelsk,
 )
 
 print("KLASS XML generated and saved to:", xml_output_path)
@@ -71,5 +72,3 @@ df = make_klass_xml_codelist(
 print("✅ KLASS XML created at:", xml_path)
 print(df.head())
 # -
-
-

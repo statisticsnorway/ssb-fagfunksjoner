@@ -21,7 +21,7 @@
 *.rej
 
 # Example generated from klass -> xml demo
-demos/*.xml  
+demos/*.xml
 
 # Blaise
 *.bdix
