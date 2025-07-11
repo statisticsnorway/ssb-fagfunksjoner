@@ -4,6 +4,7 @@ from typing import Any
 
 import pandas as pd
 import requests
+from dateutil import parser
 
 
 @dataclass
@@ -287,10 +288,6 @@ def create_dataframe(data_obj: Data, structure_obj: Structure) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A pandas DataFrame created from the data and structure objects.
     """
-    dimension_keys = [dim.id for dim in structure_obj.dimensions.get("series", [])]
-    observation_keys = [
-        dim.id for dim in structure_obj.dimensions.get("observation", [])
-    ]
     records = []
 
     for dataset_obj in data_obj.dataSets:
@@ -301,25 +298,7 @@ def create_dataframe(data_obj: Data, structure_obj: Structure) -> pd.DataFrame:
                         series_key, series_val, obs_key, obs_value, structure_obj
                     )
                 )
-
-    return pd.DataFrame(
-        records,
-        columns=dimension_keys
-        + [dim.id + "_id" for dim in structure_obj.dimensions.get("series", [])]
-        + observation_keys
-        + [dim.id + "_id" for dim in structure_obj.dimensions.get("observation", [])]
-        + ["Observation"]
-        + [
-            attr.id
-            for attr_list in structure_obj.attributes.values()
-            for attr in attr_list
-        ]
-        + [
-            attr.id + "_id"
-            for attr_list in structure_obj.attributes.values()
-            for attr in attr_list
-        ],
-    )
+    return pd.DataFrame(records)
 
 
 def make_single_dataframe_record(
@@ -345,6 +324,15 @@ def make_single_dataframe_record(
     Returns:
         dict[str, str | float]: A dictionary representing a single record in the DataFrame.
     """
+    observation_fields: dict[str, str] = {}
+    for dim in structure_obj.dimensions.get("observation", []):
+        observation = next(
+            (val for i, val in enumerate(dim.values) if i == int(obs_key)), obs_key
+        )
+        observation_fields |= {
+            f"{dim.id}_{field}": parser.parse(val) for field, val in observation.items()
+        }
+
     record: dict[str, str | float] = {
         **{
             dim.id: dim.values[int(series_key.split(":")[dim.keyPosition])]["name"]
@@ -355,17 +343,7 @@ def make_single_dataframe_record(
             + "_id": dim.values[int(series_key.split(":")[dim.keyPosition])]["id"]
             for dim in structure_obj.dimensions.get("series", [])
         },
-        **{
-            dim.id: next(
-                (val["name"] for val in dim.values if val["id"] == obs_key),
-                obs_key,
-            )
-            for dim in structure_obj.dimensions.get("observation", [])
-        },
-        **{
-            dim.id + "_id": obs_key
-            for dim in structure_obj.dimensions.get("observation", [])
-        },
+        **observation_fields,
         "Observation": obs_value[0],
     }
     for _attr_key, attr_list in structure_obj.attributes.items():
@@ -417,12 +395,15 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
     # Parsing Structure
     structure_obj = parse_structure(data["structure"])
 
+    # return structure_obj
+
     # Parsing DataSets
     datasets = parse_datasets(data["dataSets"])
     data_obj = Data(dataSets=datasets, structure=structure_obj)
 
     # Create DataFrame
     df = create_dataframe(data_obj, structure_obj)
+
     valuta_data = ValutaData(meta=valuta_meta, data=data_obj, df=df)
 
     return valuta_data
@@ -472,5 +453,4 @@ def download_exchange_rates(
     response = requests.get(url)
     response.raise_for_status()
     json_data = response.json()
-
     return parse_response(json_data)
