@@ -395,8 +395,6 @@ def parse_response(json_data: dict[str, Any]) -> ValutaData:
     # Parsing Structure
     structure_obj = parse_structure(data["structure"])
 
-    # return structure_obj
-
     # Parsing DataSets
     datasets = parse_datasets(data["dataSets"])
     data_obj = Data(dataSets=datasets, structure=structure_obj)
