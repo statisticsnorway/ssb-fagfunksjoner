@@ -1,5 +1,5 @@
+import datetime
 from dataclasses import dataclass
-from datetime import date
 from typing import Any
 
 import pandas as pd
@@ -307,7 +307,7 @@ def make_single_dataframe_record(
     obs_key: str,
     obs_value: list[str],
     structure_obj: Structure,
-) -> dict[str, str | float]:
+) -> dict[str, str | float | datetime.datetime]:
     """Create a single record for a pandas DataFrame from a series and observation.
 
     This function generates a dictionary representing a single row in a pandas
@@ -324,16 +324,16 @@ def make_single_dataframe_record(
     Returns:
         dict[str, str | float]: A dictionary representing a single record in the DataFrame.
     """
-    observation_fields: dict[str, str] = {}
+    observation_fields: dict[str, str | datetime.datetime] = {}
     for dim in structure_obj.dimensions.get("observation", []):
-        observation = next(
-            (val for i, val in enumerate(dim.values) if i == int(obs_key)), obs_key
+        observation: dict[str, str] = next(
+            (val for i, val in enumerate(dim.values) if i == int(obs_key))
         )
         observation_fields |= {
             f"{dim.id}_{field}": parser.parse(val) for field, val in observation.items()
         }
 
-    record: dict[str, str | float] = {
+    record: dict[str, str | float | datetime.datetime] = {
         **{
             dim.id: dim.values[int(series_key.split(":")[dim.keyPosition])]["name"]
             for dim in structure_obj.dimensions.get("series", [])
@@ -439,7 +439,7 @@ def download_exchange_rates(
         ValutaData: The data retrieved from the API, parsed into a ValutaData object.
     """
     if date_to is None:
-        date_to = date.today().strftime("%Y-%m-%d")
+        date_to = datetime.date.today().strftime("%Y-%m-%d")
 
     url = URL_NORGES_BANK.format(
         frequency=frequency,
