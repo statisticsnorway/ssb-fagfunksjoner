@@ -1,7 +1,15 @@
 import pandas as pd
 import pytest
 
-from src.fagfunksjoner.data.klass_xml import make_klass_xml_codelist
+from src.fagfunksjoner.data.klass_xml import (
+    format_dates,
+    klass_dataframe_to_xml_codelist,
+    make_klass_xml_codelist,
+)
+
+
+def test_format_dates_valid():
+    assert format_dates(["2024-01-01", None, ""]) == ["01.01.2024", "", ""]
 
 
 def test_make_klass_xml_codelist_success(tmp_path):
@@ -93,3 +101,88 @@ def test_make_klass_xml_codelist_all_fields(tmp_path):
     assert list(df["gyldig_fra"].unique()) == ["01.01.2025"]
     assert list(df["gyldig_til"].unique()) == ["31.12.2030"]
     assert df["forelder"].iloc[1] == "100"
+
+
+def test_make_klass_xml_with_empty_optional_lists(tmp_path):
+    """Test behavior with empty lists for optional fields."""
+    codes = ["A"]
+    names_bokmaal = ["A"]
+    xml_path = tmp_path / "empty_lists.xml"
+
+    df = make_klass_xml_codelist(
+        path=str(xml_path),
+        codes=codes,
+        names_bokmaal=names_bokmaal,
+        names_nynorsk=[],
+        names_engelsk=[],
+        parent=[],
+        shortname_bokmaal=[],
+        shortname_nynorsk=[],
+        shortname_engelsk=[],
+        notes_bokmaal=[],
+        notes_nynorsk=[],
+        notes_engelsk=[],
+        valid_from=[],
+        valid_to=[],
+    )
+
+    assert xml_path.exists()
+    assert df["navn_bokmål"][0] == "A"
+
+
+def test_make_klass_xml_with_nones(tmp_path):
+    """Test behavior when some optional fields are set to None."""
+    codes = ["A"]
+    names_bokmaal = ["A"]
+    xml_path = tmp_path / "nones.xml"
+
+    df = make_klass_xml_codelist(
+        path=str(xml_path),
+        codes=codes,
+        names_bokmaal=names_bokmaal,
+        valid_from=None,
+        valid_to=None,
+        parent=None,
+    )
+
+    assert xml_path.exists()
+    assert df["gyldig_fra"].iloc[0] == ""
+    assert df["forelder"].iloc[0] == ""
+
+
+def test_make_klass_xml_invalid_date_format(tmp_path):
+    """Test that invalid date format raises a ValueError."""
+    codes = ["1"]
+    names_bokmaal = ["One"]
+    xml_path = tmp_path / "bad_date.xml"
+
+    with pytest.raises(ValueError, match="Invalid date format: not-a-date"):
+        make_klass_xml_codelist(
+            path=str(xml_path),
+            codes=codes,
+            names_bokmaal=names_bokmaal,
+            valid_from=["not-a-date"],
+        )
+
+
+def test_klass_dataframe_to_xml_unexpected_column(tmp_path):
+    """Test klass_dataframe_to_xml_codelist with an unknown column name."""
+    df = pd.DataFrame({"kode": ["1"], "unexpected_column": ["oops"]})
+    xml_path = tmp_path / "fail.xml"
+
+    with pytest.raises(ValueError, match="unexpected_column"):
+        klass_dataframe_to_xml_codelist(df, str(xml_path))
+
+
+def test_make_klass_xml_field_length_mismatch(tmp_path):
+    """Test that mismatched field lengths raise ValueError."""
+    codes = ["1", "2"]
+    names_bokmaal = ["One"]
+    xml_path = tmp_path / "mismatch.xml"
+
+    with pytest.raises(ValueError, match="Length of the entered names must match"):
+        make_klass_xml_codelist(
+            path=str(xml_path),
+            codes=codes,
+            names_bokmaal=names_bokmaal,
+        )
