@@ -24,14 +24,14 @@ PARAM_COLS = {  # Order is important?
 }
 
 
-def format_dates(dates: list[str | None]) -> list[str | None]:
+def format_dates(dates: list[str | None] | None) -> list[str]:
     """Ensure all dates are in dd.MM.yyyy format."""
     if not dates:
-        return dates
-    formatted = []
+        return []
+    formatted: list[str] = []
     for date in dates:
-        if date is None:
-            formatted.append(None)
+        if not date:
+            formatted.append("")
         else:
             try:
                 parsed_date = parser.parse(date, dayfirst=True)
@@ -76,6 +76,10 @@ def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame
 
     output_df = pd.DataFrame(filled_dict)
 
+    # Replace all nones with empty strings?
+    for col in output_df.select_dtypes(["object", "string"]).columns:
+        output_df[col] = output_df[col].fillna("")
+
     output_df.to_xml(
         path,
         root_name="versjon",
@@ -90,18 +94,18 @@ def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame
 
 def make_klass_df_codelist(
     codes: list[str | int],
-    names_bokmaal: list[str] | None = None,
-    names_nynorsk: list[str] | None = None,
-    names_engelsk: list[str] | None = None,
-    parent: list[str] | None = None,
-    shortname_bokmaal: list[str] | None = None,
-    shortname_nynorsk: list[str] | None = None,
-    shortname_engelsk: list[str] | None = None,
-    notes_bokmaal: list[str] | None = None,
-    notes_nynorsk: list[str] | None = None,
-    notes_engelsk: list[str] | None = None,
-    valid_from: list[str] | None = None,
-    valid_to: list[str] | None = None,
+    names_bokmaal: list[str | None] | None = None,
+    names_nynorsk: list[str | None] | None = None,
+    names_engelsk: list[str | None] | None = None,
+    parent: list[str | None] | None = None,
+    shortname_bokmaal: list[str | None] | None = None,
+    shortname_nynorsk: list[str | None] | None = None,
+    shortname_engelsk: list[str | None] | None = None,
+    notes_bokmaal: list[str | None] | None = None,
+    notes_nynorsk: list[str | None] | None = None,
+    notes_engelsk: list[str | None] | None = None,
+    valid_from: list[str | None] | None = None,
+    valid_to: list[str | None] | None = None,
 ) -> pd.DataFrame:
     """Make a pandas Dataframe from lists of codes and names.
 
@@ -130,10 +134,8 @@ def make_klass_df_codelist(
         raise ValueError("Must have content in names_bokmaal or names_nynorsk")
 
     # Normalize date formats to dd.MM.yyyy which is what KLASS prefers
-    if valid_from:
-        valid_from = format_dates(valid_from)
-    if valid_to:
-        valid_to = format_dates(valid_to)
+    valid_from_str = format_dates(valid_from)
+    valid_to_str = format_dates(valid_to)
 
     cols_names = {
         "codes": codes,
@@ -147,8 +149,8 @@ def make_klass_df_codelist(
         "notes_bokmaal": notes_bokmaal,
         "notes_nynorsk": notes_nynorsk,
         "notes_engelsk": notes_engelsk,
-        "valid_from": valid_from,
-        "valid_to": valid_to,
+        "valid_from": valid_from_str,
+        "valid_to": valid_to_str,
     }
     for name in cols_names.values():
         if name and len(codes) != len(name):
@@ -163,18 +165,18 @@ def make_klass_df_codelist(
 def make_klass_xml_codelist(
     path: str,
     codes: list[str | int],
-    names_bokmaal: list[str] | None = None,
-    names_nynorsk: list[str] | None = None,
-    names_engelsk: list[str] | None = None,
-    parent: list[str] | None = None,
-    shortname_bokmaal: list[str] | None = None,
-    shortname_nynorsk: list[str] | None = None,
-    shortname_engelsk: list[str] | None = None,
-    notes_bokmaal: list[str] | None = None,
-    notes_nynorsk: list[str] | None = None,
-    notes_engelsk: list[str] | None = None,
-    valid_from: list[str] | None = None,
-    valid_to: list[str] | None = None,
+    names_bokmaal: list[str | None] | None = None,
+    names_nynorsk: list[str | None] | None = None,
+    names_engelsk: list[str | None] | None = None,
+    parent: list[str | None] | None = None,
+    shortname_bokmaal: list[str | None] | None = None,
+    shortname_nynorsk: list[str | None] | None = None,
+    shortname_engelsk: list[str | None] | None = None,
+    notes_bokmaal: list[str | None] | None = None,
+    notes_nynorsk: list[str | None] | None = None,
+    notes_engelsk: list[str | None] | None = None,
+    valid_from: list[str | None] | None = None,
+    valid_to: list[str | None] | None = None,
 ) -> pd.DataFrame:
     """Make a klass xml file and pandas Dataframe from a list of codes and names.
 
