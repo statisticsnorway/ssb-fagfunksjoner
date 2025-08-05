@@ -270,7 +270,7 @@ Example for a normal select query where we expect not too many records:
 import os
 
 import pandas as pd
-from doteng import load_dotenv
+from dotenv import load_dotenv
 
 from fagfunksjoner.prodsone import Oracle
 
@@ -292,7 +292,7 @@ Example for a select query where possibly many records:
 import os
 
 import pandas as pd
-from doteng import load_dotenv
+from dotenv import load_dotenv
 
 from fagfunksjoner.prodsone import Oracle
 
@@ -315,7 +315,7 @@ the columns in sql query statement and data are important):
 import os
 
 import pandas as pd
-from doteng import load_dotenv
+from dotenv import load_dotenv
 
 from fagfunksjoner.prodsone import Oracle
 
@@ -348,7 +348,7 @@ Having some kind of ID to the records will be very usefull!):
 ```python
 import os
 import pandas as pd
-from doteng import load_dotenv
+from dotenv import load_dotenv
 from fagfunksjoner.prodsone import Oracle
 load_dotenv()
 
@@ -382,7 +382,7 @@ import os
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from doteng import load_dotenv
+from dotenv import load_dotenv
 from fagfunksjoner.prodsone import Oracle, OraError
 load_dotenv()
 
