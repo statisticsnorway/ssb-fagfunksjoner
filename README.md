@@ -18,7 +18,6 @@
 [pypi status]: https://pypi.org/project/ssb-fagfunksjoner/
 [documentation]: https://statisticsnorway.github.io/ssb-fagfunksjoner
 [tests]: https://github.com/statisticsnorway/ssb-fagfunksjoner/actions?workflow=Tests
-
 [sonarcov]: https://sonarcloud.io/summary/overall?id=statisticsnorway_ssb-fagfunksjoner
 [sonarquality]: https://sonarcloud.io/summary/overall?id=statisticsnorway_ssb-fagfunksjoner
 [pre-commit]: https://github.com/pre-commit/pre-commit
