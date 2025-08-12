@@ -79,7 +79,7 @@ saspy_ssb.saspy_df_from_path("path")
 ```python
 import logging
 
-from fagfunksjoner import StatLogger
+from fagfunksjoner.log.statlogger import StatLogger
 
 
 # Ved å opprette StatLogger så "hijacker" den den vanlige loggeren
@@ -337,7 +337,7 @@ query = "insert into my_db_table(vare, pris) values(:vare, :pris)"
 ora = Oracle(pw=os.getenv("my-secret-password"),
              db=os.getenv("database-name"))
 
-ora.insert_or_update(sql=query, update=data)
+ora.update_or_insert(sql=query, update=data)
 
 ora.close()
 ```
@@ -368,7 +368,7 @@ query = "update my_db_table set vare = :vare, pris = :pris where id = :id"
 ora = Oracle(pw=os.getenv("my-secret-password"),
              db=os.getenv("database-name"))
 
-ora.insert_or_update(sql=query, update=data)
+ora.update_or_insert(sql=query, update=data)
 
 ora.close()
 ```
