@@ -147,7 +147,16 @@ def mypy(session: Session) -> None:
         "src",
     ]  # "tests"]
     session.install(".")
-    session.install("mypy", "pytest")
+    session.install(
+        "mypy",
+        "pytest",
+        "pyarrow-stubs",
+        "pandas-stubs",
+        "types-requests",
+        "types-toml",
+        "types-colorama",
+        "types-python-dateutil",
+    )
     session.run("mypy", *args)
     if not session.posargs:
         session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")

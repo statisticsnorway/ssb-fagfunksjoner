@@ -1,6 +1,3 @@
-permissions:
-  contents: read
-  pull-requests: write
 name: Tests
 
 on:
@@ -9,6 +6,10 @@ on:
       - main
       - master
   pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   tests:
