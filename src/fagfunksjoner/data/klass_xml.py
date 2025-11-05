@@ -4,7 +4,7 @@ It passes data through a pandas DataFrame from a list of codes and names, to an 
 """
 
 import pandas as pd
-
+from dateutil import parser
 
 PARAM_COLS = {  # Order is important?
     "codes": "kode",
@@ -22,6 +22,22 @@ PARAM_COLS = {  # Order is important?
     "valid_to": "gyldig_til",
 }
 
+
+def format_dates(dates: list[str | None]) -> list[str | None]:
+    """Ensure all dates are in dd.MM.yyyy format."""
+    if not dates:
+        return dates
+    formatted = []
+    for date in dates:
+        if date is None:
+            formatted.append(None)
+        else:
+            try:
+                parsed_date = parser.parse(date, dayfirst=True)
+                formatted.append(parsed_date.strftime("%d.%m.%Y"))
+            except Exception as e:
+                raise ValueError(f"Invalid date format: {date}") from e
+    return formatted
 
 def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame:
     """Write a klass-xml for a codelist down to a path.
@@ -111,6 +127,12 @@ def make_klass_df_codelist(
     if names_bokmaal is None and names_nynorsk is None:
         raise ValueError("Must have content in names_bokmaal or names_nynorsk")
 
+    # Normalize date formats to dd.MM.yyyy which is what KLASS prefers
+    if valid_from:
+        valid_from = format_dates(valid_from)
+    if valid_to:
+        valid_to = format_dates(valid_to)
+    
     cols_names = {
         "codes": codes,
         "names_bokmaal": names_bokmaal,

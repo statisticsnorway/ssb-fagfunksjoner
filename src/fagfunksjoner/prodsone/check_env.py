@@ -5,9 +5,10 @@ and can help differentiate between the different places we develop code.
 """
 
 import os
+from typing import Any
 
-from dapla.auth import AuthClient
-from dapla.const import DaplaRegion
+from dapla_auth_client import AuthClient
+from dapla_auth_client.const import DaplaRegion
 
 
 def check_env(raise_err: bool = True) -> str:
@@ -23,8 +24,8 @@ def check_env(raise_err: bool = True) -> str:
         OSError: If no environment indications match (Dapla or Prod), and raise_err is set to True.
     """
     try:
-        current_region = AuthClient.get_dapla_region()
-        if current_region in [DaplaRegion.DAPLA_LAB, DaplaRegion.BIP]:
+        current_region: Any = AuthClient.get_dapla_region()
+        if current_region in [DaplaRegion.DAPLA_LAB]:
             return "DAPLA"
     except AttributeError:
         pass
