@@ -64,7 +64,7 @@ def test_find_email_raises_value_error(setup_env):
         mock_subprocess.return_value.stdout = "invalid_email"
         mock_getuser.return_value = "invalid_user"
         with pytest.raises(
-            ValueError, match="Cant find the users email or tbf in the system."
+            ValueError, match=r"Cant find the users email or tbf in the system."
         ):
             find_email()
 

@@ -216,7 +216,7 @@ def construct_file_pattern(filepath: str | Path, version_denoter: str = "*") -> 
 
     # Construct the file pattern by inserting the version denoter.
     glob_pattern = f"{filepath_no_version}_v{version_denoter}{extras}{file_ext}"
-    print(f"DEBUG: glob_pattern = {glob_pattern}")  # Add this line for debugging
+    logger.debug(f"glob_pattern = {glob_pattern}")
     return glob_pattern
 
 

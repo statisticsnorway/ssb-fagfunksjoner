@@ -12,7 +12,6 @@ dependencies = [
     "colorlog>=6.9.0",
     "dapla-auth-client>=1.0.0",
     "dapla-toolbelt>=4.0.0",
-    "ipywidgets>=8.1.1",
     "ipython>=8.37.0",
     "numpy>=2.2",
     "oracledb>=2.3.0",
@@ -22,6 +21,7 @@ dependencies = [
     "requests>=2.31.0",
     "saspy>=5.2.1",
     "toml>=0.10.2",
+    "ipywidgets >=8.1.1",
 ]
 
 [project.urls]
