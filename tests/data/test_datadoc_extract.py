@@ -475,7 +475,7 @@ def test_get_path_combinations_with_invalid_dollar_key(
 def test_file_with_ark_extension(
     mock_test_url, mock_import_archive_data, mock_get_key_by_value, mock_linux_shortcuts
 ):
-    utd_path, path, expected = utd_path_expected()
+    utd_path, _path, _expected = utd_path_expected()
     mock_linux_shortcuts.return_value = {"UTD": str(utd_path.as_posix())}
     mock_get_key_by_value.return_value = "UTD"
     mock_import_archive_data.return_value = datadok_extract.ArchiveData(
@@ -504,7 +504,7 @@ def test_file_with_ark_extension(
 def test_file_with_ark_extension_finds_dat(
     mock_test_url, mock_import_archive_data, mock_get_key_by_value, mock_linux_shortcuts
 ):
-    utd_path, path, expected = utd_path_expected()
+    utd_path, _path, _expected = utd_path_expected()
     mock_linux_shortcuts.return_value = {"UTD": str(utd_path.as_posix())}
     mock_get_key_by_value.return_value = "UTD"
     mock_import_archive_data.return_value = datadok_extract.ArchiveData(
