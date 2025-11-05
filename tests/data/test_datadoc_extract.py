@@ -361,7 +361,7 @@ def test_import_archive_data_with_invalid_params(
     mock_open.return_value.read.return_value = xml_content()
 
     # Now, we expect a ValueError related to the dtype parameter
-    with pytest.raises(ValueError, match="You cannot pass dtype to pandas.fwf"):
+    with pytest.raises(ValueError, match=r"You cannot pass dtype to pandas.fwf"):
         datadok_extract.import_archive_data(
             archive_desc_xml="mock.xml",
             archive_file="mock_archive.txt",
@@ -463,7 +463,7 @@ def test_get_path_combinations_with_invalid_dollar_key(
 
     with pytest.raises(
         TypeError,
-        match="What we got out of the dollar-linux file was not a single string",
+        match=r"What we got out of the dollar-linux file was not a single string",
     ):
         datadok_extract.get_path_combinations("invalid/path/to/file")
 
