@@ -76,7 +76,7 @@ class TestStatLogger:
         invalid_loggers = [LoggerType.JSONL, 123, None]
 
         # Expect a TypeError to be raised
-        with pytest.raises(TypeError, match="All loggers must be of type LoggerType."):
+        with pytest.raises(TypeError, match=r"All loggers must be of type LoggerType."):
             StatLogger(loggers=invalid_loggers)
 
     # JSONL logging creates separate file with JSON formatted logs when enabled

@@ -156,7 +156,7 @@ def test_make_klass_xml_invalid_date_format(tmp_path):
     names_bokmaal = ["One"]
     xml_path = tmp_path / "bad_date.xml"
 
-    with pytest.raises(ValueError, match="Invalid date format: not-a-date"):
+    with pytest.raises(ValueError, match=r"Invalid date format: not-a-date"):
         make_klass_xml_codelist(
             path=str(xml_path),
             codes=codes,
@@ -170,7 +170,7 @@ def test_klass_dataframe_to_xml_unexpected_column(tmp_path):
     df = pd.DataFrame({"kode": ["1"], "unexpected_column": ["oops"]})
     xml_path = tmp_path / "fail.xml"
 
-    with pytest.raises(ValueError, match="unexpected_column"):
+    with pytest.raises(ValueError, match=r"unexpected_column"):
         klass_dataframe_to_xml_codelist(df, str(xml_path))
 
 
@@ -180,7 +180,7 @@ def test_make_klass_xml_field_length_mismatch(tmp_path):
     names_bokmaal = ["One"]
     xml_path = tmp_path / "mismatch.xml"
 
-    with pytest.raises(ValueError, match="Length of the entered names must match"):
+    with pytest.raises(ValueError, match=r"Length of the entered names must match"):
         make_klass_xml_codelist(
             path=str(xml_path),
             codes=codes,
