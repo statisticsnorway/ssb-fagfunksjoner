@@ -30,8 +30,6 @@ repository = "https://github.com/statisticsnorway/ssb-fagfunksjoner"
 documentation = "https://statisticsnorway.github.io/ssb-fagfunksjoner"
 Changelog = "https://github.com/statisticsnorway/ssb-fagfunksjoner/releases"
 
-[project.scripts]
-ssb-fagfunksjoner = "fagfunksjoner.__main__:main"
 
 [tool.poetry]
 classifiers = ["Development Status :: 4 - Beta"]
