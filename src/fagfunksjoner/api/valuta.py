@@ -346,23 +346,15 @@ def make_single_dataframe_record(
         **observation_fields,
         "Observation": obs_value[0],
     }
-    for _attr_key, attr_list in structure_obj.attributes.items():
-        for attr in attr_list:
-            attr_index = next(
-                (
-                    i
-                    for i, dim in enumerate(structure_obj.dimensions.get("series", []))
-                    if dim.id == attr.relationship["dimensions"][0]
-                ),
-                None,
-            )
-            if attr_index is not None:
-                if (len(attr.values) - 1) < series_val.attributes[attr_index]:
-                    new_index = len(attr.values) - 1
-                else:
-                    new_index = series_val.attributes[attr_index]
-                record[attr.id] = attr.values[new_index]["name"]
-                record[attr.id + "_id"] = attr.values[new_index]["id"]
+    # Map series-level attributes by their declared order in structure.attributes['series']
+    for ai, attr in enumerate(structure_obj.attributes.get("series", [])):
+        # Guard against malformed input where series provides fewer indices
+        idx = series_val.attributes[ai] if ai < len(series_val.attributes) else 0
+        # Clamp to available values for the attribute
+        if attr.values:
+            idx = min(idx, len(attr.values) - 1)
+            record[attr.id] = attr.values[idx]["name"]
+            record[attr.id + "_id"] = attr.values[idx]["id"]
     return record
 
 

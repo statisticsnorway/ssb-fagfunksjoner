@@ -228,3 +228,189 @@ def test_parse_response():
             "COLLECTION_id",
         }
     )
+
+
+def _multi_currency_json() -> dict:
+    # Two currencies (USD, DKK) with different expected UNIT_MULT values:
+    # USD -> Enheter (id '0'), DKK -> Hundre (id '2').
+    # Craft series so that current buggy logic picks the same UNIT_MULT for both,
+    # while the expected behavior differs by currency.
+    return {
+        "meta": mock_json["meta"],
+        "data": {
+            "dataSets": [
+                {
+                    "links": [
+                        {
+                            "rel": "dataflow",
+                            "urn": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=NB:EXR(1.0)",
+                        }
+                    ],
+                    "reportingBegin": "2021-01-01T00:00:00",
+                    "reportingEnd": "2021-12-31T23:59:59",
+                    "action": "Information",
+                    "series": {
+                        # FREQ:0 (A), BASE_CUR:0 (USD), QUOTE_CUR:0 (NOK), TENOR:0 (SP)
+                        "0:0:0:0": {
+                            # Attributes list intentionally the same for both series to reveal the bug
+                            "attributes": [0, 1, 0, 0],
+                            "observations": {"0": ["8.50"]},
+                        },
+                        # FREQ:0 (A), BASE_CUR:1 (DKK), QUOTE_CUR:0 (NOK), TENOR:0 (SP)
+                        "0:1:0:0": {"attributes": [0, 1, 1, 0], "observations": {"0": ["1.25"]}},
+                    },
+                }
+            ],
+            "structure": {
+                "links": mock_json["data"]["structure"]["links"],
+                "name": "Valutakurser",
+                "names": {"no": "Valutakurser"},
+                "description": "Norges Banks valutakurser",
+                "descriptions": {"no": "Norges Banks valutakurser"},
+                "dimensions": {
+                    "dataset": [],
+                    "series": [
+                        {
+                            "id": "FREQ",
+                            "name": "Frekvens",
+                            "description": "",
+                            "keyPosition": 0,
+                            "role": None,
+                            "values": [
+                                {"id": "A", "name": "Årlig", "description": "Årlig"}
+                            ],
+                        },
+                        {
+                            "id": "BASE_CUR",
+                            "name": "Basisvaluta",
+                            "description": "",
+                            "keyPosition": 1,
+                            "role": None,
+                            "values": [
+                                {"id": "USD", "name": "US dollar"},
+                                {"id": "DKK", "name": "Danske kroner"},
+                            ],
+                        },
+                        {
+                            "id": "QUOTE_CUR",
+                            "name": "Kvoteringsvaluta",
+                            "description": "",
+                            "keyPosition": 2,
+                            "role": None,
+                            "values": [
+                                {"id": "NOK", "name": "Norske kroner"}
+                            ],
+                        },
+                        {
+                            "id": "TENOR",
+                            "name": "Løpetid",
+                            "description": "",
+                            "keyPosition": 3,
+                            "role": None,
+                            "values": [{"id": "SP", "name": "Spot"}],
+                        },
+                    ],
+                    "observation": [
+                        {
+                            "id": "TIME_PERIOD",
+                            "name": "Tidsperiode",
+                            "description": "",
+                            "keyPosition": 4,
+                            "role": "time",
+                            "values": [
+                                {
+                                    "start": "2021-01-01T00:00:00",
+                                    "end": "2021-12-31T23:59:59",
+                                    "id": "2021",
+                                    "name": "2021",
+                                }
+                            ],
+                        }
+                    ],
+                },
+                "attributes": {
+                    "dataset": [],
+                    "series": [
+                        {
+                            "id": "DECIMALS",
+                            "name": "Desimaler",
+                            "description": "",
+                            "relationship": {
+                                "dimensions": ["BASE_CUR", "QUOTE_CUR", "TENOR"]
+                            },
+                            "role": None,
+                            "values": [{"id": "2", "name": "2"}],
+                        },
+                        {
+                            "id": "CALCULATED",
+                            "name": "Kalkulert",
+                            "description": "",
+                            "relationship": {
+                                "dimensions": ["BASE_CUR", "QUOTE_CUR", "TENOR"]
+                            },
+                            "role": None,
+                            "values": [{"id": "false", "name": "false"}],
+                        },
+                        {
+                            "id": "UNIT_MULT",
+                            "name": "Multiplikator",
+                            "description": "",
+                            "relationship": {
+                                "dimensions": ["BASE_CUR", "QUOTE_CUR", "TENOR"]
+                            },
+                            "role": None,
+                            # Two values, index 0 and 1
+                            "values": [
+                                {"id": "0", "name": "Enheter"},
+                                {"id": "2", "name": "Hundre"},
+                            ],
+                        },
+                        {
+                            "id": "COLLECTION",
+                            "name": "Innsamlingstidspunkt",
+                            "description": "",
+                            "relationship": {
+                                "dimensions": ["BASE_CUR", "QUOTE_CUR", "TENOR"]
+                            },
+                            "role": None,
+                            "values": [
+                                {
+                                    "id": "A",
+                                    "name": "Gjennomsnitt av observasjoner gjennom perioden",
+                                }
+                            ],
+                        },
+                    ],
+                    "observation": [],
+                },
+            },
+        },
+    }
+
+
+@pytest.fixture
+def mock_response_multi():
+    with patch("requests.get") as mock_get:
+        mock_get.return_value.json.return_value = _multi_currency_json()
+        mock_get.return_value.raise_for_status = lambda: None
+        yield mock_get
+
+
+def test_download_exchange_rates_multiple_currencies_unit_mult_by_currency(mock_response_multi):
+    data = download_exchange_rates(
+        frequency="A", currency="USD+DKK", date_from="2021-01-01", date_to="2021-12-31"
+    ).df
+
+    # Expect different UNIT_MULT per currency
+    usd_rows = data[data["BASE_CUR_id"] == "USD"]
+    dkk_rows = data[data["BASE_CUR_id"] == "DKK"]
+
+    assert not usd_rows.empty and not dkk_rows.empty
+
+    # Expected behavior: USD -> Enheter (id '0'), DKK -> Hundre (id '2')
+    assert set(usd_rows["UNIT_MULT"]) == {"Enheter"}
+    assert set(usd_rows["UNIT_MULT_id"]) == {"0"}
+    assert set(dkk_rows["UNIT_MULT"]) == {"Hundre"}
+    assert set(dkk_rows["UNIT_MULT_id"]) == {"2"}
+
+
