@@ -34,6 +34,7 @@ def all_combos_agg(
     fillna_dict: dict[str, Any] | None = None,
     keep_empty: bool = False,
     grand_total: dict[str, str] | str = "",
+    ignore_subtotals_cols: list[str] | None = None,
 ) -> pd.DataFrame:
     """Generate all aggregation levels for a set of columns in a dataframe.
 
@@ -49,6 +50,7 @@ def all_combos_agg(
         fillna_dict: Dictionary specifying values to fill NA in each column of `groupcols`. Useful for indicating totals in the final table.
         keep_empty: If True, preserves empty groups in the output.
         grand_total: Dictionary or string to indicate a grand total row. If a dictionary, the values are applied in each corresponding `groupcols`.
+        ignore_subtotals_cols: Optional list of columns for which subtotals should be ignored. Any aggregation level that would subtotal over any of these columns is not generated. This reduces the number of combinations, saving time and memory.
 
     Returns:
         DataFrame with all aggregation levels, including:
@@ -70,7 +72,9 @@ def all_combos_agg(
         df=df, groupcols=groupcols, valuecols=valuecols, aggargs=aggargs
     )
     dataframe = prepare_dataframe(df=df, groupcols=groupcols, collist=df_cols)
-    combinations = prepare_combinations(groupcols=groupcols)
+    combinations = prepare_combinations(
+        groupcols=groupcols, ignore_subtotals_cols=ignore_subtotals_cols
+    )
     calculated_aggregates = calculate_aggregates(
         df=dataframe, combos=combinations, aggargs=aggdict, keep_empty=keep_empty
     )
@@ -174,20 +178,33 @@ def prepare_dataframe(
     return dataframe
 
 
-def prepare_combinations(groupcols: list[str]) -> list[tuple[str, ...]]:
+def prepare_combinations(
+    groupcols: list[str], ignore_subtotals_cols: list[str] | None = None
+) -> list[tuple[str, ...]]:
     """Generate all possible combinations of group columns.
+
+    Optionally filters out combinations that would produce subtotals over
+    any column listed in `ignore_subtotals_cols`.
 
     Args:
         groupcols: List of columns to group by.
+        ignore_subtotals_cols: Columns for which subtotals should be ignored.
+            If provided, only combinations that include all of these columns
+            are generated.
 
     Returns:
         List of tuples representing all group column combinations.
     """
     combos = [
         tuple(combo)
-        for r in range(len(groupcols) + 1, 0, -1)
+        for r in range(len(groupcols), 0, -1)
         for combo in combinations(groupcols, r)
     ]
+
+    if ignore_subtotals_cols:
+        ignore_set = set(ignore_subtotals_cols) & set(groupcols)
+        if ignore_set:
+            combos = [c for c in combos if ignore_set.issubset(set(c))]
 
     return combos
 

@@ -108,6 +108,16 @@ def test_latest_version_path_local(mock_get_fileversions):
 
 # Test for `latest_version_path` function with local path
 @patch("fagfunksjoner.paths.versions.get_fileversions")
+def test_latest_version_path_only_unversioned(mock_get_fileversions):
+    mock_get_fileversions.return_value = [
+        "/local/folder/file.parquet",
+    ]
+    filepath = "/local/folder/file_v1.parquet"
+    assert latest_version_path(filepath) == "/local/folder/file.parquet"
+
+
+# Test for `latest_version_path` function with local path
+@patch("fagfunksjoner.paths.versions.get_fileversions")
 def test_latest_version_path_local_doc_json(mock_get_fileversions):
     mock_get_fileversions.return_value = [
         "/local/folder/file_v1__DOC.json",
@@ -206,3 +216,46 @@ def test_without_version(mock_get_gcs_file_system):
     mock_get_gcs_file_system.return_value.glob.return_value = file_list
     inputs = "gs://bucket/folder/nevner"
     assert get_fileversions(inputs) == file_list
+
+
+# New behavior: Support unversioned files when no versions exist
+@patch("fagfunksjoner.paths.versions.get_fileversions")
+@patch("fagfunksjoner.paths.versions._path_exists")
+def test_latest_version_path_falls_back_to_unversioned(
+    mock_exists, mock_get_fileversions
+):
+    mock_get_fileversions.return_value = []
+    mock_exists.return_value = True
+    filepath = "/local/folder/file_v1.parquet"
+    assert latest_version_path(filepath) == "/local/folder/file.parquet"
+
+
+@patch("fagfunksjoner.paths.versions.get_fileversions")
+@patch("fagfunksjoner.paths.versions._path_exists")
+def test_next_version_number_with_only_unversioned(mock_exists, mock_get_fileversions):
+    mock_get_fileversions.return_value = []
+    mock_exists.return_value = True
+    filepath = "/local/folder/file.parquet"
+    assert next_version_number(filepath) == 2
+
+
+@patch("fagfunksjoner.paths.versions.get_fileversions")
+@patch("fagfunksjoner.paths.versions._path_exists")
+@patch("fagfunksjoner.paths.versions.logger.warning")
+def test_next_version_number_logs_warning_when_unversioned_exists(
+    mock_warn, mock_exists, mock_get_fileversions
+):
+    mock_get_fileversions.return_value = []
+    mock_exists.return_value = True
+    filepath = "/local/folder/file.parquet"
+    _ = next_version_number(filepath)
+    mock_warn.assert_called()
+
+
+@patch("fagfunksjoner.paths.versions.get_fileversions")
+@patch("fagfunksjoner.paths.versions._path_exists")
+def test_next_version_path_with_only_unversioned(mock_exists, mock_get_fileversions):
+    mock_get_fileversions.return_value = []
+    mock_exists.return_value = True
+    filepath = "/local/folder/file.parquet"
+    assert next_version_path(filepath) == "/local/folder/file_v2.parquet"

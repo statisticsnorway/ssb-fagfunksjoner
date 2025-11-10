@@ -16,6 +16,43 @@ from dapla import FileClient
 from fagfunksjoner.fagfunksjoner_logger import logger, silence_logger
 
 
+def _to_unversioned_path(filepath: str | Path) -> str:
+    """Return the unversioned variant of a filepath.
+
+    Examples:
+        '/dir/file_v2.parquet' -> '/dir/file.parquet'
+        '/dir/file.parquet' -> '/dir/file.parquet'
+    """
+    file_str = str(filepath)
+    file_ext = f".{file_str.rsplit('.', 1)[-1]}" if "." in file_str else ""
+    if "_v" in file_str:
+        return file_str.rsplit("_v", 1)[0] + file_ext
+    return file_str
+
+
+def _path_exists(path: str) -> bool:
+    """Check if a path exists either locally or in remote storage.
+
+    Uses `FileClient.get_gcs_file_system().exists` for remote paths and
+    `Path(path).exists()` for local paths.
+    """
+    try:
+        if (
+            path.startswith("gs://")
+            or path.startswith("http")
+            or path.startswith("ssb-")
+        ):
+            fs = FileClient.get_gcs_file_system()
+            # Most fsspec filesystems expose an `exists` method
+            res = fs.exists(path)
+            # Only trust explicit booleans; otherwise treat as not existing
+            return res if isinstance(res, bool) else False
+        return Path(path).exists()
+    except Exception:
+        # Be conservative if we cannot check; assume it doesn't exist
+        return False
+
+
 def get_version_number(filepath: str | Path) -> int:
     """Extracts the version number from a given file path.
 
@@ -314,46 +351,67 @@ def latest_version_path(filepath: str | Path) -> str | Path:
     files_list = get_fileversions(file_str)
     logger.info(f"Files_list: {files_list}")
 
-    # If versioned files are found:
+    # If entries are found, prefer versioned entries. If only unversioned are present, return them.
     if files_list:
-        # Get the latest file version based on the available files.
-        latest_files_list = get_latest_fileversions(files_list)
-        logger.info(f"Latest_files_list: {latest_files_list}")
+        # Separate versioned and unversioned candidates (supporting patched tests and edge-cases)
+        versioned = [f for f in files_list if "_v" in str(f)]
+        unversioned_candidates = [f for f in files_list if "_v" not in str(f)]
 
-        if len(latest_files_list) > 1:
-            list_print = [file.rsplit("/", 1) for file in latest_files_list]
-            raise ValueError(
-                f"The latest version returned more than one file: {list_print}"
-            )
+        if versioned:
+            # Get the latest version from versioned entries only
+            latest_files_list = get_latest_fileversions(versioned)
+            logger.info(f"Latest_files_list: {latest_files_list}")
 
-        latest_file = latest_files_list[0]
-
-        # Extract the version number from the latest file.
-        latest_version_number = get_version_number(latest_file)
-
-        # Log the detected latest version number.
-        logger.info(f"Latest version of file is number {latest_version_number}.")
-
-        # Check if the specified filepath contains a version number.
-        if "_v" in file_str:
-            # Extract the version number from the specified filepath.
-            specified_version = get_version_number(file_str)
-
-            # Compare the specified version with the detected latest version.
-            if latest_version_number > specified_version:
-                # Warn the user if the specified version is not the latest.
-                logger.warning(
-                    f"You specified a path with version {specified_version}, but we found a version {latest_version_number}. "
-                    "Are you sure you are working from the latest version?"
+            if len(latest_files_list) > 1:
+                list_print = [file.rsplit("/", 1) for file in latest_files_list]
+                raise ValueError(
+                    f"The latest version returned more than one file: {list_print}"
                 )
 
-        # Return the path to the latest version of the file.
-        if was_path:
-            return Path(latest_file)
-        return latest_file
+            latest_file = latest_files_list[0]
+
+            # Extract the version number from the latest file.
+            latest_version_number = get_version_number(latest_file)
+
+            # Log the detected latest version number.
+            logger.info(f"Latest version of file is number {latest_version_number}.")
+
+            # Check if the specified filepath contains a version number.
+            if "_v" in file_str:
+                # Extract the version number from the specified filepath.
+                specified_version = get_version_number(file_str)
+
+                # Compare the specified version with the detected latest version.
+                if latest_version_number > specified_version:
+                    # Warn the user if the specified version is not the latest.
+                    logger.warning(
+                        f"You specified a path with version {specified_version}, but we found a version {latest_version_number}. "
+                        "Are you sure you are working from the latest version?"
+                    )
+
+            # Return the path to the latest version of the file.
+            if was_path:
+                return Path(latest_file)
+            return latest_file
+
+        # No versioned entries, but something exists; return the unversioned entry (prefer first)
+        if unversioned_candidates:
+            if was_path:
+                return Path(str(unversioned_candidates[0]))
+            return str(unversioned_candidates[0])
 
     else:
         # Construct a pattern for version 1 if no versions are found.
+        # Before defaulting to v1 pattern, check if the unversioned file exists and return it
+        unversioned_path = _to_unversioned_path(file_str)
+        if _path_exists(unversioned_path):
+            logger.info(
+                "No versioned files found; returning unversioned file as latest."
+            )
+            if was_path:
+                return Path(unversioned_path)
+            return unversioned_path
+
         filepath_default = construct_file_pattern(
             filepath=file_str, version_denoter="1"
         )
@@ -366,47 +424,56 @@ def latest_version_path(filepath: str | Path) -> str | Path:
             return Path(filepath_default)
         return filepath_default
 
+    # Fallback: if control reaches here (shouldn't normally), return v1 pattern
+    filepath_default = construct_file_pattern(filepath=file_str, version_denoter="1")
+    if was_path:
+        return Path(filepath_default)
+    return filepath_default
+
 
 def latest_version_number(filepath: str | Path) -> int:
-    """Function for finding latest version in use for a file.
+    """Find the latest version number for a file.
 
-    Args:
-        filepath: GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
-            eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet
-            or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
-
-    Returns:
-        int: The latest version number for the file.
+    If versioned files exist, returns their highest version number.
+    If only an unversioned file exists, treat it as version 1.
+    If nothing exists, default to 1.
     """
-    return get_version_number(latest_version_path(str(filepath)))
+    latest = latest_version_path(str(filepath))
+    latest_str = str(latest)
+    if "_v" in latest_str:
+        return get_version_number(latest_str)
+    # Unversioned or default pattern; treat as version 1
+    return 1
 
 
 def next_version_number(filepath: str | Path) -> int:
-    """Function for finding next version for a new file.
+    """Find the next version number for a new file.
 
-    Args:
-        filepath: GCS filepath or local filepath, should be the full path, but needs to follow the naming standard.
-            eg. ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet
-            or /ssb/stammeXX/kortkode/inndata/skd_data/2023/skd_p2023-01_v1.parquet
-
-    Returns:
-        int: The next version number for the file.
+    - If versioned files exist, returns highest + 1.
+    - If only an unversioned file exists, warn and return 2.
+    - If nothing exists, return 1.
     """
     file_str = str(filepath)
-    # Get the list of file versions.
     versions = silence_logger(get_fileversions, file_str)
 
     if versions:
-        # Extract the version number from the latest file.
-        current_version_int = latest_version_number(file_str)
-        # Increment to get the next version number.
-        next_version_int = current_version_int + 1
-    else:
-        logger.info(f"Did not find any existing versions of the file: {versions}")
-        # Default to version 1 if no versions exist.
-        next_version_int = 1
+        # If versions include at least one versioned file, base on those; otherwise fall through
+        versioned = [f for f in versions if "_v" in str(f)]
+        if versioned:
+            current_version_int = latest_version_number(file_str)
+            return current_version_int + 1
 
-    return next_version_int
+    # No versioned files found; check for unversioned file
+    unversioned = _to_unversioned_path(file_str)
+    if _path_exists(unversioned):
+        logger.warning(
+            "Unversioned file exists alongside request for next version. "
+            "Consider renaming it to '_v1' and maintaining 'file' as a copy of latest."
+        )
+        return 2
+
+    logger.info("Did not find any existing versions of the file. Starting at v1.")
+    return 1
 
 
 def next_version_path(filepath: str | Path) -> str | Path:
@@ -430,35 +497,33 @@ def next_version_path(filepath: str | Path) -> str | Path:
     """
     was_path = isinstance(filepath, Path)
     file_str = str(filepath)
-    # Determine the next version number by incrementing the highest found version.
+
+    # Determine the next version number
     next_version_number_int = next_version_number(file_str)
 
-    # Get the path of the latest version of the specified file.
-    latest_file = silence_logger(latest_version_path, file_str)
-
-    # Extract the version number from the latest version of the file.
-    current_version_number_int = get_version_number(latest_file)
-
-    # Split the latest file path at "_v" to get the part before the version number.
-    first_part = latest_file.rsplit("_v", 1)[0]
-
-    # Replace the current version number with the next version number in the file path.
-    second_part = latest_file.rsplit("_v", 1)[-1].replace(
-        str(current_version_number_int), str(next_version_number_int)
+    # Build components similar to construct_file_pattern to preserve extras
+    file_ext = f".{file_str.rsplit('.', 1)[-1]}" if "." in file_str else ".parquet"
+    filepath_no_version = (
+        file_str.rsplit("_v", 1)[0]
+        if "_v" in file_str
+        else file_str.replace(file_ext, "")
     )
+    extras = ""
+    if "_v" in file_str:
+        after_v = file_str.rsplit("_v", 1)[1].rsplit(".", 1)[0]
+        look_for_non_digit = [c.isdigit() for c in after_v]
+        if False in look_for_non_digit:
+            i = look_for_non_digit.index(False)
+            extras = after_v[i:]
 
-    # Construct the new file path using the incremented version number.
-    new_path = f"{first_part}_v{second_part}"
+    # Construct new versioned path
+    new_path = f"{filepath_no_version}_v{next_version_number_int}{extras}{file_ext}"
 
-    # Extract the base file name from the new path for logging purposes.
     next_base_file_name = get_file_name(new_path)
-
-    # Log the next version number of the file for reference.
     logger.info(
         f"The next version of file {next_base_file_name} is {next_version_number_int}."
     )
 
-    # Return the new file path with the incremented version number.
     if was_path:
         return Path(new_path)
     return new_path
