@@ -476,7 +476,16 @@ def next_version_number(filepath: str | Path) -> int:
     return 1
 
 
-def next_version_path(filepath: str | Path) -> str | Path:
+@overload
+def next_version_path(filepath: Path, include_unversioned: bool = False) -> Path: ...
+@overload
+def next_version_path(filepath: str, include_unversioned: bool = False) -> str: ...
+@overload
+def next_version_path(filepath: Path, include_unversioned: bool = True) -> tuple[Path, Path]: ...
+@overload
+def next_version_path(filepath: str, include_unversioned: bool = True) -> tuple[str, str]: ...
+
+def next_version_path(filepath: str | Path, include_unversioned: bool = False) -> str | Path | tuple[str, str] | tuple[Path, Path]:
     """Generates a new file path with an incremented version number.
 
     Constructs a filepath for a new version of a file,
@@ -486,6 +495,7 @@ def next_version_path(filepath: str | Path) -> str | Path:
 
     Args:
         filepath: The path for the file.
+        include_unversioned: If we should include the unversioned path in a tuple when we return
 
     Returns:
         str | Path: The new file path with an incremented version number and specified suffix.
@@ -525,7 +535,12 @@ def next_version_path(filepath: str | Path) -> str | Path:
     )
 
     if was_path:
+        if include_unversioned:
+            return (Path(new_path), Path(filepath_no_version + file_ext),)
         return Path(new_path)
+    
+    if include_unversioned:
+        return (new_path, filepath_no_version + file_ext,)
     return new_path
 
 

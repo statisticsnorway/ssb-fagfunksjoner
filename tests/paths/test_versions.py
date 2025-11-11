@@ -193,6 +193,30 @@ def test_next_version_path(
     assert next_version_path(file_path) == expected
 
 
+# Test for `next_version_path` function with include_unversioned set to True
+@patch("fagfunksjoner.paths.versions.get_fileversions")
+@patch("fagfunksjoner.paths.versions.latest_version_path")
+@patch("fagfunksjoner.paths.versions.get_version_number")
+def test_next_version_path_include_unversioned(
+    mock_get_version_number, mock_latest_version_path, mock_get_fileversions
+):
+    mock_get_fileversions.return_value = [
+        "gs://bucket/folder/file_v1.parquet",
+        "gs://bucket/folder/file_v2.parquet",
+    ]
+    mock_latest_version_path.return_value = "gs://bucket/folder/file_v2.parquet"
+    mock_get_version_number.return_value = 2
+
+    file_path = "gs://bucket/folder/file_v2.parquet"
+    expected = ("gs://bucket/folder/file_v3.parquet", "gs://bucket/folder/file.parquet")
+    assert next_version_path(file_path, include_unversioned=True) == expected
+
+    mock_get_fileversions.return_value = [p.replace("gs://", "/") for p in mock_get_fileversions.return_value]
+    expected = (Path("/bucket/folder/file_v3.parquet"), Path("/bucket/folder/file.parquet"),)
+    assert next_version_path(Path(file_path.replace("gs://", "/")), include_unversioned=True) == expected
+
+
+
 def test_several_startswith():
     inputs = [
         "gs://bucket/folder/nevner_verifisert_v1.parquet",
