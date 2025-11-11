@@ -257,7 +257,10 @@ def _multi_currency_json() -> dict:
                             "observations": {"0": ["8.50"]},
                         },
                         # FREQ:0 (A), BASE_CUR:1 (DKK), QUOTE_CUR:0 (NOK), TENOR:0 (SP)
-                        "0:1:0:0": {"attributes": [0, 1, 1, 0], "observations": {"0": ["1.25"]}},
+                        "0:1:0:0": {
+                            "attributes": [0, 1, 1, 0],
+                            "observations": {"0": ["1.25"]},
+                        },
                     },
                 }
             ],
@@ -297,9 +300,7 @@ def _multi_currency_json() -> dict:
                             "description": "",
                             "keyPosition": 2,
                             "role": None,
-                            "values": [
-                                {"id": "NOK", "name": "Norske kroner"}
-                            ],
+                            "values": [{"id": "NOK", "name": "Norske kroner"}],
                         },
                         {
                             "id": "TENOR",
@@ -396,7 +397,9 @@ def mock_response_multi():
         yield mock_get
 
 
-def test_download_exchange_rates_multiple_currencies_unit_mult_by_currency(mock_response_multi):
+def test_download_exchange_rates_multiple_currencies_unit_mult_by_currency(
+    mock_response_multi,
+):
     data = download_exchange_rates(
         frequency="A", currency="USD+DKK", date_from="2021-01-01", date_to="2021-12-31"
     ).df
@@ -412,5 +415,3 @@ def test_download_exchange_rates_multiple_currencies_unit_mult_by_currency(mock_
     assert set(usd_rows["UNIT_MULT_id"]) == {"0"}
     assert set(dkk_rows["UNIT_MULT"]) == {"Hundre"}
     assert set(dkk_rows["UNIT_MULT_id"]) == {"2"}
-
-

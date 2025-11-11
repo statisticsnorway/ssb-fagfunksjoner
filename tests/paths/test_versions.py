@@ -211,10 +211,19 @@ def test_next_version_path_include_unversioned(
     expected = ("gs://bucket/folder/file_v3.parquet", "gs://bucket/folder/file.parquet")
     assert next_version_path(file_path, include_unversioned=True) == expected
 
-    mock_get_fileversions.return_value = [p.replace("gs://", "/") for p in mock_get_fileversions.return_value]
-    expected = (Path("/bucket/folder/file_v3.parquet"), Path("/bucket/folder/file.parquet"),)
-    assert next_version_path(Path(file_path.replace("gs://", "/")), include_unversioned=True) == expected
-
+    mock_get_fileversions.return_value = [
+        p.replace("gs://", "/") for p in mock_get_fileversions.return_value
+    ]
+    expected = (
+        Path("/bucket/folder/file_v3.parquet"),
+        Path("/bucket/folder/file.parquet"),
+    )
+    assert (
+        next_version_path(
+            Path(file_path.replace("gs://", "/")), include_unversioned=True
+        )
+        == expected
+    )
 
 
 def test_several_startswith():
