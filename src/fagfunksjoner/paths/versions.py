@@ -9,7 +9,7 @@ for example the __DOC.json-files, will not work, because they do not end with "_
 
 import glob
 from pathlib import Path
-from typing import overload
+from typing import Literal, overload
 
 from dapla import FileClient
 
@@ -477,16 +477,20 @@ def next_version_number(filepath: str | Path) -> int:
 
 
 @overload
-def next_version_path(filepath: Path, include_unversioned: bool = False) -> Path: ...
-@overload
-def next_version_path(filepath: str, include_unversioned: bool = False) -> str: ...
+def next_version_path(
+    filepath: Path, include_unversioned: Literal[False] = ...
+) -> Path: ...
 @overload
 def next_version_path(
-    filepath: Path, include_unversioned: bool = True
+    filepath: str, include_unversioned: Literal[False] = ...
+) -> str: ...
+@overload
+def next_version_path(
+    filepath: Path, include_unversioned: Literal[True]
 ) -> tuple[Path, Path]: ...
 @overload
 def next_version_path(
-    filepath: str, include_unversioned: bool = True
+    filepath: str, include_unversioned: Literal[True]
 ) -> tuple[str, str]: ...
 
 
