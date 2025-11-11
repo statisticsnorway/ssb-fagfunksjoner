@@ -4,7 +4,8 @@ from typing import Any
 
 import pandas as pd
 import requests
-from dateutil import parser
+
+from fagfunksjoner.fagfunksjoner_logger import logger
 
 
 @dataclass
@@ -278,6 +279,9 @@ def parse_datasets(datasets_data: list[dict[str, Any]]) -> list[DataSet]:
     return datasets
 
 
+_PERIOD_WARNING_EMITTED = False
+
+
 def create_dataframe(data_obj: Data, structure_obj: Structure) -> pd.DataFrame:
     """Create a DataFrame from data and structure objects.
 
@@ -288,6 +292,14 @@ def create_dataframe(data_obj: Data, structure_obj: Structure) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A pandas DataFrame created from the data and structure objects.
     """
+    global _PERIOD_WARNING_EMITTED
+    if not _PERIOD_WARNING_EMITTED:
+        logger.warning(
+            "TIME_PERIOD fields are now returned as strings without implicit date parsing. "
+            "Cast to datetime/period explicitly if needed."
+        )
+        _PERIOD_WARNING_EMITTED = True
+
     records = []
 
     for dataset_obj in data_obj.dataSets:
@@ -307,7 +319,7 @@ def make_single_dataframe_record(
     obs_key: str,
     obs_value: list[str],
     structure_obj: Structure,
-) -> dict[str, str | float | datetime.datetime]:
+) -> dict[str, str | float]:
     """Create a single record for a pandas DataFrame from a series and observation.
 
     This function generates a dictionary representing a single row in a pandas
@@ -324,16 +336,16 @@ def make_single_dataframe_record(
     Returns:
         dict[str, str | float]: A dictionary representing a single record in the DataFrame.
     """
-    observation_fields: dict[str, str | datetime.datetime] = {}
+    observation_fields: dict[str, str] = {}
     for dim in structure_obj.dimensions.get("observation", []):
         observation: dict[str, str] = next(
             (val for i, val in enumerate(dim.values) if i == int(obs_key))
         )
         observation_fields |= {
-            f"{dim.id}_{field}": parser.parse(val) for field, val in observation.items()
+            f"{dim.id}_{field}": val for field, val in observation.items()
         }
 
-    record: dict[str, str | float | datetime.datetime] = {
+    record: dict[str, str | float] = {
         **{
             dim.id: dim.values[int(series_key.split(":")[dim.keyPosition])]["name"]
             for dim in structure_obj.dimensions.get("series", [])
