@@ -52,7 +52,7 @@ for p, v1, v2 in zip(periods, base1, base2, strict=False):
             "unit": "percent",
             "data_period": period_str,
             # Explicit tolerances: 5% relative change is warning, 10% is critical
-            "tol": {"warning": 0.05, "critical": 0.10},
+            # "tol": {"warning": 0.05, "critical": 0.10},
         },
     )
 
@@ -76,11 +76,11 @@ print("Finished logging synthetic indicators.")
 # -------------------------------------------------------------------
 
 auto_cfg = AutoToleranceConfig(
-    ref_strategy_for_sigma="previous",  # relative change vs previous period
-    n_hist=12,  # use up to last 12 periods
+    ref_strategy_for_sigma="median",  # relative change vs previous period
+    n_hist=12,
     min_points=6,  # need at least 6 points
-    k_warning=1.0,  # 1 * sigma_rel for warning
-    k_critical=2.0,  # 2 * sigma_rel for critical
+    k_warning=1.0,  # k_w * sigma_rel for warning
+    k_critical=2.0,  # k_c * sigma_rel for critical
     use_mad=True,  # robust estimate
 )
 
@@ -95,14 +95,26 @@ logger = QualIndLogger(
 # 3a. Compare one indicator across periods (tabular)
 # -------------------------------------------------------------------
 
+# +
 df_missing = logger.compare_periods(
     "share_missing_id",
     n_periods=12,
-    ref_strategy="previous",
-    style=False,
+    ref_strategy="rolling_mean",
+    style=True,
+    print_style=True,
 )
-print("\n=== share_missing_id, previous-period rel_change ===")
-print(df_missing.to_string(index=False))
+# print("\n=== share_missing_id, previous-period rel_change ===")
+# print(df_missing.to_string(index=False))
+
+# +
+df_missing = logger.compare_periods(
+    "share_missing_id",
+    n_periods=12,
+    ref_strategy="median",
+    style=True,
+    print_style=True,
+)
+# -
 
 # -------------------------------------------------------------------
 # 3b. Same indicator, but styled using explicit tol (warning/critical)

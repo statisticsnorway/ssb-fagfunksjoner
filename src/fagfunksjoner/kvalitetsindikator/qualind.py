@@ -19,7 +19,13 @@ from fagfunksjoner import logger
 # Type aliases for clarity
 tolerance_t = dict[str, float]
 reference_strategy_t = Literal[
-    "previous", "rolling_mean", "abs_mean", "seasonal", "specific"
+    "previous",
+    "rolling_mean",
+    "abs_mean",
+    "seasonal",
+    "specific",
+    "median",
+    "rolling_median",
 ]
 
 
@@ -27,12 +33,15 @@ reference_strategy_t = Literal[
 class AutoToleranceConfig:
     """Configuration for automatic tolerance inference from historical data."""
 
-    ref_strategy_for_sigma: str = "previous"
+    ref_strategy_for_sigma: str = (
+        "median"  # Reference strategy used only for computing the historical rel_change distribution used in tolerance estimation. This is independent of the reference strategy used when displaying or exporting comparisons.
+    )
     n_hist: int = 24  # periods of history to use
     min_points: int = 6  # minimum number of non-NaN rel_change
     k_warning: float = 1.0
     k_critical: float = 2.0
     use_mad: bool = True  # median absolute deviation (mad)
+    fail_on_insufficient_history: bool = False
 
 
 class QualityIndicator(BaseModel):
@@ -278,7 +287,8 @@ class QualIndLogger:
 
         df = self._collect_indicator_series(indicator, n_periods)
 
-        values = df["value"].astype(float)
+        # Coerce to numeric; invalid and missing values become NaN
+        values = pd.to_numeric(df["value"], errors="coerce")
         if ref_strategy == "previous":
             ref = values.shift(1)
         elif ref_strategy == "rolling_mean":
@@ -296,6 +306,16 @@ class QualIndLogger:
             mapping = dict(zip(df["period"], values, strict=False))
             ref_val = mapping.get(specific_period)
             ref = pd.Series([ref_val] * len(values), index=df.index)
+
+        elif ref_strategy == "median":
+            # Compare to (shifted) global median of history (more robust than mean)
+            history = values.shift(1).dropna()
+            baseline = history.median() if len(history) else pd.NA
+            ref = pd.Series([baseline] * len(values), index=df.index)
+
+        elif ref_strategy == "rolling_median":
+            # Compare to rolling median of previous periods
+            ref = values.shift(1).rolling(mean_periods, min_periods=1).median()
         else:
             raise ValueError(f"Unknown strategy {ref_strategy}")
 
@@ -351,7 +371,6 @@ class QualIndLogger:
 
             # get / compute tol for this indicator
             if ind_key not in tol_cache:
-                # raw_tol = self.indicators.get(ind_key, {}).get("tol", {})
                 raw_tol = self.get_tolerance_for_indicator(ind_key)
                 tol_cache[ind_key] = _normalize_tol(raw_tol)
 
@@ -359,12 +378,15 @@ class QualIndLogger:
             if not tol:
                 return [""] * len(row)
 
-            # optional: enforce tier order (critical before warning, etc.)
-            for tier, thresh in tol.items():
-                if abs(rel) > thresh:
-                    color = colors_merged.get(tier, "")
-                    return [f"background-color: {color}"] * len(row)
-
+            # --- NEW: pick the most severe breached tier ---
+            breached: list[tuple[str, float]] = [
+                (tier, thresh) for tier, thresh in tol.items() if abs(rel) > thresh
+            ]
+            if breached:
+                # choose the tier with the largest threshold (most severe)
+                tier, _ = max(breached, key=lambda kv: kv[1])
+                color = colors_merged.get(tier, "")
+                return [f"background-color: {color}"] * len(row)
             return [""] * len(row)
 
         return df.style.apply(style_row, axis=1)
@@ -409,6 +431,15 @@ class QualIndLogger:
         )
         rel = hist["rel_change"].dropna().astype(float)
         if len(rel) < cfg.min_points:
+            msg = (
+                f"Insufficient history to compute automatic tolerance for '{indicator}'. "
+                f"Found {len(rel)} non-missing rel_change values, "
+                f"but require at least {cfg.min_points}."
+            )
+            if cfg.fail_on_insufficient_history:
+                # Raise a clear, domain-specific error instead of a cryptic TypeError
+                raise RuntimeError(msg)
+            logger.warning(msg)
             return {}  # too little data → no auto tol
 
         rel_window = rel.tail(cfg.n_hist)

@@ -1,0 +1,22 @@
+{
+    "share_missing_id": {
+        "title": "Share of records with missing person ID",
+        "description": "Number of employment records without a valid person ID divided by total.",
+        "value": 0.03188112943278243,
+        "unit": "percent",
+        "data_period": "2024-04",
+        "timestamp": "2025-12-02T12:11:46.481481",
+        "metadata": null,
+        "tol": null
+    },
+    "avg_employments_per_person": {
+        "title": "Average number of employments per person",
+        "description": "Mean number of concurrent employments for active persons.",
+        "value": 1.5128141507423352,
+        "unit": "count",
+        "data_period": "2024-04",
+        "timestamp": "2025-12-02T12:11:46.481633",
+        "metadata": null,
+        "tol": null
+    }
+}
