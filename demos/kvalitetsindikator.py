@@ -1,138 +1,208 @@
-from fagfunksjoner import QualIndLogger
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+from fagfunksjoner.kvalitetsindikator.qualind import AutoToleranceConfig, QualIndLogger
 
 
-general_format = {
-    "title": "title of quality indicator.",
-    "description": "description of quality indicator.",
-    "type": "type of indicator, should be some pre-defined category.",
-    "unit": "percent, count, etc. ",
-    "data_period": "YYYY-MM",
-    "data_source": "dataset filepaths.",
-    "value": "NaN",
-}
+# -------------------------------------------------------------------
+# 1. Setup: where logs live, and synthetic monthly periods
+# -------------------------------------------------------------------
 
-# ### Setter opp noen eksempler på kvalitetsindikatorer som følger malen i 'general format'
-#
-# legger så hver kvalitetsindikator i en dictionary med et kortnavn på kvalitetsindikatoren som nøkkel.
+LOG_DIR = Path("demo_kvalind_logs")
+LOG_DIR.mkdir(exist_ok=True)
 
-# +
-path_to_logs = "/buckets/produkt/logg/prosessdata/"
-year = 2024
-month = "03"
+# We'll simulate 12 months of data for 2024
+periods = pd.period_range("2024-01", "2024-12", freq="M")
 
-names = [
-    "koble_inntmot_p_t",
-    "koble_inntmo_p_t+1",
-    "arbeidsforhold_filter",
-    "ant_kobl_p_t+1",
-    "aktive_jobber_filter",
-    "total_filter_arbforh",
-]
+# Synthetic indicator 1: share of missing IDs, around 3% with some noise
+rng = np.random.default_rng(42)
+base1 = 0.03 + 0.002 * rng.standard_normal(len(periods))
+# add one spike (e.g. data issue) in September
+base1[8] += 0.02  # 2024-09 spike
 
-titles = [
-    "Andel som kobler mot inntmot for periode t",
-    "Andel som kobler mot inntmot for periode t+1",
-    "Andel filtrert bort på arb_type",
-    "Andel arbeidsforhold hentet fra måned etter statistikkmnd (t+1).",
-    "Andel filtrert bort pga inaktivt arbeidsforhold",
-    "Total andel filtrert bort i uttrekk av arbeidsforhold",
-]
+# Synthetic indicator 2: average number of employments per person, mild trend
+base2 = 1.5 + 0.01 * np.arange(len(periods)) + 0.02 * rng.standard_normal(len(periods))
 
-descriptions = [
-    "Kobler arbforh mot inntmot, andel som ikke kobler.",
-    "Kobler arbforh mot inntmot, andel som ikke kobler.",
-    "Filtrerer bort arb_type = 'pensjon'.",
-    "Henter arbeidsforhold fra neste mnd.",
-    "arbeidsforhold som ikke er aktive i statistikkmnd filtrerers bort.",
-    "Total andel filtrert bort i hele uttrekket av arbeidsforhold.",
-]
+# -------------------------------------------------------------------
+# 2. Log indicators for each period
+#    Important: we create a new QualIndLogger for each period when logging
+# -------------------------------------------------------------------
 
-_type = [
-    "koblingsrate",
-    "koblingsrate",
-    "filter",
-    "koblingsrate",
-    "koblingsrate",
-    "filter",
-]
+for p, v1, v2 in zip(periods, base1, base2, strict=False):
+    year = p.year
+    month = p.month
 
-unit = ["percent", "percent", "percent", "percent", "percent", "percent"]
+    logger = QualIndLogger(
+        log_dir=LOG_DIR,
+        year=year,
+        month=month,
+    )
 
+    period_str = f"{year}-{month:02d}"
 
-# dette må oppdateres mtp datoer og versjoner av filer i programmet som produserer kvalitetsindikatorene
-data_source = [
-    ["path/to/input/file1.parquet", "path/to/input/file2.parquet"],
-    ["path/to/input/file1.parquet", "path/to/input/file2.parquet"],
-    ["path/to/input/file1.parquet"],
-    ["path/to/input/file1.parquet"],
-    ["path/to/input/file1.parquet"],
-    ["path/to/input/file1.parquet"],
-]
+    # Indicator A: explicit tolerances (percent, relative change)
+    logger.log_indicator(
+        "share_missing_id",
+        {
+            "title": "Share of records with missing person ID",
+            "description": "Number of employment records without a valid person ID divided by total.",
+            "value": float(v1),
+            "unit": "percent",
+            "data_period": period_str,
+            # Explicit tolerances: 5% relative change is warning, 10% is critical
+            "tol": {"warning": 0.05, "critical": 0.10},
+        },
+    )
 
-kval_ind_templates = {}
-for i in range(len(names)):
-    kval_ind_templates[names[i]] = {
-        "title": titles[i],
-        "description": descriptions[i],
-        "type": _type[i],
-        "unit": unit[i],
-        "data_period": f"{year}-{month}",
-        "data_source": data_source[i],
-        "value": "NaN",
-    }
-# -
+    # Indicator B: NO explicit tol, will use auto tolerance (MAD-based)
+    logger.log_indicator(
+        "avg_employments_per_person",
+        {
+            "title": "Average number of employments per person",
+            "description": "Mean number of concurrent employments for active persons.",
+            "value": float(v2),
+            "unit": "count",
+            "data_period": period_str,
+            # no 'tol' key → auto tolerance will be derived later
+        },
+    )
 
-# ## Demo
+print("Finished logging synthetic indicators.")
 
-# ### Initier klassen med filsti til logg-mappe og datoer for kjøring av produksjonsløp.
-#
-# Hvis det finnes en logg-fil med dette datostempelet, hvis klassen importere denne.
+# -------------------------------------------------------------------
+# 3. Analyse latest period (December 2024) with auto-tolerances enabled
+# -------------------------------------------------------------------
 
-qual_ind_logger = QualIndLogger("/buckets/produkt/logg/prosessdata/", 2024, "03")
+auto_cfg = AutoToleranceConfig(
+    ref_strategy_for_sigma="previous",  # relative change vs previous period
+    n_hist=12,  # use up to last 12 periods
+    min_points=6,  # need at least 6 points
+    k_warning=1.0,  # 1 * sigma_rel for warning
+    k_critical=2.0,  # 2 * sigma_rel for critical
+    use_mad=True,  # robust estimate
+)
 
-# ### Logger en kvalitetsindikator vha klasseinstansen
+logger = QualIndLogger(
+    log_dir=LOG_DIR,
+    year=2024,
+    month=12,
+    auto_tol_config=auto_cfg,
+)
 
-# +
-# kortnavnet på en av kvalitetsindikatorene som er definert over.
-qual_ind = "koble_inntmot_p_t"
-# sender inn malen for valgt kvalitetsindikator
-qual_ind_logger.log_indicator(qual_ind, kval_ind_templates[qual_ind])
+# -------------------------------------------------------------------
+# 3a. Compare one indicator across periods (tabular)
+# -------------------------------------------------------------------
 
-# oppdaterer med verdi for kvalitetsindikatoren
-qual_ind_logger.update_indicator_value(qual_ind, "value", "66")
-# -
+df_missing = logger.compare_periods(
+    "share_missing_id",
+    n_periods=12,
+    ref_strategy="previous",
+    style=False,
+)
+print("\n=== share_missing_id, previous-period rel_change ===")
+print(df_missing.to_string(index=False))
 
-# ### Sammenlikne flere periode for en kvalitetsindikator
-#
-# Vi logger først noen flere kvalitetsindikatorer for flere periode, så vi har noe å sammenlikne
+# -------------------------------------------------------------------
+# 3b. Same indicator, but styled using explicit tol (warning/critical)
+# -------------------------------------------------------------------
 
-# +
-# definerer syntetiske verdier på kvalitetsindikatorene, og datoer for "kjøring"
-values = [i for i in range(45, 50)]
-years = [2023 for i in range(5)]
-months = [i for i in range(1, 6)]
+styled_missing = logger.compare_periods(
+    "share_missing_id",
+    n_periods=12,
+    ref_strategy="previous",
+    style=True,
+    print_style=False,  # set True in a notebook to display directly
+)
+# In a Jupyter notebook you would do:
+# display(styled_missing)
 
-for i in range(len(years)):
-    value = values[i]
-    year = years[i]
-    month = months[i]
+# -------------------------------------------------------------------
+# 3c. Indicator without explicit tol → auto tolerance from history
+# -------------------------------------------------------------------
 
-    qual_ind_logger = QualIndLogger("/buckets/produkt/logg/prosessdata/", year, month)
-    qual_ind = qual_ind = "koble_inntmot_p_t"
-    qual_ind_logger.log_indicator(qual_ind, kval_ind_templates[qual_ind])
-    qual_ind_logger.update_indicator_value(qual_ind, "value", value)
-# -
+df_avg = logger.compare_periods(
+    "avg_employments_per_person",
+    n_periods=12,
+    ref_strategy="previous",
+    style=False,
+)
+print("\n=== avg_employments_per_person, previous-period rel_change ===")
+print(df_avg.to_string(index=False))
 
-# ### Så bruker vi klassen til å printe en enkel sammenlikning
+# Show what auto tolerance was inferred
+tol_avg = logger.get_tolerance_for_indicator("avg_employments_per_person")
+print("\nAuto tolerance for avg_employments_per_person:", tol_avg)
 
-# +
-# tar utgangspunkt i en statistikkmnd da
-year = 2023
-month = "05"
-qual_ind_logger = QualIndLogger("/buckets/produkt/logg/prosessdata/", year, month)
+styled_avg = logger.compare_periods(
+    "avg_employments_per_person",
+    n_periods=12,
+    ref_strategy="previous",
+    style=True,
+)
+# In notebook: display(styled_avg)
 
-# indikaktoren vi vil gjør en sammenlikning over tid med
-qual_ind = qual_ind = "koble_inntmot_p_t"
+# -------------------------------------------------------------------
+# 4. Systemize all indicators (long format) and style it
+# -------------------------------------------------------------------
 
-qual_ind_logger.compare_months(qual_ind, n_periods=5)
-# -
+long_df = logger.systemize_process_data(
+    n_periods=12,
+    ref_strategy="previous",
+    style=False,
+)
+print("\n=== Long-format indicators (all) ===")
+print(long_df.to_string(index=False))
+
+styled_long = logger.systemize_process_data(
+    n_periods=12,
+    ref_strategy="previous",
+    style=True,
+)
+# In notebook: display(styled_long)
+
+# -------------------------------------------------------------------
+# 5. Filter rows that breach a given tolerance tier
+# -------------------------------------------------------------------
+
+# For a single indicator:
+breaches_warning = logger.filter_by_tolerance(
+    df=df_missing,
+    indicator="share_missing_id",
+    tier="warning",
+)
+print("\n=== Warning breaches for share_missing_id ===")
+print(breaches_warning.to_string(index=False))
+
+# -------------------------------------------------------------------
+# 6. Check pass/fail for latest period
+# -------------------------------------------------------------------
+
+# check_pass expects df with a single indicator in 'indicator' column
+df_missing_with_ind = df_missing.copy()
+df_missing_with_ind["indicator"] = "share_missing_id"
+
+passed = logger.check_pass(
+    df=df_missing_with_ind,
+    indicator="share_missing_id",
+    critical_tier="critical",
+)
+print("\nLatest period (share_missing_id) passes critical tolerance?", passed)
+
+# -------------------------------------------------------------------
+# 7. Optional: export to Excel
+# -------------------------------------------------------------------
+
+# from fagfunksjoner.kvalitetsindikator.qualind import make_wide_df  # or wherever it's defined
+
+out_dir = Path("demo_kvalind_reports")
+# out_dir.mkdir(exist_ok=True)
+logger.export_kvalinds_to_excel(
+    out_path=out_dir,
+    indicators=None,  # all indicators
+    change_cols=["rel_change"],
+    n_periods=12,
+    ref_strategy="previous",
+)
+print(f"\nExported Excel report to: {out_dir}")

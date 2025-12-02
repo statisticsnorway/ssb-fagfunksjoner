@@ -53,7 +53,7 @@ from fagfunksjoner.data.pandas_combinations import (
 from fagfunksjoner.data.pandas_dtypes import auto_dtype
 from fagfunksjoner.data.view_dataframe import view_dataframe
 from fagfunksjoner.formats.formats import SsbFormat
-from fagfunksjoner.kvalitetsindikator.qual_ind import QualIndLogger
+from fagfunksjoner.kvalitetsindikator.qualind import QualIndLogger
 from fagfunksjoner.log.statlogger import StatLogger
 from fagfunksjoner.paths.project_root import ProjectRoot
 from fagfunksjoner.paths.versions import get_latest_fileversions, next_version_path

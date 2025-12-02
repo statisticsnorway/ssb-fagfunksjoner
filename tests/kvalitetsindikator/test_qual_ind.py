@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from fagfunksjoner.kvalitetsindikator.qual_ind import (
+from fagfunksjoner.kvalitetsindikator.qualind import (
     QualIndLogger,
     QualityIndicator,
     highlight_rel_change,
