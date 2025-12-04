@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from fagfunksjoner.kvalitetsindikator.qualind import AutoToleranceConfig, QualIndLogger
+from fagfunksjoner.quality_indicator import AutoToleranceConfig, QualIndLogger
 
 
 # -------------------------------------------------------------------
@@ -75,6 +75,17 @@ print("Finished logging synthetic indicators.")
 # 3. Analyse latest period (December 2024) with auto-tolerances enabled
 # -------------------------------------------------------------------
 
+# ## The AutoToleranceConfig contains parameters used to estimate a reasonable tolerance relative change should not exceed
+#
+# The values in the config below are its default values, so it doesn't actually need to be specified.
+#
+# If no tolerance for the relative change e.g. {'warning': 0.05, 'critical': 0.1} is logged together with the indicator, like for 'avg_employments_per_person', then the QualIndLogger will estimate its own tolerance in the relative change space.
+# By default this tolerance is estimated using MAD (median absolute deviation), which is similar to standard deviation, but less volatile/sensitive to outliers. 
+# * n_hist determines how many period-observation the tolerance should be estimated from and the ref_strategy_for_sigma  determines which method to use to calculate relative change which is used in the tolerance estimation.
+# * k_warning and k_critical determines the sigma factor for the tolerance.
+# * use_mad is a bolean argument to indicate if you want to use MAD or normal standard deviation. 
+#
+
 # +
 auto_cfg = AutoToleranceConfig(
     ref_strategy_for_sigma="median",  # relative change vs previous period
@@ -104,23 +115,9 @@ a = logger.compare_periods(
     style=True,
     print_style=True,
 )
-# print("\n=== share_missing_id, previous-period rel_change ===")
-# print(df_missing.to_string(index=False))
 
 # -------------------------------------------------------------------
-# 3b. Same indicator, but styled using explicit tol (warning/critical)
-# -------------------------------------------------------------------
-
-a = logger.compare_periods(
-    "share_missing_id",
-    n_periods=12,
-    ref_strategy="median",
-    style=True,
-    print_style=True,  # set True in a notebook to display directly
-)
-
-# -------------------------------------------------------------------
-# 3c. Indicator without explicit tol → auto tolerance from history
+# 3b. Indicator without explicit tol → auto tolerance from history
 # -------------------------------------------------------------------
 
 a = logger.compare_periods(
@@ -135,30 +132,23 @@ a = logger.compare_periods(
 tol_avg = logger.get_tolerance_for_indicator("avg_employments_per_person")
 print("\nAuto tolerance for avg_employments_per_person:", tol_avg)
 
-a = logger.compare_periods(
-    "avg_employments_per_person",
-    n_periods=25,
-    ref_strategy="median",
-    style=True,
-    print_style=True,
-)
-
 # -------------------------------------------------------------------
-# 4. Systemize all indicators (long format) and style it
+# 4. Systemize all indicators (long format)
 # -------------------------------------------------------------------
 
-long_df = logger.systemize_process_data(
+long_df = logger.collect_long_df(
     n_periods=12,
-    ref_strategy="rolling_median",
+    ref_strategy="median",
     style=False,
 )
+long_df
 
 # -------------------------------------------------------------------
 # 5. Filter rows that breach a given tolerance tier
 # -------------------------------------------------------------------
 
 # For a single indicator:
-breaches_warning = logger.filter_by_tolerance(
+breaches_warning = logger.filter_breaches(
     df=long_df,
     indicator="share_missing_id",
     # tier="warning",
@@ -170,31 +160,36 @@ print(breaches_warning.to_string(index=False))
 # 6. Check pass/fail for latest period
 # -------------------------------------------------------------------
 
-# check_pass expects df with a single indicator in 'indicator' column
-df_missing_with_ind = long_df.copy()
-df_missing_with_ind["indicator"] = "share_missing_id"
+a = logger.compare_periods(
+    "share_missing_id",
+    n_periods=5,
+    ref_strategy="median",
+    style=True,
+    print_style=True,
+)
 
-all_statuses = logger.check_pass()
-# e.g. {"avg_employments_per_person": True, "something_else": True, ...}
-if not all(all_statuses.values()):
-    failing = [k for k, v in all_statuses.items() if not v]
-    print("Indicators failing:", failing)
-else:
-    print("All indicators passed")
+# ### If the last row in the table above is red, then we expect the assert in this next cell to fail.
+
+indicator='share_missing_id'
+assert logger.check_latest_pass(
+    indicator=indicator,
+    n_periods=5,
+    ref_strategy = 'median'), f"Latest period for indicator '{indicator}' failed with a relative change of {round(a.data['rel_change'].to_list()[-1]*100, 1)}%"
 
 # -------------------------------------------------------------------
 # 7. Optional: export to Excel
 # -------------------------------------------------------------------
 
-# from fagfunksjoner.kvalitetsindikator.qualind import make_wide_df  # or wherever it's defined
+# ### Export to excel. Open excel file in new browser tab to download file. 
 
 out_dir = Path("demo_kvalind_reports")
 # out_dir.mkdir(exist_ok=True)
 logger.export_kvalinds_to_excel(
     out_path=out_dir,
     # indicators=None,  # all indicators
-    # change_cols=["rel_change"],
     n_periods=12,
-    # ref_strategy="median",
+    ref_strategy="median",
 )
 print(f"\nExported Excel report to: {out_dir}")
+
+
