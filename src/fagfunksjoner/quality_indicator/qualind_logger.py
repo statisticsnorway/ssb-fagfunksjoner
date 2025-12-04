@@ -84,7 +84,7 @@ class QualIndLogger:
         year: int | str,
         month: int | str | None = None,
         quarter: int | str | None = None,
-        auto_tol_config: AutoToleranceConfig | None = None,  # <-- add this
+        auto_tol_config: AutoToleranceConfig | None = None,
     ) -> None:
         """Initialize the QualIndLogger.
 
