@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -21,8 +22,7 @@ tolerance_t = dict[str, float]
 reference_strategy_t = Literal[
     "previous",
     "rolling_mean",
-    "abs_mean",
-    "seasonal",
+    "mean",
     "specific",
     "median",
     "rolling_median",
@@ -217,12 +217,27 @@ class QualIndLogger:
         indicator: str,
         n_periods: int,
     ) -> pd.DataFrame:
-        """Helper: fetch values and units for last n_periods."""
+        """Helper: fetch values and units for last n_periods.
+
+        Note:
+            `n_periods` is a maximum lookback. If there are fewer logged
+            periods (i.e. no JSON file), fewer rows are returned.
+        """
         periods = self._get_prev_periods(n_periods)
-        recs = []
+        recs: list[dict[str, Any]] = []
+
         for d in reversed(periods):
             p = self._format_period(d)
-            entry = self.get_logs(p).get(indicator, {})
+            logs = self.get_logs(p)
+
+            # If there is no log file / no process_data for this period, skip it
+            if not logs:
+                continue
+
+            # If log exists but this specific indicator is missing,
+            # we still include the period with value = NA (as before)
+            entry = logs.get(indicator, {})
+
             recs.append(
                 {
                     "period": p,
@@ -230,6 +245,11 @@ class QualIndLogger:
                     "unit": entry.get("unit", ""),
                 }
             )
+
+        if not recs:
+            # No data at all - return an empty frame with the expected columns
+            return pd.DataFrame(columns=["period", "value", "unit"])
+
         return pd.DataFrame(recs)
 
     def compare_periods(
@@ -238,7 +258,6 @@ class QualIndLogger:
         n_periods: int = 5,
         ref_strategy: reference_strategy_t = "previous",
         mean_periods: int = 5,
-        seasonal_lag: int | None = None,
         specific_period: str | None = None,
         print_df: bool = False,
         style: bool = False,
@@ -256,12 +275,9 @@ class QualIndLogger:
             ref_strategy: Strategy for reference value calculation:
                 - 'previous': compare to immediately prior period.
                 - 'rolling_mean': compare to the mean of the n previous periods.
-                - 'abs_mean': compare to mean of the n last periods (not including latest).
-                - 'seasonal': compare to the same period one year ago (or `seasonal_lag`).
+                - 'mean': compare to mean of the n last periods (not including latest).
                 - 'specific': compare to a user-defined `specific_period`.
-            mean_periods: Number of periods to average for 'mean' strategy (default: 5).
-            seasonal_lag: Lag in periods for 'seasonal' strategy (default: 12 months or
-                4 quarters).
+            mean_periods: Window length for mean/median-based reference strategies.
             specific_period: Specific period string (e.g., '2024-05' or '2024_Q2') for
                 'specific'.
             print_df: If True, print the raw DataFrame to console.
@@ -293,11 +309,8 @@ class QualIndLogger:
             ref = values.shift(1)
         elif ref_strategy == "rolling_mean":
             ref = values.shift(1).rolling(mean_periods, min_periods=1).mean()
-        elif ref_strategy == "abs_mean":
+        elif ref_strategy == "mean":
             ref = _recent_mean_baseline(values, mean_periods)
-        elif ref_strategy == "seasonal":
-            lag = seasonal_lag or (12 if self.frequency == "monthly" else 4)
-            ref = values.shift(lag)
         elif ref_strategy == "specific":
             if not specific_period:
                 raise ValueError(
@@ -395,16 +408,65 @@ class QualIndLogger:
         self,
         df: pd.DataFrame,
         indicator: str,
-        tier: str,
+        tier: str | list[str] | None = None,
     ) -> pd.DataFrame:
-        """Return rows where abs(rel_change) exceeds the given tolerance tier."""
+        """Return rows that breach tolerance thresholds.
+
+        Args:
+            df: DataFrame from compare_periods/systemize_process_data.
+            indicator: Indicator key.
+            tier:
+                - "warning": only warning breaches
+                - "critical": only critical breaches
+                - ["warning", "critical"]: both
+                - None: return all breached tiers.
+
+        Returns:
+            DataFrame with added 'breach_tier' column, filtered to the requested tiers.
+
+        Raises:
+            ValueError: If the indicator has no defined tolerances, or if `tier`
+                contains a tier name not present in the tolerance configuration.
+        """
         tol = self.get_tolerance_for_indicator(indicator)
-        thresh = tol.get(tier)
-        if thresh is None:
+        if not tol:
+            raise ValueError(f"No tolerance defined for indicator '{indicator}'.")
+
+        warning = tol.get("warning")
+        critical = tol.get("critical")
+
+        if warning is None and critical is None:
             raise ValueError(
-                f"Tier '{tier}' not defined in tolerances for '{indicator}'."
+                f"No tiered tolerances found for '{indicator}'. "
+                "Expected at least 'warning' or 'critical'."
             )
-        return df[df["rel_change"].abs() > thresh]
+
+        # Normalize tier input
+        if tier is None:
+            wanted_tiers = {"warning", "critical"}
+        elif isinstance(tier, str):
+            wanted_tiers = {tier}
+        else:
+            wanted_tiers = set(tier)
+
+        abs_rel = df["rel_change"].abs()
+
+        # Determine actual breach tier row-by-row
+        def classify(val: float | pd.NA) -> str | pd.NA:
+            if pd.isna(val):
+                return pd.NA
+            if critical is not None and val > critical:
+                return "critical"
+            if warning is not None and val > warning:
+                return "warning"
+            return pd.NA
+
+        df = df.copy()
+        df["breach_tier"] = abs_rel.apply(classify)
+
+        # Filter based on wanted tiers
+        mask = df["breach_tier"].isin(wanted_tiers)
+        return df[mask].reset_index(drop=True)
 
     def get_tolerance_for_indicator(self, indicator: str) -> dict[str, float]:
         """Return tolerance dict for an indicator.
@@ -461,23 +523,75 @@ class QualIndLogger:
 
     def check_pass(
         self,
-        df: pd.DataFrame,
-        indicator: str,
+        indicator: str | list[str] | None = None,
         critical_tier: str = "critical",
-    ) -> bool:
-        """Return True if the latest period's rel_change is within the critical tolerance."""
-        tol = self.get_tolerance_for_indicator(indicator)
-        crit = tol.get(critical_tier)
-        # No critical threshold defined → treat as pass
-        if crit is None:
-            return True
+        n_periods: int = 5,
+        ref_strategy: reference_strategy_t = "median",
+        mean_periods: int = 5,
+        specific_period: str | None = None,
+    ) -> bool | dict[str, bool]:
+        """Check whether the latest period passes the critical tolerance.
 
-        assert len(df["indicator"].unique()) == 1, (
-            "The 'check_pass'-function only handles pass/fail of one "
-            "quality indicator at a time"
-        )
-        latest_rel = df["rel_change"].iloc[-1]
-        return pd.isna(latest_rel) or abs(latest_rel) <= crit
+        If `indicator` is a string, returns a single bool.
+        If `indicator` is a list or None, returns a dict[indicator -> bool].
+
+        Args:
+            indicator:
+                - str: single indicator key.
+                - list[str]: multiple indicator keys.
+                - None: use all indicators in this logger.
+            critical_tier: Tolerance tier to use for pass/fail (default "critical").
+            n_periods: Number of periods to use when computing rel_change.
+            ref_strategy: Reference strategy used for rel_change.
+            mean_periods: Window size for mean/median-based strategies.
+            specific_period: Specific period string for 'specific' strategy.
+
+        Returns:
+            bool or dict[str, bool]: pass/fail for latest period.
+        """
+        # Normalise indicator(s)
+        if indicator is None:
+            indicators = list(self.indicators.keys())
+        elif isinstance(indicator, str):
+            indicators = [indicator]
+        else:
+            indicators = list(indicator)
+
+        results: dict[str, bool] = {}
+
+        for ind_key in indicators:
+            tol = self.get_tolerance_for_indicator(ind_key)
+            crit = tol.get(critical_tier)
+
+            # No threshold defined → treat as pass
+            if crit is None:
+                results[ind_key] = True
+                continue
+
+            # Build comparison df for this indicator
+            df = self.compare_periods(
+                ind_key,
+                n_periods=n_periods,
+                ref_strategy=ref_strategy,
+                mean_periods=mean_periods,
+                specific_period=specific_period,
+                style=False,
+            )
+
+            if df.empty or "rel_change" not in df.columns:
+                # No data → by convention treat as pass (or you could log a warning)
+                results[ind_key] = True
+                continue
+
+            latest_rel = df["rel_change"].iloc[-1]
+            passed = pd.isna(latest_rel) or abs(latest_rel) <= crit
+            results[ind_key] = bool(passed)
+
+        # If the caller passed a single indicator, return a bool, not a dict
+        if isinstance(indicator, str):
+            return results[indicator]
+
+        return results
 
     def _format_period(self, d: datetime) -> str:
         if self.frequency == "monthly":
@@ -493,7 +607,6 @@ class QualIndLogger:
         n_periods: int = 5,
         ref_strategy: reference_strategy_t = "previous",
         mean_periods: int = 5,
-        seasonal_lag: int | None = None,
         specific_period: str | None = None,
         style: bool = False,
         colors: dict[str, str] | None = None,
@@ -510,7 +623,6 @@ class QualIndLogger:
                 n_periods=n_periods,
                 ref_strategy=ref_strategy,
                 mean_periods=mean_periods,
-                seasonal_lag=seasonal_lag,
                 specific_period=specific_period,
                 style=False,
             )
@@ -532,41 +644,179 @@ class QualIndLogger:
         indicators: list[str] | None = None,
         change_cols: list[str] | None = None,
         n_periods: int = 5,
-        ref_strategy: reference_strategy_t = "previous",
+        ref_strategy: reference_strategy_t = "median",
         mean_periods: int = 5,
-        seasonal_lag: int | None = None,
         specific_period: str | None = None,
         colors: dict[str, str] | None = None,
         engine: str = "openpyxl",
+        include_overview: bool = True,
+        include_metadata: bool = True,
+        per_indicator_sheets: bool = True,
     ) -> None:
-        """Export both long and wide indicator comparisons to Excel.
+        """Export quality-indicator comparisons to an Excel workbook.
 
-        Uses the same parameters as `systemize_process_data` for reference strategy and
-        optional styling.
+        The workbook can contain:
+            - overview_long: all indicators in long format
+            - overview_wide: wide pivot (one column per indicatorxmetric)
+            - metadata: titles, descriptions, units, tolerances, latest values
+            - one sheet per indicator (optional)
         """
         if change_cols is None:
             change_cols = ["rel_change"]
-        out_path = Path(out_path)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Generate long with styling flag turned off
+        out_path = Path(out_path)
+        out_path.mkdir(parents=True, exist_ok=True)
+
+        # Decide which indicators to work with
+        if indicators is None:
+            indicators = list(self.indicators.keys())
+
+        # --- 1) Build long-format data for all indicators ---
         long_df = self.systemize_process_data(
             indicators=indicators,
             n_periods=n_periods,
             ref_strategy=ref_strategy,
             mean_periods=mean_periods,
-            seasonal_lag=seasonal_lag,
             specific_period=specific_period,
             style=False,
         )
-        # Generate wide
-        wide = make_wide_df(long_df, change_cols)
 
+        # --- 2) Wide-format overview ---
+        wide_df = make_wide_df(long_df, change_cols)
+
+        # --- 3) Metadata table ---
+        if include_metadata:
+            meta_rows: list[dict[str, Any]] = []
+            for ind_key in indicators:
+                raw = self.indicators.get(ind_key, {})
+                tol = self.get_tolerance_for_indicator(ind_key)
+
+                # Use latest non-NA row from long_df for this indicator
+                df_ind = long_df[long_df["indicator"] == ind_key].copy()
+                df_ind = df_ind.dropna(subset=["value"])
+
+                if not df_ind.empty:
+                    latest_row = df_ind.iloc[-1]
+                    latest_period = latest_row["period"]
+                    latest_value = latest_row["value"]
+                    latest_rel_change = latest_row.get("rel_change", pd.NA)
+                else:
+                    latest_period = None
+                    latest_value = None
+                    latest_rel_change = pd.NA
+
+                # Compute breach tier for the latest period (highest tier breached)
+                breach = None
+                if tol and pd.notna(latest_rel_change):
+                    warning = tol.get("warning")
+                    critical = tol.get("critical")
+                    abs_rel = abs(float(latest_rel_change))
+
+                    if critical is not None and abs_rel > critical:
+                        breach = "critical"
+                    elif warning is not None and abs_rel > warning:
+                        breach = "warning"
+
+                meta_rows.append(
+                    {
+                        "key": ind_key,
+                        "latest_period": latest_period,
+                        "latest_value": latest_value,
+                        "unit": raw.get("unit", ""),
+                        "latest_rel_change": latest_rel_change,
+                        "breach": breach,
+                        "tol_warning": tol.get("warning"),
+                        "tol_critical": tol.get("critical"),
+                        "title": raw.get("title", ""),
+                        "description": raw.get("description", ""),
+                    }
+                )
+
+            metadata_df = pd.DataFrame(meta_rows)
+
+            # Reorder columns as requested
+            desired_cols = [
+                "key",
+                "latest_period",
+                "latest_value",
+                "unit",
+                "latest_rel_change",
+                "breach",
+                "tol_warning",
+                "tol_critical",
+                "title",
+                "description",
+            ]
+            # In case something is missing for some reason, intersect with existing
+            metadata_df = metadata_df[
+                [c for c in desired_cols if c in metadata_df.columns]
+            ]
+
+        # --- 4) Helper to add breach_tier/pass_critical columns per indicator ---
+        def _add_breach_columns(df_ind: pd.DataFrame, ind_key: str) -> pd.DataFrame:
+            tol = self.get_tolerance_for_indicator(ind_key)
+            if not tol:
+                df_ind["breach_tier"] = pd.NA
+                df_ind["pass_critical"] = True
+                return df_ind
+
+            warning = tol.get("warning")
+            critical = tol.get("critical")
+
+            abs_rel = df_ind["rel_change"].abs()
+
+            def classify(val: float | pd.NA) -> str | pd.NA:
+                if pd.isna(val):
+                    return pd.NA
+                if critical is not None and val > critical:
+                    return "critical"
+                if warning is not None and val > warning:
+                    return "warning"
+                return pd.NA
+
+            df_ind["breach_tier"] = abs_rel.apply(classify)
+
+            if critical is None:
+                df_ind["pass_critical"] = True
+            else:
+                df_ind["pass_critical"] = abs_rel.le(critical) | abs_rel.isna()
+
+            return df_ind
+
+        # --- 5) Write everything to Excel ---
         final_file = out_path / f"kvalind_report_p{self.period_str}.xlsx"
+
+        def _sanitize_sheet_name(name: str) -> str:
+            # Excel sheet names: max 31 chars, no []:*?/\
+            clean = re.sub(r"[\[\]:*?/\\]", "_", name)
+            return clean[:31] or "sheet"
+
         with pd.ExcelWriter(final_file, engine=engine) as writer:
-            long_df.to_excel(writer, sheet_name="long", index=False)
-            wide.to_excel(writer, sheet_name="wide", index=False)
-        logger.info(f"Exported report to {final_file}")
+            if include_overview:
+                long_df.to_excel(writer, sheet_name="overview_long", index=False)
+                wide_df.to_excel(writer, sheet_name="overview_wide", index=False)
+
+            if include_metadata:
+                metadata_df.to_excel(writer, sheet_name="metadata", index=False)
+
+            if per_indicator_sheets:
+                for ind_key in indicators:
+                    df_ind = (
+                        long_df[long_df["indicator"] == ind_key]
+                        .copy()
+                        .sort_values("period")
+                        .reset_index(drop=True)
+                    )
+                    df_ind = _add_breach_columns(df_ind, ind_key)
+
+                    # Drop the redundant indicator column in the per-indicator sheet
+                    if "indicator" in df_ind.columns:
+                        df_ind = df_ind.drop(columns=["indicator"])
+
+                    sheet_name = _sanitize_sheet_name(f"ind_{ind_key}")
+                    df_ind.to_excel(writer, sheet_name=sheet_name, index=False)
+
+        logger.info(f"Exported quality-indicator report to {final_file}")
 
 
 def make_wide_df(
