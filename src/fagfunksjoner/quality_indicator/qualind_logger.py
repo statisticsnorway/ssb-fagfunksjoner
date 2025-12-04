@@ -21,8 +21,8 @@ from fagfunksjoner import logger
 tolerance_t = dict[str, float]
 reference_strategy_t = Literal[
     "previous",
-    "rolling_mean",
     "mean",
+    "rolling_mean",
     "specific",
     "median",
     "rolling_median",
@@ -36,7 +36,7 @@ class AutoToleranceConfig:
     ref_strategy_for_sigma: str = (
         "median"  # Reference strategy used only for computing the historical rel_change distribution used in tolerance estimation. This is independent of the reference strategy used when displaying or exporting comparisons.
     )
-    n_hist: int = 24  # periods of history to use
+    n_hist: int = 12  # periods of history to use
     min_points: int = 6  # minimum number of non-NaN rel_change
     k_warning: float = 1.0
     k_critical: float = 2.0
@@ -171,7 +171,7 @@ class QualIndLogger:
         with open(self.log_file, "w", encoding="utf-8") as f:
             json.dump(self.indicators, f, indent=4, ensure_ascii=False)
 
-    def get_logs(self, period_str: str) -> dict[str, Any]:
+    def load_period_log(self, period_str: str) -> dict[str, Any]:
         """Load logs for a given period string (e.g. '2025-05').
 
         Args:
@@ -228,7 +228,7 @@ class QualIndLogger:
 
         for d in reversed(periods):
             p = self._format_period(d)
-            logs = self.get_logs(p)
+            logs = self.load_period_log(p)
 
             # If there is no log file / no process_data for this period, skip it
             if not logs:
@@ -256,8 +256,8 @@ class QualIndLogger:
         self,
         indicator: str,
         n_periods: int = 5,
-        ref_strategy: reference_strategy_t = "previous",
-        mean_periods: int = 5,
+        ref_strategy: reference_strategy_t = "median",
+        history_window: int | None = None,
         specific_period: str | None = None,
         print_df: bool = False,
         style: bool = False,
@@ -277,7 +277,7 @@ class QualIndLogger:
                 - 'rolling_mean': compare to the mean of the n previous periods.
                 - 'mean': compare to mean of the n last periods (not including latest).
                 - 'specific': compare to a user-defined `specific_period`.
-            mean_periods: Window length for mean/median-based reference strategies.
+            history_window: Window length for computing mean/median-based reference strategies. Dafaults to n_periods if None
             specific_period: Specific period string (e.g., '2024-05' or '2024_Q2') for
                 'specific'.
             print_df: If True, print the raw DataFrame to console.
@@ -295,22 +295,36 @@ class QualIndLogger:
                 provided.
         """
 
-        def _recent_mean_baseline(values: pd.Series, mean_periods: int) -> pd.Series:
+        def _recent_mean_baseline(values: pd.Series, history_window: int) -> pd.Series:
             # Exclude current value when computing baseline
-            recent_history = values.shift(1).dropna().tail(mean_periods)
+            recent_history = values.shift(1).dropna().tail(history_window)
             baseline = recent_history.mean() if len(recent_history) else pd.NA
             return pd.Series([baseline] * len(values), index=values.index)
 
+        if history_window is None:
+            history_window = n_periods
         df = self._collect_indicator_series(indicator, n_periods)
 
         # Coerce to numeric; invalid and missing values become NaN
         values = pd.to_numeric(df["value"], errors="coerce")
-        if ref_strategy == "previous":
-            ref = values.shift(1)
+        history = values.shift(1)  # always exclude current
+        if ref_strategy == "mean":
+            # Single baseline: mean of last `history_window` periods
+            baseline = history.tail(history_window).mean()
+            ref = pd.Series([baseline] * len(values), index=df.index)
+
+        elif ref_strategy == "median":
+            # Single baseline: median of last `history_window` periods
+            baseline = history.tail(history_window).median()
+            ref = pd.Series([baseline] * len(values), index=df.index)
+
         elif ref_strategy == "rolling_mean":
-            ref = values.shift(1).rolling(mean_periods, min_periods=1).mean()
-        elif ref_strategy == "mean":
-            ref = _recent_mean_baseline(values, mean_periods)
+            ref = history.rolling(history_window, min_periods=1).mean()
+
+        elif ref_strategy == "rolling_median":
+            ref = history.rolling(history_window, min_periods=1).median()
+        elif ref_strategy == "previous":
+            ref = values.shift(1)
         elif ref_strategy == "specific":
             if not specific_period:
                 raise ValueError(
@@ -319,16 +333,6 @@ class QualIndLogger:
             mapping = dict(zip(df["period"], values, strict=False))
             ref_val = mapping.get(specific_period)
             ref = pd.Series([ref_val] * len(values), index=df.index)
-
-        elif ref_strategy == "median":
-            # Compare to (shifted) global median of history (more robust than mean)
-            history = values.shift(1).dropna()
-            baseline = history.median() if len(history) else pd.NA
-            ref = pd.Series([baseline] * len(values), index=df.index)
-
-        elif ref_strategy == "rolling_median":
-            # Compare to rolling median of previous periods
-            ref = values.shift(1).rolling(mean_periods, min_periods=1).median()
         else:
             raise ValueError(f"Unknown strategy {ref_strategy}")
 
@@ -336,7 +340,7 @@ class QualIndLogger:
         df["rel_change"] = (values - ref) / ref.replace({0: pd.NA})
 
         if style:
-            styled = self.style_with_tolerance(
+            styled = self.style_tolerances(
                 df.assign(indicator=indicator), indicator, colors=colors
             )
             if print_style:
@@ -346,7 +350,7 @@ class QualIndLogger:
             print(df.to_string(index=False))
         return df
 
-    def style_with_tolerance(
+    def style_tolerances(
         self,
         df: pd.DataFrame,
         indicator: str | None,
@@ -404,7 +408,7 @@ class QualIndLogger:
 
         return df.style.apply(style_row, axis=1)
 
-    def filter_by_tolerance(
+    def filter_breaches(
         self,
         df: pd.DataFrame,
         indicator: str,
@@ -413,7 +417,7 @@ class QualIndLogger:
         """Return rows that breach tolerance thresholds.
 
         Args:
-            df: DataFrame from compare_periods/systemize_process_data.
+            df: DataFrame from compare_periods/collect_long_df.
             indicator: Indicator key.
             tier:
                 - "warning": only warning breaches
@@ -521,77 +525,53 @@ class QualIndLogger:
             "critical": cfg.k_critical * sigma_rel,
         }
 
-    def check_pass(
+    def check_latest_pass(
         self,
-        indicator: str | list[str] | None = None,
-        critical_tier: str = "critical",
+        indicator: str,
+        tier: str = "critical",
         n_periods: int = 5,
         ref_strategy: reference_strategy_t = "median",
-        mean_periods: int = 5,
+        history_window: int | None = None,
         specific_period: str | None = None,
-    ) -> bool | dict[str, bool]:
-        """Check whether the latest period passes the critical tolerance.
-
-        If `indicator` is a string, returns a single bool.
-        If `indicator` is a list or None, returns a dict[indicator -> bool].
+    ) -> bool:
+        """Return True if the latest period's rel_change is within the given tolerance tier.
 
         Args:
-            indicator:
-                - str: single indicator key.
-                - list[str]: multiple indicator keys.
-                - None: use all indicators in this logger.
-            critical_tier: Tolerance tier to use for pass/fail (default "critical").
-            n_periods: Number of periods to use when computing rel_change.
-            ref_strategy: Reference strategy used for rel_change.
-            mean_periods: Window size for mean/median-based strategies.
+            indicator: Indicator key.
+            tier: Tolerance tier to use for pass/fail (e.g. "critical" or "warning").
+            n_periods: Number of periods to include in the comparison.
+            ref_strategy: Reference strategy for computing rel_change.
+            history_window: Optional window length used by mean/median-based strategies.
+                If None, defaults to n_periods inside compare_periods.
             specific_period: Specific period string for 'specific' strategy.
 
         Returns:
-            bool or dict[str, bool]: pass/fail for latest period.
+            True if the latest period passes the given tier, or if no threshold is defined.
         """
-        # Normalise indicator(s)
-        if indicator is None:
-            indicators = list(self.indicators.keys())
-        elif isinstance(indicator, str):
-            indicators = [indicator]
-        else:
-            indicators = list(indicator)
+        # Resolve tolerance for this indicator
+        tol = self.get_tolerance_for_indicator(indicator)
+        thresh = tol.get(tier)
 
-        results: dict[str, bool] = {}
+        # No threshold for this tier → convention: treat as pass
+        if thresh is None:
+            return True
 
-        for ind_key in indicators:
-            tol = self.get_tolerance_for_indicator(ind_key)
-            crit = tol.get(critical_tier)
+        # Build comparison df for this indicator
+        df = self.compare_periods(
+            indicator=indicator,
+            n_periods=n_periods,
+            ref_strategy=ref_strategy,
+            history_window=history_window,  # or history_window if you rename
+            specific_period=specific_period,
+            style=False,
+        )
 
-            # No threshold defined → treat as pass
-            if crit is None:
-                results[ind_key] = True
-                continue
+        if df.empty or "rel_change" not in df.columns:
+            # No data → by convention treat as pass (or you could log a warning)
+            return True
 
-            # Build comparison df for this indicator
-            df = self.compare_periods(
-                ind_key,
-                n_periods=n_periods,
-                ref_strategy=ref_strategy,
-                mean_periods=mean_periods,
-                specific_period=specific_period,
-                style=False,
-            )
-
-            if df.empty or "rel_change" not in df.columns:
-                # No data → by convention treat as pass (or you could log a warning)
-                results[ind_key] = True
-                continue
-
-            latest_rel = df["rel_change"].iloc[-1]
-            passed = pd.isna(latest_rel) or abs(latest_rel) <= crit
-            results[ind_key] = bool(passed)
-
-        # If the caller passed a single indicator, return a bool, not a dict
-        if isinstance(indicator, str):
-            return results[indicator]
-
-        return results
+        latest_rel = df["rel_change"].iloc[-1]
+        return pd.isna(latest_rel) or abs(latest_rel) <= thresh
 
     def _format_period(self, d: datetime) -> str:
         if self.frequency == "monthly":
@@ -601,12 +581,12 @@ class QualIndLogger:
             return f"{d.year}_Q{q}"
         return f"{d.year}"
 
-    def systemize_process_data(
+    def collect_long_df(
         self,
         indicators: list[str] | None = None,
         n_periods: int = 5,
-        ref_strategy: reference_strategy_t = "previous",
-        mean_periods: int = 5,
+        ref_strategy: reference_strategy_t = "median",
+        history_window: int | None = None,
         specific_period: str | None = None,
         style: bool = False,
         colors: dict[str, str] | None = None,
@@ -616,13 +596,15 @@ class QualIndLogger:
         Computes absolute and relative change using the chosen reference strategy.
         Optionally returns a styled Styler.
         """
+        if history_window is None:
+            history_window = n_periods
         rows: list[dict[str, Any]] = []
         for indicator in indicators or list(self.indicators.keys()):
             df = self.compare_periods(
                 indicator,
                 n_periods=n_periods,
                 ref_strategy=ref_strategy,
-                mean_periods=mean_periods,
+                history_window=history_window,
                 specific_period=specific_period,
                 style=False,
             )
@@ -635,7 +617,7 @@ class QualIndLogger:
         long = long.sort_values(["indicator", "period"]).reset_index(drop=True)
 
         if style:
-            return self.style_with_tolerance(long.copy(), None, colors=colors)
+            return self.style_tolerances(long.copy(), None, colors=colors)
         return long
 
     def export_kvalinds_to_excel(
@@ -645,7 +627,7 @@ class QualIndLogger:
         change_cols: list[str] | None = None,
         n_periods: int = 5,
         ref_strategy: reference_strategy_t = "median",
-        mean_periods: int = 5,
+        history_window: int | None = None,
         specific_period: str | None = None,
         colors: dict[str, str] | None = None,
         engine: str = "openpyxl",
@@ -664,6 +646,9 @@ class QualIndLogger:
         if change_cols is None:
             change_cols = ["rel_change"]
 
+        if history_window is None:
+            history_window = n_periods
+
         out_path = Path(out_path)
         out_path.mkdir(parents=True, exist_ok=True)
 
@@ -672,11 +657,11 @@ class QualIndLogger:
             indicators = list(self.indicators.keys())
 
         # --- 1) Build long-format data for all indicators ---
-        long_df = self.systemize_process_data(
+        long_df = self.collect_long_df(
             indicators=indicators,
             n_periods=n_periods,
             ref_strategy=ref_strategy,
-            mean_periods=mean_periods,
+            history_window=history_window,
             specific_period=specific_period,
             style=False,
         )
@@ -828,7 +813,7 @@ def make_wide_df(
     Parameters
     ----------
     long_df : pd.DataFrame
-        Output of systemize_process_data(), containing:
+        Output of collect_long_df(), containing:
         ['indicator', 'period', 'value', 'abs_change', 'rel_change', 'unit']
 
     change_cols : list[str]
