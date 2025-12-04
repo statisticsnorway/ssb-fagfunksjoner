@@ -14,7 +14,7 @@ LOG_DIR = Path("demo_kvalind_logs")
 LOG_DIR.mkdir(exist_ok=True)
 
 # We'll simulate 12 months of data for 2024
-periods = pd.period_range("2024-01", "2024-12", freq="M")
+periods = pd.period_range("2022-01", "2024-12", freq="M")
 
 # Synthetic indicator 1: share of missing IDs, around 3% with some noise
 rng = np.random.default_rng(42)
@@ -52,7 +52,7 @@ for p, v1, v2 in zip(periods, base1, base2, strict=False):
             "unit": "percent",
             "data_period": period_str,
             # Explicit tolerances: 5% relative change is warning, 10% is critical
-            # "tol": {"warning": 0.05, "critical": 0.10},
+            "tol": {"warning": 0.05, "critical": 0.10},
         },
     )
 
@@ -75,6 +75,7 @@ print("Finished logging synthetic indicators.")
 # 3. Analyse latest period (December 2024) with auto-tolerances enabled
 # -------------------------------------------------------------------
 
+# +
 auto_cfg = AutoToleranceConfig(
     ref_strategy_for_sigma="median",  # relative change vs previous period
     n_hist=12,
@@ -90,70 +91,57 @@ logger = QualIndLogger(
     month=12,
     auto_tol_config=auto_cfg,
 )
+# -
 
 # -------------------------------------------------------------------
 # 3a. Compare one indicator across periods (tabular)
 # -------------------------------------------------------------------
 
-# +
-df_missing = logger.compare_periods(
+a = logger.compare_periods(
     "share_missing_id",
-    n_periods=12,
-    ref_strategy="rolling_mean",
+    n_periods=5,
+    ref_strategy="mean",
     style=True,
     print_style=True,
 )
 # print("\n=== share_missing_id, previous-period rel_change ===")
 # print(df_missing.to_string(index=False))
 
-# +
-df_missing = logger.compare_periods(
-    "share_missing_id",
-    n_periods=12,
-    ref_strategy="median",
-    style=True,
-    print_style=True,
-)
-# -
-
 # -------------------------------------------------------------------
 # 3b. Same indicator, but styled using explicit tol (warning/critical)
 # -------------------------------------------------------------------
 
-styled_missing = logger.compare_periods(
+a = logger.compare_periods(
     "share_missing_id",
     n_periods=12,
-    ref_strategy="previous",
+    ref_strategy="median",
     style=True,
-    print_style=False,  # set True in a notebook to display directly
+    print_style=True,  # set True in a notebook to display directly
 )
-# In a Jupyter notebook you would do:
-# display(styled_missing)
 
 # -------------------------------------------------------------------
 # 3c. Indicator without explicit tol → auto tolerance from history
 # -------------------------------------------------------------------
 
-df_avg = logger.compare_periods(
+a = logger.compare_periods(
     "avg_employments_per_person",
     n_periods=12,
-    ref_strategy="previous",
-    style=False,
+    ref_strategy="median",
+    style=True,
+    print_style=True,
 )
-print("\n=== avg_employments_per_person, previous-period rel_change ===")
-print(df_avg.to_string(index=False))
 
 # Show what auto tolerance was inferred
 tol_avg = logger.get_tolerance_for_indicator("avg_employments_per_person")
 print("\nAuto tolerance for avg_employments_per_person:", tol_avg)
 
-styled_avg = logger.compare_periods(
+a = logger.compare_periods(
     "avg_employments_per_person",
-    n_periods=12,
-    ref_strategy="previous",
+    n_periods=25,
+    ref_strategy="median",
     style=True,
+    print_style=True,
 )
-# In notebook: display(styled_avg)
 
 # -------------------------------------------------------------------
 # 4. Systemize all indicators (long format) and style it
@@ -161,18 +149,9 @@ styled_avg = logger.compare_periods(
 
 long_df = logger.systemize_process_data(
     n_periods=12,
-    ref_strategy="previous",
+    ref_strategy="rolling_median",
     style=False,
 )
-print("\n=== Long-format indicators (all) ===")
-print(long_df.to_string(index=False))
-
-styled_long = logger.systemize_process_data(
-    n_periods=12,
-    ref_strategy="previous",
-    style=True,
-)
-# In notebook: display(styled_long)
 
 # -------------------------------------------------------------------
 # 5. Filter rows that breach a given tolerance tier
@@ -180,9 +159,9 @@ styled_long = logger.systemize_process_data(
 
 # For a single indicator:
 breaches_warning = logger.filter_by_tolerance(
-    df=df_missing,
+    df=long_df,
     indicator="share_missing_id",
-    tier="warning",
+    # tier="warning",
 )
 print("\n=== Warning breaches for share_missing_id ===")
 print(breaches_warning.to_string(index=False))
@@ -192,15 +171,16 @@ print(breaches_warning.to_string(index=False))
 # -------------------------------------------------------------------
 
 # check_pass expects df with a single indicator in 'indicator' column
-df_missing_with_ind = df_missing.copy()
+df_missing_with_ind = long_df.copy()
 df_missing_with_ind["indicator"] = "share_missing_id"
 
-passed = logger.check_pass(
-    df=df_missing_with_ind,
-    indicator="share_missing_id",
-    critical_tier="critical",
-)
-print("\nLatest period (share_missing_id) passes critical tolerance?", passed)
+all_statuses = logger.check_pass()
+# e.g. {"avg_employments_per_person": True, "something_else": True, ...}
+if not all(all_statuses.values()):
+    failing = [k for k, v in all_statuses.items() if not v]
+    print("Indicators failing:", failing)
+else:
+    print("All indicators passed")
 
 # -------------------------------------------------------------------
 # 7. Optional: export to Excel
@@ -212,9 +192,9 @@ out_dir = Path("demo_kvalind_reports")
 # out_dir.mkdir(exist_ok=True)
 logger.export_kvalinds_to_excel(
     out_path=out_dir,
-    indicators=None,  # all indicators
-    change_cols=["rel_change"],
+    # indicators=None,  # all indicators
+    # change_cols=["rel_change"],
     n_periods=12,
-    ref_strategy="previous",
+    # ref_strategy="median",
 )
 print(f"\nExported Excel report to: {out_dir}")
