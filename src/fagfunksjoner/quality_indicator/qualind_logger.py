@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal  
+from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -33,9 +33,8 @@ reference_strategy_t = Literal[
 class AutoToleranceConfig:
     """Configuration for automatic tolerance inference from historical data."""
 
-    ref_strategy_for_sigma: str = (
-        "median"  # Reference strategy used only for computing the historical rel_change distribution used in tolerance estimation. This is independent of the reference strategy used when displaying or exporting comparisons.
-    )
+    # Use the same literal type as compare_periods
+    ref_strategy_for_sigma: reference_strategy_t = "median"
     n_hist: int = 12  # periods of history to use
     min_points: int = 6  # minimum number of non-NaN rel_change
     k_warning: float = 1.0
@@ -173,19 +172,18 @@ class QualIndLogger:
 
     def load_period_log(self, period_str: str) -> dict[str, Any]:
         """Load logs for a given period string (e.g. '2025-05')."""
-    
         path = self.log_dir / f"process_data_p{period_str}.json"
-    
+
         if path.exists():
             try:
                 with open(path, encoding="utf-8") as f:
                     data: Any = json.load(f)
-    
+
                 if isinstance(data, dict):
                     return data
                 else:
                     return {}
-    
+
             except json.JSONDecodeError:
                 print(
                     f"Warning: Could not parse JSON for period {period_str}, returning empty."
@@ -296,18 +294,22 @@ class QualIndLogger:
                 provided.
         """
 
-        def _recent_mean_baseline(values: pd.Series[float], history_window: int) -> pd.Series[float]:
+        def _recent_mean_baseline(
+            values: pd.Series[float], history_window: int
+        ) -> pd.Series[float]:
             """Compute a constant baseline: mean of the last `history_window` historical values.
-        
+
             The returned series has the same index as `values`, with the scalar
             baseline repeated in every row.
             """
             # Exclude current value when computing baseline
             recent_history = values.shift(1).dropna().tail(history_window)
-        
+
             # Use np.nan instead of pd.NA to keep this float-typed
-            baseline: float = float(recent_history.mean()) if len(recent_history) else float("nan")
-        
+            baseline: float = (
+                float(recent_history.mean()) if len(recent_history) else float("nan")
+            )
+
             return pd.Series([baseline] * len(values), index=values.index)
 
         if history_window is None:
@@ -353,7 +355,7 @@ class QualIndLogger:
                 df.assign(indicator=indicator), indicator, colors=colors
             )
             if print_style:
-                display(styled) # type: ignore[no-untyped-call]
+                display(styled)  # type: ignore[no-untyped-call]
             return styled
         if print_df:
             print(df.to_string(index=False))
@@ -385,7 +387,7 @@ class QualIndLogger:
         if colors:
             colors_merged.update(colors)
 
-        def style_row(row: pd.Series) -> list[str]:
+        def style_row(row: pd.Series[Any]) -> list[str]:
             rel = row.get("rel_change")
             if pd.isna(rel):
                 return [""] * len(row)
@@ -465,14 +467,17 @@ class QualIndLogger:
         abs_rel = df["rel_change"].abs()
 
         # Determine actual breach tier row-by-row
-        def classify(val: float | pd.NA) -> str | pd.NA:
+        def classify(val: float | None) -> str | None:
             if pd.isna(val):
-                return pd.NA
+                return None
+            assert isinstance(
+                val, int | float
+            ), f"Unexpected type for rel_change: {type(val)}"
             if critical is not None and val > critical:
                 return "critical"
             if warning is not None and val > warning:
                 return "warning"
-            return pd.NA
+            return None
 
         df = df.copy()
         df["breach_tier"] = abs_rel.apply(classify)
@@ -504,7 +509,11 @@ class QualIndLogger:
             ref_strategy=cfg.ref_strategy_for_sigma,
             style=False,
         )
-        rel = hist["rel_change"].dropna().astype(float)
+
+        # We know style=False → compare_periods returns a DataFrame here
+        hist_df = cast(pd.DataFrame, hist)
+
+        rel = hist_df["rel_change"].dropna().astype(float)
         if len(rel) < cfg.min_points:
             msg = (
                 f"Insufficient history to compute automatic tolerance for '{indicator}'. "
@@ -566,7 +575,7 @@ class QualIndLogger:
             return True
 
         # Build comparison df for this indicator
-        df = self.compare_periods(
+        df_result = self.compare_periods(
             indicator=indicator,
             n_periods=n_periods,
             ref_strategy=ref_strategy,
@@ -574,13 +583,20 @@ class QualIndLogger:
             specific_period=specific_period,
             style=False,
         )
-
+        df = cast(pd.DataFrame, df_result)
         if df.empty or "rel_change" not in df.columns:
             # No data → by convention treat as pass (or you could log a warning)
             return True
 
         latest_rel = df["rel_change"].iloc[-1]
-        return pd.isna(latest_rel) or abs(latest_rel) <= thresh
+        # If latest_rel is missing, treat as pass
+        if pd.isna(latest_rel):
+            return True
+
+        # Ensure numeric and explicitly return bool
+        latest_val = float(latest_rel)
+        result: bool = abs(latest_val) <= thresh
+        return result
 
     def _format_period(self, d: datetime) -> str:
         if self.frequency == "monthly":
@@ -599,7 +615,7 @@ class QualIndLogger:
         specific_period: str | None = None,
         style: bool = False,
         colors: dict[str, str] | None = None,
-    ) -> pd.DataFrame:
+    ) -> pd.DataFrame | pd.io.formats.style.Styler:
         """Build a tidy DataFrame of all indicators across periods.
 
         Computes absolute and relative change using the chosen reference strategy.
@@ -607,9 +623,9 @@ class QualIndLogger:
         """
         if history_window is None:
             history_window = n_periods
-        rows: list[dict[str, Any]] = []
+        rows: list[pd.DataFrame] = []
         for indicator in indicators or list(self.indicators.keys()):
-            df = self.compare_periods(
+            df_result = self.compare_periods(
                 indicator,
                 n_periods=n_periods,
                 ref_strategy=ref_strategy,
@@ -617,8 +633,12 @@ class QualIndLogger:
                 specific_period=specific_period,
                 style=False,
             )
+            # style=False → compare_periods returns a DataFrame
+            df = cast(pd.DataFrame, df_result)
             df["indicator"] = indicator
             rows.append(df)
+
+        long = pd.concat(rows, axis=0, ignore_index=True)
         long = pd.concat(rows, axis=0, ignore_index=True)
         long = long[
             ["indicator", "period", "value", "abs_change", "rel_change", "unit"]
@@ -639,7 +659,7 @@ class QualIndLogger:
         history_window: int | None = None,
         specific_period: str | None = None,
         colors: dict[str, str] | None = None,
-        engine: str = "openpyxl",
+        engine: Literal["openpyxl", "xlsxwriter", "odf", "auto"] = "openpyxl",
         include_overview: bool = True,
         include_metadata: bool = True,
         per_indicator_sheets: bool = True,
@@ -666,7 +686,7 @@ class QualIndLogger:
             indicators = list(self.indicators.keys())
 
         # --- 1) Build long-format data for all indicators ---
-        long_df = self.collect_long_df(
+        long_result = self.collect_long_df(
             indicators=indicators,
             n_periods=n_periods,
             ref_strategy=ref_strategy,
@@ -674,6 +694,9 @@ class QualIndLogger:
             specific_period=specific_period,
             style=False,
         )
+
+        # style=False → collect_long_df returns a DataFrame
+        long_df = cast(pd.DataFrame, long_result)
 
         # --- 2) Wide-format overview ---
         wide_df = make_wide_df(long_df, change_cols)
@@ -759,14 +782,15 @@ class QualIndLogger:
 
             abs_rel = df_ind["rel_change"].abs()
 
-            def classify(val: float | pd.NA) -> str | pd.NA:
+            def classify(val: float | None) -> str | None:
                 if pd.isna(val):
-                    return pd.NA
-                if critical is not None and val > critical:
+                    return None  # or pd.NA if you prefer, but type should stay Optional[str]
+                v = float(val)
+                if critical is not None and v > critical:
                     return "critical"
-                if warning is not None and val > warning:
+                if warning is not None and v > warning:
                     return "warning"
-                return pd.NA
+                return None
 
             df_ind["breach_tier"] = abs_rel.apply(classify)
 
