@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal  
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,7 @@ from dateutil.relativedelta import relativedelta
 from IPython.display import display
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
-from fagfunksjoner import logger
+from fagfunksjoner.fagfunksjoner_logger import logger
 
 
 # Type aliases for clarity
@@ -172,19 +172,20 @@ class QualIndLogger:
             json.dump(self.indicators, f, indent=4, ensure_ascii=False)
 
     def load_period_log(self, period_str: str) -> dict[str, Any]:
-        """Load logs for a given period string (e.g. '2025-05').
-
-        Args:
-            period_str: Period identifier.
-
-        Returns:
-            Dict of indicators or empty dict if none.
-        """
+        """Load logs for a given period string (e.g. '2025-05')."""
+    
         path = self.log_dir / f"process_data_p{period_str}.json"
+    
         if path.exists():
             try:
                 with open(path, encoding="utf-8") as f:
-                    return json.load(f)
+                    data: Any = json.load(f)
+    
+                if isinstance(data, dict):
+                    return data
+                else:
+                    return {}
+    
             except json.JSONDecodeError:
                 print(
                     f"Warning: Could not parse JSON for period {period_str}, returning empty."
@@ -295,10 +296,18 @@ class QualIndLogger:
                 provided.
         """
 
-        def _recent_mean_baseline(values: pd.Series, history_window: int) -> pd.Series:
+        def _recent_mean_baseline(values: pd.Series[float], history_window: int) -> pd.Series[float]:
+            """Compute a constant baseline: mean of the last `history_window` historical values.
+        
+            The returned series has the same index as `values`, with the scalar
+            baseline repeated in every row.
+            """
             # Exclude current value when computing baseline
             recent_history = values.shift(1).dropna().tail(history_window)
-            baseline = recent_history.mean() if len(recent_history) else pd.NA
+        
+            # Use np.nan instead of pd.NA to keep this float-typed
+            baseline: float = float(recent_history.mean()) if len(recent_history) else float("nan")
+        
             return pd.Series([baseline] * len(values), index=values.index)
 
         if history_window is None:
@@ -344,7 +353,7 @@ class QualIndLogger:
                 df.assign(indicator=indicator), indicator, colors=colors
             )
             if print_style:
-                display(styled)
+                display(styled) # type: ignore[no-untyped-call]
             return styled
         if print_df:
             print(df.to_string(index=False))
