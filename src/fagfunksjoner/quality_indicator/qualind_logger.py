@@ -10,6 +10,7 @@ from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
+from pandas.io.formats.style import Styler
 from dateutil.relativedelta import relativedelta
 from IPython.display import display
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
@@ -262,7 +263,7 @@ class QualIndLogger:
         style: bool = False,
         print_style: bool = False,
         colors: dict[str, str] | None = None,
-    ) -> pd.DataFrame | pd.io.formats.style.Styler:
+    ) -> pd.DataFrame | Styler:
         """Compare an indicator across periods using different reference strategies.
 
         Provides options to print or style the results. If styling, automatically
@@ -366,7 +367,7 @@ class QualIndLogger:
         df: pd.DataFrame,
         indicator: str | None,
         colors: dict[str, str] | None = None,
-    ) -> pd.io.formats.style.Styler:
+    ) -> Styler:
         """Returns a styled DataFrame highlighting where relative change exceeds tolerance tiers.
 
         If `indicator` is None, per-row indicator is taken from df['indicator'].
@@ -615,7 +616,7 @@ class QualIndLogger:
         specific_period: str | None = None,
         style: bool = False,
         colors: dict[str, str] | None = None,
-    ) -> pd.DataFrame | pd.io.formats.style.Styler:
+    ) -> pd.DataFrame | Styler:
         """Build a tidy DataFrame of all indicators across periods.
 
         Computes absolute and relative change using the chosen reference strategy.
