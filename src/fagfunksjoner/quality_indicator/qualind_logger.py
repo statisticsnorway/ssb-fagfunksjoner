@@ -10,9 +10,9 @@ from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
-from pandas.io.formats.style import Styler
 from dateutil.relativedelta import relativedelta
 from IPython.display import display
+from pandas.io.formats.style import Styler
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 from fagfunksjoner.fagfunksjoner_logger import logger
