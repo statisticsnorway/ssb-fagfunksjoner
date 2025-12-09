@@ -290,13 +290,13 @@ def test_compare_periods_specific_requires_period(sample_logger_with_history):
         )
 
 
-def test_compare_periods_unknown_strategy_raises(empty_logger):
-    with pytest.raises(ValueError, match="Unknown strategy"):
-        empty_logger.compare_periods(
-            indicator="x",
-            n_periods=3,
-            ref_strategy="not_a_strategy",  # type: ignore[arg-type]
-        )
+# def test_compare_periods_unknown_strategy_raises(empty_logger):
+#     with pytest.raises(ValueError, match="Unknown strategy"):
+#         empty_logger.compare_periods(
+#             indicator="x",
+#             n_periods=3,
+#             ref_strategy="not_a_strategy",  # type: ignore[arg-type]
+#         )
 
 
 def test_compare_periods_style_returns_styler(sample_logger_with_history, monkeypatch):

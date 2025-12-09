@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -16,6 +16,16 @@ from pandas.io.formats.style import Styler
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 from fagfunksjoner.fagfunksjoner_logger import logger
+
+
+if TYPE_CHECKING:
+    # For type checkers: use the generic form
+    from pandas import Series as _Series
+
+    SeriesLike = _Series[Any]
+else:
+    # At runtime: plain Series (non-subscripted, safe for typeguard)
+    from pandas import Series as SeriesLike
 
 
 # Type aliases for clarity
@@ -388,7 +398,7 @@ class QualIndLogger:
         if colors:
             colors_merged.update(colors)
 
-        def style_row(row: pd.Series[Any]) -> list[str]:
+        def style_row(row: SeriesLike) -> list[str]:
             rel = row.get("rel_change")
             if pd.isna(rel):
                 return [""] * len(row)
