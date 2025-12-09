@@ -6,14 +6,8 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.io.formats.style import Styler  # NEW: for isinstance checks
 
-# ---------------------------------------------------------------------------
-# IMPORTS: adjust this to your actual module path
-# ---------------------------------------------------------------------------
-# Example if your code lives in src/functions/qualind.py:
-# from src.functions.qualind import QualIndLogger, AutoToleranceConfig, make_wide_df
-#
-# For this snippet I'll assume the module is named `qualind` next to tests:
 from fagfunksjoner.quality_indicator.qualind_logger import (  # type: ignore[import]
     AutoToleranceConfig,
     QualIndLogger,
@@ -103,6 +97,19 @@ def test_init_yearly_creates_correct_period_str(tmp_path):
     assert ql.period_str == "2024"
 
 
+# NEW: error branches in __init__
+
+
+def test_init_raises_if_both_month_and_quarter(tmp_path):
+    with pytest.raises(ValueError, match="either month or quarter"):
+        QualIndLogger(log_dir=tmp_path, year=2024, month=3, quarter=1)
+
+
+def test_init_raises_if_invalid_quarter(tmp_path):
+    with pytest.raises(ValueError, match="Quarter must be between 1 and 4"):
+        QualIndLogger(log_dir=tmp_path, year=2024, quarter=5)
+
+
 # ---------------------------------------------------------------------------
 # log_indicator / update_indicator_value / load_period_log
 # ---------------------------------------------------------------------------
@@ -130,6 +137,29 @@ def test_log_and_update_indicator(tmp_path):
     ql.update_indicator_value("rows_total", "value", 456)
     loaded = ql.load_period_log(ql.period_str)
     assert loaded["rows_total"]["value"] == 456
+
+
+# NEW: load_period_log edge cases
+
+
+def test_load_period_log_missing_file_returns_empty(empty_logger):
+    result = empty_logger.load_period_log("2099-01")
+    assert result == {}
+
+
+def test_load_period_log_invalid_json_returns_empty(tmp_path):
+    # Create a corrupted JSON file for a period
+    period_str = "2024-03"
+    bad_file = tmp_path / f"process_data_p{period_str}.json"
+    bad_file.write_text("{not-valid-json", encoding="utf-8")
+
+    ql = QualIndLogger(log_dir=tmp_path, year=2024, month=3)
+    # Now test load_period_log on another bad json file
+    bad_file2 = tmp_path / "process_data_p2024-01.json"
+    bad_file2.write_text("this-is-not-json", encoding="utf-8")
+
+    result = ql.load_period_log("2024-01")
+    assert result == {}
 
 
 # ---------------------------------------------------------------------------
@@ -213,6 +243,91 @@ def test_compare_periods_specific_period(sample_logger_with_history):
     assert np.isclose(inferred_ref, 11.0)
 
 
+# NEW: rolling strategies, error branches, and style=True
+
+
+def test_compare_periods_rolling_strategies(sample_logger_with_history):
+    ql = sample_logger_with_history
+
+    df_mean = ql.compare_periods(
+        indicator="ind_a",
+        n_periods=5,
+        ref_strategy="rolling_mean",
+        history_window=2,
+        style=False,
+    )
+    df_median = ql.compare_periods(
+        indicator="ind_a",
+        n_periods=5,
+        ref_strategy="rolling_median",
+        history_window=2,
+        style=False,
+    )
+
+    assert len(df_mean) == 5
+    assert len(df_median) == 5
+    # first reference should be NaN for rolling strategies
+    assert pd.isna(df_mean["abs_change"].iloc[0]) or pd.isna(
+        df_mean["rel_change"].iloc[0]
+    )
+    assert pd.isna(df_median["abs_change"].iloc[0]) or pd.isna(
+        df_median["rel_change"].iloc[0]
+    )
+
+
+def test_compare_periods_specific_requires_period(sample_logger_with_history):
+    ql = sample_logger_with_history
+    with pytest.raises(ValueError, match="specific_period"):
+        ql.compare_periods(
+            indicator="ind_a",
+            n_periods=5,
+            ref_strategy="specific",
+            specific_period=None,
+            style=False,
+        )
+
+
+def test_compare_periods_unknown_strategy_raises(empty_logger):
+    with pytest.raises(ValueError, match="Unknown strategy"):
+        empty_logger.compare_periods(
+            indicator="x",
+            n_periods=3,
+            ref_strategy="not_a_strategy",  # type: ignore[arg-type]
+        )
+
+
+def test_compare_periods_style_returns_styler(sample_logger_with_history, monkeypatch):
+    ql = sample_logger_with_history
+
+    # Make sure we have some tolerance so styling applies
+    monkeypatch.setattr(
+        ql,
+        "get_tolerance_for_indicator",
+        lambda ind: {"warning": 0.0, "critical": 0.0},
+    )
+
+    styled = ql.compare_periods(
+        indicator="ind_a",
+        n_periods=5,
+        ref_strategy="previous",
+        style=True,
+        print_style=False,
+    )
+
+    assert isinstance(styled, Styler)
+
+
+# ---------------------------------------------------------------------------
+# _collect_indicator_series (indirect) / empty-data path
+# ---------------------------------------------------------------------------
+
+
+def test_collect_indicator_series_no_data_returns_empty(empty_logger):
+    df = empty_logger._collect_indicator_series("no_such_indicator", n_periods=3)
+    assert list(df.columns) == ["period", "value", "unit"]
+    assert df.empty
+
+
 # ---------------------------------------------------------------------------
 # get_tolerance_for_indicator (explicit + automatic)
 # ---------------------------------------------------------------------------
@@ -290,6 +405,101 @@ def test_get_tolerance_auto_from_history(tmp_path):
     assert tol["critical"] > tol["warning"]
 
 
+# NEW: auto tolerance with insufficient history (no failure, returns {})
+
+
+def test_get_tolerance_auto_insufficient_history_returns_empty(tmp_path):
+    # Only one period -> fewer than min_points
+    period_str = "2024-01"
+    path = tmp_path / f"process_data_p{period_str}.json"
+    data = {
+        "auto": {
+            "title": "Auto",
+            "description": "Auto tol",
+            "value": 100.0,
+            "unit": "count",
+            "data_period": period_str,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+
+    cfg = AutoToleranceConfig(
+        ref_strategy_for_sigma="previous",
+        n_hist=4,
+        min_points=2,
+        use_mad=True,
+        fail_on_insufficient_history=False,
+    )
+    ql = QualIndLogger(log_dir=tmp_path, year=2024, month=1, auto_tol_config=cfg)
+
+    tol = ql.get_tolerance_for_indicator("auto")
+    assert tol == {}
+
+
+# ---------------------------------------------------------------------------
+# style_tolerances (including color overrides / weird tol types)
+# ---------------------------------------------------------------------------
+
+
+def test_style_tolerances_uses_indicator_column_and_colors(
+    sample_logger_with_history, monkeypatch
+):
+    ql = sample_logger_with_history
+
+    long_df = ql.collect_long_df(
+        indicators=["ind_a"],
+        n_periods=5,
+        ref_strategy="previous",
+        style=False,
+    )
+    # Give a tolerance that will mark all non-zero rel_changes as warning
+    monkeypatch.setattr(
+        ql,
+        "get_tolerance_for_indicator",
+        lambda ind: {"warning": 0.0},
+    )
+
+    styled = ql.style_tolerances(
+        df=long_df,
+        indicator=None,  # force it to read 'indicator' column
+        colors={"warning": "purple"},
+    )
+    assert isinstance(styled, Styler)
+    html = styled.to_html()
+    # At least one cell should have our custom background color
+    assert "background-color: purple" in html
+
+
+def test_style_tolerances_handles_unknown_tol_type(empty_logger, monkeypatch):
+    ql = empty_logger
+
+    df = pd.DataFrame(
+        {
+            "period": ["2024-01"],
+            "value": [1.0],
+            "abs_change": [0.1],
+            "rel_change": [0.1],
+            "unit": ["x"],
+            "indicator": ["weird"],
+        }
+    )
+
+    # Return a non-numeric, non-dict tolerance -> _normalize_tol → {}
+    monkeypatch.setattr(
+        ql,
+        "get_tolerance_for_indicator",
+        lambda ind: "not-a-dict-or-float",
+    )
+
+    styled = ql.style_tolerances(df, indicator=None)
+    assert isinstance(styled, Styler)
+    # No background-color should be applied because tol is empty
+    html = styled.to_html()
+    assert "background-color:" not in html or "background-color: " in html
+
+
 # ---------------------------------------------------------------------------
 # filter_breaches
 # ---------------------------------------------------------------------------
@@ -315,6 +525,35 @@ def test_filter_breaches_classifies_and_filters(empty_logger, monkeypatch):
 
     critical_only = ql.filter_breaches(df, indicator="x", tier=["critical"])
     assert list(critical_only["breach_tier"]) == ["critical"]
+
+
+def test_filter_breaches_raises_if_no_tolerance(empty_logger, monkeypatch):
+    ql = empty_logger
+
+    monkeypatch.setattr(
+        ql,
+        "get_tolerance_for_indicator",
+        lambda ind: {},
+    )
+
+    df = pd.DataFrame({"rel_change": [0.1, 0.2]})
+    with pytest.raises(ValueError, match="No tolerance defined"):
+        ql.filter_breaches(df, indicator="x", tier=None)
+
+
+def test_filter_breaches_raises_if_no_tiered_tolerances(empty_logger, monkeypatch):
+    ql = empty_logger
+
+    # Tolerance dict without 'warning' or 'critical'
+    monkeypatch.setattr(
+        ql,
+        "get_tolerance_for_indicator",
+        lambda ind: {"foo": 0.1},
+    )
+
+    df = pd.DataFrame({"rel_change": [0.1, 0.2]})
+    with pytest.raises(ValueError, match="No tiered tolerances"):
+        ql.filter_breaches(df, indicator="x", tier=None)
 
 
 # ---------------------------------------------------------------------------
@@ -372,6 +611,64 @@ def test_check_latest_pass_with_threshold(sample_logger_with_history, monkeypatc
     )
 
 
+# NEW: check_latest_pass edge cases
+
+
+def test_check_latest_pass_missing_tier_treated_as_pass(
+    sample_logger_with_history, monkeypatch
+):
+    ql = sample_logger_with_history
+
+    # Only warning tier defined; asking for 'critical' should be treated as pass
+    monkeypatch.setattr(
+        ql,
+        "get_tolerance_for_indicator",
+        lambda ind: {"warning": 0.01},
+    )
+
+    assert ql.check_latest_pass("ind_a", tier="critical") is True
+
+
+def test_check_latest_pass_empty_df_from_compare_periods(
+    sample_logger_with_history, monkeypatch
+):
+    ql = sample_logger_with_history
+
+    monkeypatch.setattr(
+        ql,
+        "get_tolerance_for_indicator",
+        lambda ind: {"critical": 0.0},
+    )
+
+    # Force compare_periods to return an empty DataFrame
+    monkeypatch.setattr(
+        ql,
+        "compare_periods",
+        lambda **kwargs: pd.DataFrame(columns=["period", "value", "unit"]),
+    )
+
+    assert ql.check_latest_pass("ind_a", tier="critical") is True
+
+
+def test_check_latest_pass_latest_rel_is_nan(sample_logger_with_history, monkeypatch):
+    ql = sample_logger_with_history
+
+    monkeypatch.setattr(
+        ql,
+        "get_tolerance_for_indicator",
+        lambda ind: {"critical": 0.0},
+    )
+
+    # compare_periods returns a single row with rel_change NaN
+    monkeypatch.setattr(
+        ql,
+        "compare_periods",
+        lambda **kwargs: pd.DataFrame({"rel_change": [np.nan]}),
+    )
+
+    assert ql.check_latest_pass("ind_a", tier="critical") is True
+
+
 # ---------------------------------------------------------------------------
 # collect_long_df + make_wide_df
 # ---------------------------------------------------------------------------
@@ -425,6 +722,45 @@ def test_make_wide_df_basic():
     assert len(wide) == 2
 
 
+# NEW: collect_long_df(style=True) and make_wide_df default change_cols
+
+
+def test_collect_long_df_style_returns_styler(sample_logger_with_history, monkeypatch):
+    ql = sample_logger_with_history
+
+    monkeypatch.setattr(
+        ql,
+        "get_tolerance_for_indicator",
+        lambda ind: {"warning": 0.0, "critical": 0.0},
+    )
+
+    styled = ql.collect_long_df(
+        indicators=["ind_a"],
+        n_periods=5,
+        ref_strategy="previous",
+        style=True,
+    )
+    assert isinstance(styled, Styler)
+
+
+def test_make_wide_df_default_change_cols():
+    long_df = pd.DataFrame(
+        {
+            "indicator": ["a", "a"],
+            "period": ["2024-01", "2024-02"],
+            "value": [1, 2],
+            "abs_change": [np.nan, 1],
+            "rel_change": [np.nan, 1.0],
+            "unit": ["x", "x"],
+        }
+    )
+    wide = make_wide_df(long_df)  # use default change_cols
+    cols = set(wide.columns)
+    # Only rel_change should be included besides value
+    assert "a_value" in cols
+    assert "a_rel_change" in cols
+
+
 # ---------------------------------------------------------------------------
 # export_kvalinds_to_excel
 # ---------------------------------------------------------------------------
@@ -458,3 +794,37 @@ def test_export_kvalinds_to_excel_creates_file(sample_logger_with_history, tmp_p
     assert "metadata" in xls.sheet_names
     # Per-indicator sheet name is sanitized; here should be something like "ind_ind_a"
     assert any(name.startswith("ind_") for name in xls.sheet_names)
+
+
+# NEW: export_kvalinds_to_excel when no tolerance is defined ( _add_breach_columns no-tol path )
+
+
+def test_export_kvalinds_to_excel_no_tol_sets_default_breach_columns(
+    sample_logger_with_history, tmp_path
+):
+    ql = sample_logger_with_history
+
+    out_dir = tmp_path / "reports_no_tol"
+    ql.export_kvalinds_to_excel(
+        out_path=out_dir,
+        indicators=["ind_a"],
+        change_cols=["rel_change"],
+        n_periods=5,
+        ref_strategy="previous",
+        include_overview=False,  # metadata + per-indicator only
+        include_metadata=False,
+        per_indicator_sheets=True,
+    )
+
+    final_file = out_dir / f"kvalind_report_p{ql.period_str}.xlsx"
+    assert final_file.exists()
+
+    xls = pd.ExcelFile(final_file)
+    # Only per-indicator sheets
+    ind_sheet_name = next(name for name in xls.sheet_names if name.startswith("ind_"))
+    df_ind = pd.read_excel(final_file, sheet_name=ind_sheet_name)
+
+    # With no tol, we expect 'breach_tier' all NA and 'pass_critical' all True
+    assert "breach_tier" in df_ind.columns
+    assert "pass_critical" in df_ind.columns
+    assert df_ind["pass_critical"].all()
