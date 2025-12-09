@@ -6,8 +6,11 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.io.formats.style import Styler  # NEW: for isinstance checks
+from pandas.io.formats.style import Styler
 
+from fagfunksjoner.quality_indicator.qualind_logger import (
+    QualityIndicator,  # type: ignore[import]
+)
 from fagfunksjoner.quality_indicator.qualind_logger import (  # type: ignore[import]
     AutoToleranceConfig,
     QualIndLogger,
@@ -828,3 +831,218 @@ def test_export_kvalinds_to_excel_no_tol_sets_default_breach_columns(
     assert "breach_tier" in df_ind.columns
     assert "pass_critical" in df_ind.columns
     assert df_ind["pass_critical"].all()
+
+
+def test_quality_indicator_validates_pattern_and_serializes_timestamp():
+    qi = QualityIndicator(
+        title="Test",
+        description="desc",
+        value=1.23,
+        unit="percent",
+        data_period="2024-03",  # valid pattern
+        metadata={"foo": "bar"},
+        tol={"warning": 0.1, "critical": 0.2},
+        extra_field="allowed",  # extra should be allowed by model_config
+    )
+    dumped = qi.model_dump()
+
+    # data_period is kept as-is
+    assert dumped["data_period"] == "2024-03"
+
+    # timestamp serialized via field_serializer as ISO string
+    qi_json = qi.model_dump_json()
+    loaded = json.loads(qi_json)
+    assert "T" in loaded["timestamp"]  # crude but effective ISO check
+
+    # extra field should be present
+    assert loaded["extra_field"] == "allowed"
+
+
+def test_quality_indicator_invalid_data_period_raises():
+    with pytest.raises(ValueError):
+        QualityIndicator(
+            title="Bad",
+            description="bad",
+            value=1,
+            unit="x",
+            data_period="2024-13",  # invalid month
+        )
+
+
+def test_get_tolerance_auto_mad_path(tmp_path):
+    """Exercise AutoToleranceConfig.use_mad=True path with sufficient history."""
+    periods = ["2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06"]
+    # non-constant to get non-zero MAD
+    values = [100.0, 110.0, 90.0, 120.0, 115.0, 118.0]
+
+    for p, v in zip(periods, values, strict=False):
+        path = tmp_path / f"process_data_p{p}.json"
+        data = {
+            "auto_mad": {
+                "title": "Auto MAD",
+                "description": "MAD based tol",
+                "value": v,
+                "unit": "count",
+                "data_period": p,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+
+    cfg = AutoToleranceConfig(
+        ref_strategy_for_sigma="previous",
+        n_hist=6,
+        min_points=3,
+        use_mad=True,  # <- MAD branch
+        k_warning=1.0,
+        k_critical=2.0,
+        fail_on_insufficient_history=True,
+    )
+    ql = QualIndLogger(log_dir=tmp_path, year=2024, month=6, auto_tol_config=cfg)
+
+    tol = ql.get_tolerance_for_indicator("auto_mad")
+    # We mainly care that we went through the MAD path and produced positive thresholds
+    assert "warning" in tol and "critical" in tol
+    assert tol["warning"] > 0
+    assert tol["critical"] > tol["warning"]
+
+
+def test_style_tolerances_picks_most_severe_tier(empty_logger, monkeypatch):
+    """When both warning and critical are breached, critical color should win."""
+    ql = empty_logger
+
+    df = pd.DataFrame(
+        {
+            "period": ["2024-01"],
+            "value": [100.0],
+            "abs_change": [50.0],
+            "rel_change": [0.5],  # will breach both 0.1 and 0.3
+            "unit": ["x"],
+        }
+    )
+
+    # Make sure we use the explicit indicator argument, not df['indicator']
+    monkeypatch.setattr(
+        ql,
+        "get_tolerance_for_indicator",
+        lambda ind: {"warning": 0.1, "critical": 0.3},
+    )
+
+    styled = ql.style_tolerances(
+        df=df,
+        indicator="my_ind",  # use this key
+        colors={"warning": "yellow", "critical": "red"},
+    )
+    assert isinstance(styled, Styler)
+    html = styled.to_html()
+    # We expect the "critical" color, not "yellow"
+    assert "background-color: red" in html
+    assert "background-color: yellow" not in html
+
+
+def test_export_kvalinds_to_excel_metadata_and_breach(
+    sample_logger_with_history, tmp_path
+):
+    """Hit metadata table construction with breach classification."""
+    ql = sample_logger_with_history
+
+    # Set a relatively low critical threshold so latest period breaches
+    # Make warning lower than critical so we can distinguish
+    ql.indicators["ind_a"]["tol"] = {"warning": 0.01, "critical": 0.02}
+
+    out_dir = tmp_path / "reports_meta"
+    ql.export_kvalinds_to_excel(
+        out_path=out_dir,
+        indicators=["ind_a"],
+        change_cols=["rel_change"],
+        n_periods=5,
+        ref_strategy="previous",
+        include_overview=True,
+        include_metadata=True,
+        per_indicator_sheets=False,  # metadata + overview only
+    )
+
+    final_file = out_dir / f"kvalind_report_p{ql.period_str}.xlsx"
+    assert final_file.exists()
+
+    xls = pd.ExcelFile(final_file)
+    assert "metadata" in xls.sheet_names
+
+    meta_df = pd.read_excel(final_file, sheet_name="metadata")
+
+    # Check the basic columns are there
+    for col in [
+        "key",
+        "latest_period",
+        "latest_value",
+        "unit",
+        "latest_rel_change",
+        "breach",
+        "tol_warning",
+        "tol_critical",
+        "title",
+        "description",
+    ]:
+        assert col in meta_df.columns
+
+    # There should be exactly one row for 'ind_a'
+    assert (meta_df["key"] == "ind_a").sum() == 1
+    row = meta_df[meta_df["key"] == "ind_a"].iloc[0]
+
+    # We don't assert exact numeric values, just that latest_rel_change is not NA
+    assert pd.notna(row["latest_rel_change"])
+
+    # With such low critical threshold, we expect 'critical' or 'warning' breach;
+    # at least breach should not be NaN if rel_change is large.
+    assert row["breach"] in ("warning", "critical")
+
+
+def test_export_kvalinds_to_excel_sanitizes_sheet_name(tmp_path):
+    """Exercise _sanitize_sheet_name path: invalid chars and max length."""
+    # Build minimal logs with a very "ugly" indicator key
+    ugly_key = "very/long*indicator:name?with[bad]chars_and_more________________"
+    period_str = "2024-01"
+    path = tmp_path / f"process_data_p{period_str}.json"
+    data = {
+        ugly_key: {
+            "title": "Ugly",
+            "description": "",
+            "value": 1.0,
+            "unit": "x",
+            "data_period": period_str,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+
+    ql = QualIndLogger(log_dir=tmp_path, year=2024, month=1)
+
+    out_dir = tmp_path / "reports_sanitized"
+    ql.export_kvalinds_to_excel(
+        out_path=out_dir,
+        indicators=[ugly_key],
+        change_cols=["rel_change"],
+        n_periods=1,
+        ref_strategy="previous",
+        include_overview=False,
+        include_metadata=False,
+        per_indicator_sheets=True,
+    )
+
+    final_file = out_dir / f"kvalind_report_p{ql.period_str}.xlsx"
+    assert final_file.exists()
+
+    xls = pd.ExcelFile(final_file)
+    # There should be exactly one sheet, whose name is sanitized from ugly_key
+    assert len(xls.sheet_names) == 1
+    sheet_name = xls.sheet_names[0]
+
+    # invalid chars []:*?/\\ should be replaced with '_'
+    for bad in ["[", "]", ":", "*", "?", "/", "\\"]:
+        assert bad not in sheet_name
+
+    # Excel sheet names are max 31 chars
+    assert len(sheet_name) <= 31
+    assert sheet_name.startswith("ind_")
