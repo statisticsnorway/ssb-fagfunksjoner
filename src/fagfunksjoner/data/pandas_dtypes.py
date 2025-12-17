@@ -236,5 +236,5 @@ def categories_threshold(
     for i, num in str_cols.nunique().items():
         if num <= cardinality_threshold:
             logger.info(f"Converting to categorical: {i} {num}")
-            df[i] = df[i].astype("category")
+            df[i] = df[i].astype("category")  # type: ignore[call-overload]
     return df
