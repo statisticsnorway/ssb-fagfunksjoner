@@ -16,3 +16,11 @@ Module contents
    :members:
    :undoc-members:
    :show-inheritance:
+
+fagfunksjoner.dapla.gsm module
+------------------------------
+
+.. automodule:: fagfunksjoner.dapla.gsm
+   :members:
+   :show-inheritance:
+   :undoc-members:

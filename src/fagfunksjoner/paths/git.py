@@ -46,10 +46,10 @@ def repo_root_dir(directory: Path | str | None = None) -> Path:
 
     Example:
     --------
-    >>> import dapla as dp
+    >>> from fagfunksjoner.paths.git import repo_root_dir
     >>> import tomli
     >>>
-    >>> config_file = dp.repo_root_dir() / "pyproject.toml"
+    >>> config_file = repo_root_dir() / "pyproject.toml"
     >>> with open(config_file, mode="rb") as fp:
     >>>     config = tomli.load(fp)
     """
