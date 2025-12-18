@@ -56,6 +56,7 @@ from fagfunksjoner.data.round_ssb import round_up
 from fagfunksjoner.data.view_dataframe import view_dataframe
 from fagfunksjoner.formats.formats import SsbFormat
 from fagfunksjoner.log.statlogger import StatLogger
+from fagfunksjoner.paths.git import repo_root_dir
 from fagfunksjoner.paths.project_root import ProjectRoot
 from fagfunksjoner.paths.versions import (
     get_latest_fileversions,
@@ -81,6 +82,7 @@ __all__ = [
     "next_version_path",
     "open_path_datadok",
     "open_path_metapath_datadok",
+    "repo_root_dir",
     "round_up",
     "saspy_df_from_path",
     "saspy_session",
