@@ -62,6 +62,5 @@ def repo_root_dir(directory: Path | str | None = None) -> Path:
     while directory / ".git" not in directory.iterdir():
         if directory == Path("/"):
             raise RuntimeError(f"The directory {directory} is not in a git repo.")
-        else:
-            directory = directory.parent
+        directory = directory.parent
     return directory
