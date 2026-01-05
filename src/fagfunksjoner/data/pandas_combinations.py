@@ -10,7 +10,7 @@ This has some similar functionality to "proc means" in SAS.
 import copy
 from collections.abc import Callable, Hashable, Mapping
 from itertools import combinations, product
-from typing import Any, TypeAlias, TypeVar
+from typing import Any, TypeAlias, TypeVar, cast
 
 import numpy as np
 import pandas as pd
@@ -285,6 +285,7 @@ def handle_grand_total(
 
     Raises:
         ValueError: If 'grand_total' is not a string or a dictionary.
+        TypeError: If the result of the aggregation is not a pandas series or dataframe.
     """
     for col in groupcols:
         if isinstance(grand_total, dict):
@@ -295,12 +296,16 @@ def handle_grand_total(
         else:
             all_levels[col] = all_levels[col].astype("object")
 
-    gt = df.agg(aggargs)  # type: ignore[type-arg, arg-type]
+    gt: pd.Series | pd.DataFrame = df.agg(aggargs)  # type: ignore[type-arg, arg-type]
 
     if isinstance(gt, pd.Series):
         gt_df = flatten_col_multiindex(gt.to_frame().T)
+    elif isinstance(gt, pd.DataFrame):
+        gt_df = _unstack_agg_dataframe(gt)
     else:
-        gt_df = flatten_col_multiindex(gt.unstack().to_frame().T)  # type: ignore[unreachable]
+        raise TypeError(
+            "Excpecting the aggregated data to be a pandas series or a dataframe at this point."
+        )
 
     gt_df["level"] = 0
     gt_df["ways"] = 0
@@ -319,6 +324,11 @@ def handle_grand_total(
     all_levels = pd.concat([all_levels, gt_df], ignore_index=True)
 
     return all_levels
+
+
+def _unstack_agg_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    unstack = cast(Callable[[], pd.Series], df.unstack)
+    return flatten_col_multiindex(unstack().to_frame().T)
 
 
 def fill_na_dict(df: pd.DataFrame, mapping: dict[str, Any]) -> pd.DataFrame:
