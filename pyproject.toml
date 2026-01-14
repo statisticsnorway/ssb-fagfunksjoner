@@ -10,7 +10,8 @@ dynamic = ["classifiers"]
 dependencies = [
     "colorama>=0.4.6",
     "colorlog>=6.9.0",
-    "dapla-auth-client>=1.0.0",
+    "dapla-auth-client>=1.2.3; python_version >= '3.11'",
+    "dapla-auth-client<=1.2.0; python_version < '3.11'",
     "dapla-toolbelt>=4.0.0",
     "ipython>=8.37.0",
     "numpy>=2.2",
