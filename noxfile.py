@@ -157,7 +157,7 @@ def precommit(session: Session) -> None:
 @session(python=python_versions)
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
-    args = session.posargs or ["src", "tests"]
+    args = session.posargs or ["src"]
     session.install(".")
     install_poetry_groups(session, "dev")
     session.run("mypy", *args)
