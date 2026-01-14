@@ -16,7 +16,7 @@ class SsbFormat(dict[Any, Any]):
         """Initializes the SsbFormat instance.
 
         Args:
-            start_dict (dict, optional): Initial dictionary to populate SsbFormat.
+            start_dict: Initial dictionary to populate SsbFormat.
         """
         super().__init__()
         self.cached = True  # Switching the default to False might f-up __setitem__
@@ -56,7 +56,7 @@ class SsbFormat(dict[Any, Any]):
         If none apply and an 'other' key exists, its value is returned.
 
         Args:
-            key (str | int | float | NAType | None): Key that is missing in the dictionary.
+            key: Key that is missing in the dictionary.
 
         Returns:
             Any: The corresponding mapped value based on special conditions.
@@ -104,9 +104,9 @@ class SsbFormat(dict[Any, Any]):
         """Converts a range-string key to a tuple of floats and stores it.
 
         Args:
-            key (str): A string representing a range in the format "lower-upper". The lower bound should be
+            key: A string representing a range in the format "lower-upper". The lower bound should be
                        either a digit or "low" and the upper bound a digit or "high".
-            value (Any): The value to be associated with the converted range in the ranges dictionary.
+            value: The value to be associated with the converted range in the ranges dictionary.
 
         Raises:
             ValueError: If either the lower or upper bound contains a '.' character, indicating a float-like
@@ -224,8 +224,8 @@ class SsbFormat(dict[Any, Any]):
         """Stores the SsbFormat instance in a specified output path.
 
         Args:
-            output_path (str): Path where the format will be stored.
-            force (bool): Flag to force storing even for cached instances.
+            output_path: Path where the format will be stored.
+            force: Flag to force storing even for cached instances.
 
         Raises:
             ValueError: If storing a cached SsbFormat might lead to an unexpectedly large number of keys.
@@ -245,10 +245,10 @@ def get_format(filepath: str | Path) -> SsbFormat | None:
     """Retrieves the format from a json-format-file from path.
 
     Args:
-        filepath (str|Path): Send in the full path to the format directly.
+        filepath: Send in the full path to the format directly.
 
     Returns:
-        dict or defaultdict: The formatted dictionary or defaultdict for the specified format and date. If the format contains a "other" key, a defaultdict will be returned. If the
+        The formatted dictionary or defaultdict for the specified format and date. If the format contains a "other" key, a defaultdict will be returned. If the
             format contains the SAS-value for missing: ".", or another recognized "empty-datatype":
             Many known keys for empty values, will be inserted in the dict, to hopefully map these correctly.
     """
@@ -264,9 +264,9 @@ def store_format(
     """Takes a nested or unnested dictionary and saves it to prodsone-folder as a timestamped json.
 
     Args:
-        anyformat (dict[str, str]): Dictionary containing format information.
+        anyformat: Dictionary containing format information.
             The values of the dictionary are the dict contents of the formats.¨
-        output_path (str): Path to store the format data. Not including the filename itself, only the base folder.
+        output_path: Path to store the format data. Not including the filename itself, only the base folder.
     """
     if not isinstance(output_path, Path):
         output_path = Path(output_path)

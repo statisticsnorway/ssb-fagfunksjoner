@@ -113,8 +113,8 @@ def check_column_arguments(
         - aggargs: Updated aggregation functions for each column in `valuecols`.
 
     Raises:
-        ValueError: If a column in `groupcols` or `valuecols` is not in `df`.
-        ValueError: If any column in `valuecols` is non-numeric and lacks an aggregation function.
+        ValueError: If a column in `groupcols` or `valuecols` is not in `df`. Or
+            if any column in `valuecols` is non-numeric and lacks an aggregation function.
 
     Example:
         >>> data = pd.DataFrame({
