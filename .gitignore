@@ -37,6 +37,9 @@ demos/*.xml
 # See https://adr.ssb.no/0020-lagringsformat-for-jupyter-notebooks/
 *.ipynb
 
+# Exclude generated documentation
+/docs/_build/
+
 
 # The section below is from the GitHub .gitignore template for Python:
 # https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore
