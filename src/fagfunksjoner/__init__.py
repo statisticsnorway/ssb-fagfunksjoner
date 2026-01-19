@@ -66,7 +66,6 @@ from fagfunksjoner.paths.versions import (
 from fagfunksjoner.prodsone.check_env import check_env, linux_shortcuts
 from fagfunksjoner.prodsone.saspy_ssb import saspy_df_from_path, saspy_session
 
-
 __all__ = [
     "ProjectRoot",
     "SsbFormat",

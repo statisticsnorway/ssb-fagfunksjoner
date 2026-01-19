@@ -5,7 +5,6 @@ import pytest
 
 from fagfunksjoner.api.valuta import ValutaData, download_exchange_rates, parse_response
 
-
 # Mock JSON response
 mock_json = {
     "meta": {

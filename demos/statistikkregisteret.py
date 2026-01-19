@@ -15,7 +15,6 @@
 # %%
 from fagfunksjoner.api import statistikkregisteret as reg
 
-
 # %%
 shortcode = "vgu"
 
@@ -49,7 +48,6 @@ reg.time_until_publishing("vgu")
 import datetime
 
 from fagfunksjoner.api import statistikkregisteret as reg
-
 
 kortkode = "vgu"
 

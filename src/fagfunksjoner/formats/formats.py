@@ -5,7 +5,6 @@ from typing import Any
 import pandas as pd
 from pandas._libs.missing import NAType
 
-
 SSBFORMAT_INPUT_TYPE = dict[str | int, Any] | dict[str, Any]
 
 

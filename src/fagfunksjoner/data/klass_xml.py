@@ -6,7 +6,6 @@ It passes data through a pandas DataFrame from a list of codes and names, to an 
 import pandas as pd
 from dateutil import parser
 
-
 PARAM_COLS = {  # Order is important?
     "codes": "kode",
     "parent": "forelder",

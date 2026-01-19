@@ -6,7 +6,6 @@ from fagfunksjoner.prodsone.oradb import (
     Oracle,  # Replace 'fagfunksjoner.prodsone.oradb' with the actual module name
 )
 
-
 # Sample data for testing
 sample_sql = "SELECT * FROM sample_table"
 sample_update_sql = "UPDATE sample_table SET col1 = :1 WHERE col2 = :2"

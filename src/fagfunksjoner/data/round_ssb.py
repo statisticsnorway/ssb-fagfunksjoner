@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any, overload
 
 import pandas as pd
 
-
 # Alias for type checking
 if TYPE_CHECKING:
     pd_Series = pd.Series[Any]

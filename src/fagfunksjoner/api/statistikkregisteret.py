@@ -10,7 +10,6 @@ import requests as rs
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
-
 TEXT = "#text"
 ENDRET = "@endret"
 DESKFLYT = "@deskFlyt"

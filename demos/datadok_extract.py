@@ -15,7 +15,6 @@
 # %%
 from fagfunksjoner import open_path_datadok
 
-
 # %%
 tiar = "$UTD/gjfor_vgo/arkiv/tiar/g2013g2023"
 arkivfil = open_path_datadok(tiar)

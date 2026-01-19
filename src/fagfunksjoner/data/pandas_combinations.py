@@ -17,7 +17,6 @@ import pandas as pd
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
-
 # Having trouble importing these from pandas._typing
 AggFuncTypeBase: TypeAlias = Callable[[Any], Any] | str | np.ufunc
 HashableT = TypeVar("HashableT", bound=Hashable)

@@ -18,7 +18,6 @@
 
 import gc
 
-
 # %%
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
@@ -34,7 +33,6 @@ import requests
 from fagfunksjoner.data.dicts import get_key_by_value
 from fagfunksjoner.fagfunksjoner_logger import logger
 from fagfunksjoner.prodsone.check_env import linux_shortcuts
-
 
 # %% [markdown]
 # ## Hente fra api til Datadok

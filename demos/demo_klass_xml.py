@@ -1,6 +1,5 @@
 from fagfunksjoner.data.klass_xml import make_klass_xml_codelist
 
-
 # ### Using the main parameters
 
 # Define your classification codes and names

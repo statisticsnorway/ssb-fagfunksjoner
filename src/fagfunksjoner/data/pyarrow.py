@@ -57,7 +57,7 @@ def restructur_pyarrow_schema(
         inuse_field_index = inuse_schema.get_field_index(name)
         wanted_field_index = wanted_schema.get_field_index(name)
         inuse_field = inuse_schema.field(inuse_field_index)  # type: ignore
-        wanted_field = wanted_schema.field(wanted_field_index)  # type:ignore
+        wanted_field = wanted_schema.field(wanted_field_index)  # type: ignore
 
         if type(inuse_field.type) is type(wanted_field.type):  # type: ignore
             newfields.append(inuse_field.with_type(wanted_field.type))  # type: ignore
