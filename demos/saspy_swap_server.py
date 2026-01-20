@@ -15,7 +15,6 @@
 # %%
 from fagfunksjoner.prodsone import saspy_ssb
 
-
 saspy_ssb.swap_server(2)
 
 # %%

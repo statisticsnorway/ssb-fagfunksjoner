@@ -300,9 +300,9 @@ def latest_version_path(filepath: str | Path) -> str | Path:
              a pattern for version 1 of the file.
 
     Raises:
-        ValueError: If `get_latest_fileversions` returns a list of more than one file.
-        ValueError: If the filepath does not follow the naming convention with '_v'
-                    followed by digits to denote version, when a versioned file is required.
+        ValueError: If `get_latest_fileversions` returns a list of more than one file. Or
+            if the filepath does not follow the naming convention with '_v'
+            followed by digits to denote version, when a versioned file is required.
 
     Examples:
         - 'ssb-prod-ofi-skatteregn-data-produkt/skatteregn/inndata/skd_data/2023/skd_p2023-01_v1.parquet'

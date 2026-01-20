@@ -50,14 +50,12 @@ Check if you are on Dapla or in prodsone.
 ```python
 from fagfunksjoner import check_env
 
-
 check_env()
 ```
 
 Navigate to the root of your project and back again. Do stuff while in root, like importing local functions.
 ```python
 from fagfunksjoner import ProjectRoot
-
 
 with ProjectRoot():
     ... # Do your local imports here...
@@ -69,7 +67,6 @@ Setting up password with saspy
 ```python
 from fagfunksjoner.prodsone import saspy_ssb
 
-
 saspy_ssb.set_password() # Follow the instructions to set the password
 saspy_ssb.saspy_df_from_path("path")
 ```
@@ -79,7 +76,6 @@ saspy_ssb.saspy_df_from_path("path")
 import logging
 
 from fagfunksjoner.log.statlogger import StatLogger
-
 
 # Ved å opprette StatLogger så "hijacker" den den vanlige loggeren
 root_logger = StatLogger(log_file="custom_log_file.log")
@@ -95,7 +91,6 @@ logger.info("This is an info message")
 ```python
 from fagfunksjoner import make_klass_xml_codelist
 
-
 make_klass_xml_codelist(path="kjoenn.xml",
     codes=["1", "2"],
     names_bokmaal=["Mann", "Kvinne"])
@@ -108,7 +103,6 @@ make_klass_xml_codelist(path="kjoenn.xml",
 import pandas as pd
 
 from fagfunksjoner import round_up
-
 
 print(round(2.5, 0), round_up(2.5, 0))
 
@@ -132,7 +126,6 @@ Aggregate on all exclusive combinations of codes in certain columns (maybe befor
 ```python
 from fagfunksjoner import all_combos_agg
 
-
 ialt_koder = {
 "skolefylk": "01-99",
 "almyrk": "00",
@@ -150,7 +143,6 @@ To aggregate on NON-EXCLUSIVE combinations of codes in certain columns, use the 
 
 ```python
 from fagfunksjoner import all_combos_agg_inclusive
-
 
 category_mappings = {
     "Alder": {
@@ -202,7 +194,6 @@ Perform mapping using SsbFormat. Behaves like a dictionary. Has functionality fo
 ```python
 from fagfunksjoner import SsbFormat
 
-
 age_frmt = {
 'low-18': '-18',
 '19-25': '19-25',
@@ -224,7 +215,6 @@ print(df['age_group'].value_counts())
 # save format
 from fagfunksjoner.formats import store_format
 
-
 store_format(path+'format_name_p2025-02.json')
 
 # or
@@ -233,7 +223,6 @@ ssb_age_frmt.store(path + 'format_name_p2025-02.json', force=True)
 
 # read format/import format (dictionary saved as .json) as SsbFormat
 from fagfunksjoner.formats import get_format
-
 
 some_frmt = get_format(path+'format_name.json')
 ```
@@ -244,7 +233,6 @@ We have "flat files", which are not comma seperated. These need metadata to corr
 
 ```python
 from fagfunksjoner import open_path_datadok
-
 
 archive_object = open_path_datadok("$TBF/project/arkiv/filename/g2022g2023")
 # The object now has several important attributes
@@ -274,7 +262,6 @@ from dotenv import load_dotenv
 
 from fagfunksjoner.prodsone import Oracle
 
-
 load_dotenv()
 
 query = "select vare, pris from my_db_table"
@@ -295,7 +282,6 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from fagfunksjoner.prodsone import Oracle
-
 
 load_dotenv()
 
@@ -318,7 +304,6 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from fagfunksjoner.prodsone import Oracle
-
 
 load_dotenv()
 

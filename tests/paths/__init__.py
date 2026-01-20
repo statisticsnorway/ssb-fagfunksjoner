@@ -5,5 +5,4 @@ import logging
 
 import fagfunksjoner.fagfunksjoner_logger
 
-
 fagfunksjoner.fagfunksjoner_logger.logger.setLevel(logging.DEBUG)

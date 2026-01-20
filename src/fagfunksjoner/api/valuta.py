@@ -11,7 +11,7 @@ from dateutil import parser
 class Link:
     """Represents a hyperlink related to the dataset.
 
-    Args:
+    Attributes:
         rel: The relationship type of the link.
         href: The URL of the link (if available).
         uri: The URI of the link (if available).
@@ -28,7 +28,7 @@ class Link:
 class Sender:
     """Represents the sender of the dataset.
 
-    Args:
+    Attributes:
         id: The identifier of the sender.
     """
 
@@ -39,7 +39,7 @@ class Sender:
 class Receiver:
     """Represents the receiver of the dataset.
 
-    Args:
+    Attributes:
         id: The identifier of the receiver.
     """
 
@@ -50,13 +50,13 @@ class Receiver:
 class ValutaMeta:
     """Metadata related to the dataset.
 
-    Args:
+    Attributes:
         id: The identifier of the metadata.
         prepared: The preparation timestamp of the metadata.
         test: Indicates if the dataset is a test.
         datasetId: The identifier of the dataset.
         sender: The sender of the dataset.
-        receiver : The receiver of the dataset.
+        receiver: The receiver of the dataset.
         links: A list of related links.
     """
 
@@ -73,7 +73,7 @@ class ValutaMeta:
 class Observation:
     """Represents an observation within the dataset.
 
-    Args:
+    Attributes:
         id: The identifier of the observation.
         name: The name of the observation.
         description: The description of the observation.
@@ -94,7 +94,7 @@ class Observation:
 class Attribute:
     """Represents an attribute within the dataset.
 
-    Args:
+    Attributes:
         id: The identifier of the attribute.
         name: The name of the attribute.
         description: The description of the attribute.
@@ -115,7 +115,7 @@ class Attribute:
 class Dimension:
     """Represents a dimension within the dataset.
 
-    Args:
+    Attributes:
         id: The identifier of the dimension.
         name: The name of the dimension.
         description: The description of the dimension.
@@ -136,7 +136,7 @@ class Dimension:
 class Structure:
     """Represents the structure of the dataset.
 
-    Args:
+    Attributes:
         links: A list of related links.
         name: The name of the structure.
         names: A dictionary of names in different languages.
@@ -159,7 +159,7 @@ class Structure:
 class Series:
     """Represents a series within the dataset.
 
-    Args:
+    Attributes:
         attributes: The attributes of the series.
         observations: The observations within the series.
     """
@@ -172,7 +172,7 @@ class Series:
 class DataSet:
     """Represents a dataset.
 
-    Args:
+    Attributes:
         links: A list of related links.
         reportingBegin: The start date of the reporting period.
         reportingEnd: The end date of the reporting period.
@@ -191,7 +191,7 @@ class DataSet:
 class Data:
     """Represents the data part of the dataset.
 
-    Args:
+    Attributes:
         dataSets: A list of datasets.
         structure: The structure of the dataset.
     """
@@ -204,7 +204,7 @@ class Data:
 class ValutaData:
     """Represents the entire dataset including metadata and data.
 
-    Args:
+    Attributes:
         meta: The metadata of the dataset.
         data: The data part of the dataset.
         df: A DataFrame representation of the dataset (optional).

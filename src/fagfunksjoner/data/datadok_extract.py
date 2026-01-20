@@ -18,7 +18,6 @@
 
 import gc
 
-
 # %%
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
@@ -34,7 +33,6 @@ import requests
 from fagfunksjoner.data.dicts import get_key_by_value
 from fagfunksjoner.fagfunksjoner_logger import logger
 from fagfunksjoner.prodsone.check_env import linux_shortcuts
-
 
 # %% [markdown]
 # ## Hente fra api til Datadok
@@ -244,10 +242,10 @@ def codelist_to_df(codelist: list[CodeList]) -> pd.DataFrame:
     """Converts a list of CodeList objects to a DataFrame.
 
     Args:
-        codelist (list[CodeList]): A list of CodeList objects.
+        codelist: A list of CodeList objects.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the code list information.
+        A DataFrame containing the code list information.
     """
     return pd.DataFrame([vars(cl) for cl in codelist])
 
@@ -259,7 +257,7 @@ def metadata_to_df(context_variables: list[ContextVariable]) -> pd.DataFrame:
         context_variables: A list of ContextVariable objects.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the context variable information.
+        A DataFrame containing the context variable information.
     """
     df = pd.DataFrame([vars(cv) for cv in context_variables])
     df["type"] = (
@@ -282,7 +280,7 @@ def codelist_to_dict(codelist_df: pd.DataFrame) -> dict[str, dict[str, str]]:
         codelist_df: DataFrame containing the code list information.
 
     Returns:
-        dict[str, CodeList]: A dictionary mapping code list titles to dictionaries of code values and texts.
+        A dictionary mapping code list titles to dictionaries of code values and texts.
     """
     if codelist_df.empty:
         logger.info("NOTE: Filbeskrivelsen har ingen kodelister")
@@ -306,7 +304,7 @@ def date_parser(
         date_format: The format in which the date string is.
 
     Returns:
-        datetime: The parsed datetime object, or pd.NaT if parsing fails.
+        The parsed datetime object, or pd.NaT if parsing fails.
     """
     try:
         return datetime.strptime(date_str, date_format)
@@ -321,7 +319,7 @@ def date_formats(metadata_df: pd.DataFrame) -> dict[str, str]:
         metadata_df: DataFrame containing metadata.
 
     Returns:
-        dict[str, str]: A dictionary mapping column titles to date conversion formats.
+        A dictionary mapping column titles to date conversion formats.
 
     Raises:
         ValueError: On unrecognized dateformats.
@@ -368,7 +366,7 @@ def extract_parameters(
         df: A DataFrame containing metadata.
 
     Returns:
-        tuple[list[str], list[int], dict[str, str], str]: Extracted parameters to input into archive import.
+        Extracted parameters to input into archive import.
     """
     col_names = df["title"].tolist()
     col_lengths = df["length"].astype(int).tolist()
@@ -387,7 +385,7 @@ def downcast_ints(
         metadata_df: The DataFrame containing metadata.
 
     Returns:
-        pd.DataFrame: The modified archive DataFrame with downcast ints.
+        The modified archive DataFrame with downcast ints.
     """
     int_cols = metadata_df.loc[metadata_df["type"] == "Int64", "title"]
     for col in int_cols:
@@ -407,7 +405,7 @@ def convert_dates(
         metadata_df: The DataFrame containing metadata.
 
     Returns:
-        pd.DataFrame: The modified archive DataFrame with converted datetimecolumns.
+        The modified archive DataFrame with converted datetimecolumns.
     """
     formats = date_formats(metadata_df)
     for col, formatting in formats.items():
@@ -428,7 +426,7 @@ def handle_decimals(
         metadata_df: The DataFrame containing metadata.
 
     Returns:
-        pd.DataFrame: The modified archive DataFrame with adjusted decimal values.
+        The modified archive DataFrame with adjusted decimal values.
     """
     desi_cols = (
         metadata_df["title"]
@@ -466,14 +464,14 @@ def import_archive_data(
     Args:
         archive_desc_xml: Path or URL to the XML file describing the archive.
         archive_file: Path to the archive file.
-        read_fwf_params: Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
+        **read_fwf_params: Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
             so dont use those.
 
     Returns:
-        ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
+        An ArchiveData object containing the imported data, metadata, and code lists.
 
     Raises:
-        ParseError: If we cant parse the content on the datadok-api endpoint as XML.
+        ET.ParseError: If we cant parse the content on the datadok-api endpoint as XML.
         ValueError: If params are passed through read_fwf_params that we will overwrite with the import function.
 
     Example usage::
@@ -544,11 +542,11 @@ def open_path_metapath_datadok(
     Args:
         path: Path to the archive file on linux.
         metapath: Path described in datadok.
-        read_fwf_params: Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
+        **read_fwf_params: Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
             so dont use those.
 
     Returns:
-        ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
+        An ArchiveData object containing the imported data, metadata, and code lists.
     """
     return import_archive_data(
         archive_desc_xml=f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={metapath}",
@@ -564,11 +562,11 @@ def open_path_datadok(path: str | Path, **read_fwf_params: Any) -> ArchiveData:
 
     Args:
         path: The path to the archive file in prodsonen to attempt to get metadata for and open.
-        read_fwf_params: Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
+        **read_fwf_params: Remaining parameters to pass to pd.read_fwf, dtype, widths, names and na_values is overwritten,
             so dont use those.
 
     Returns:
-        ArchiveData: An ArchiveData object containing the imported data, metadata, and code lists.
+        An ArchiveData object containing the imported data, metadata, and code lists.
 
     Raises:
         ValueError: If no datadok-api endpoint is found for the path given.
@@ -596,14 +594,14 @@ def look_for_filepath(path_lib: Path) -> Path:
     """Look for possible placements of the physical "flatfile" on disk.
 
     Args:
-        path_lib (Path): The given path from the user as a pathlib.Path
+        path_lib: The given path from the user as a pathlib.Path
 
     Raises:
-        FileNotFoundError: If we find more than one matching file, we do not know which to pick.
-        FileNotFoundError: If we find zero matching files, we also do not know which to pick.
+        FileNotFoundError: If we find more than one matching file, we do not know which to pick. Or
+            if we find zero matching files, we also do not know which to pick.
 
     Returns:
-        Path: The found path of an actual physical file.
+        The found path of an actual physical file.
     """
     file_combinations = get_path_combinations(
         path_lib.with_suffix(""), file_exts=None, add_dollar=False
@@ -649,7 +647,7 @@ def url_from_path(path: str | Path) -> str:
         path: The path to append to the endpoint.
 
     Returns:
-        str: The URL for the given path
+        The URL for the given path
     """
     return f"http://ws.ssb.no/DatadokService/DatadokService.asmx/GetFileDescriptionByPath?path={path}"
 
@@ -661,7 +659,7 @@ def test_url(url: str) -> bool:
         url: The URL we should test.
 
     Returns:
-        bool: True if there is content at the URL. False otherwise.
+        True if there is content at the URL. False otherwise.
     """
     try:
         urlparse(url)
@@ -691,7 +689,7 @@ def test_url_combos(combinations: list[tuple[Path, str]]) -> None | str | Path:
             First element is most of the file path, second part is the file extensions, including "."
 
     Returns:
-        None | str: Returns the tested path, if one test passes, if nothing is found, return None.
+        Returns the tested path, if one test passes, if nothing is found, return None.
     """
     for path_head, ext in combinations:
         url_path = path_head.with_suffix(ext)
@@ -705,10 +703,10 @@ def convert_to_pathlib(path: str | Path) -> Path:
     """Make sure the path is converted to pathlib.Path.
 
     Args:
-        path (str | Path): The path to possibly convert.
+        path: The path to possibly convert.
 
     Returns:
-        Path: The converted path.
+        The converted path.
     """
     if not isinstance(path, Path):
         return Path(path)
@@ -726,7 +724,7 @@ def get_path_combinations(
         add_dollar: If we should add dollar paths (not needed for file opening.)
 
     Returns:
-        list[tuple[str, str]]: The generated combinations for possible locations of the files.
+        The generated combinations for possible locations of the files.
     """
     path_lib = convert_to_pathlib(path)
 
@@ -754,10 +752,10 @@ def add_pii_paths(paths: list[Path]) -> list[Path]:
     """Add PII-paths to a list of paths, to look in more places.
 
     Args:
-        paths (list[str]): List containing paths that we will add PII or non-PII paths for.
+        paths: List containing paths that we will add PII or non-PII paths for.
 
     Returns:
-        list[str]: List containing more paths now, we should have added to it.
+        List containing more paths now, we should have added to it.
     """
     paths_pii = []
     for path in paths:
@@ -791,10 +789,10 @@ def replace_dollar_stamme(path_lib: Path) -> Path | None:
     """Replace the dollar in a path with the full path using the linux-stammer.
 
     Args:
-        path_lib (Path): Th inpath, suspected to have a dollar.
+        path_lib: The inpath, suspected to have a dollar.
 
     Returns:
-        Path | None: Corrected path returned.
+        Corrected path returned.
     """
     dollar: str = str(path_lib.parts[0]).replace("$", "").replace("_PII", "").upper()
     non_dollar = linux_shortcuts().get(dollar, None)
@@ -820,7 +818,7 @@ def add_dollar_or_nondollar_path(
         TypeError: If what we get for the dollar-paths is not a single string.
 
     Returns:
-        list[str]: List containing one more path now.
+        List containing one more path now.
     """
     path_lib = convert_to_pathlib(path)
     paths = [path_lib]
@@ -872,7 +870,7 @@ def go_back_in_time(
         file_exts: The different file extensions to try.
 
     Returns:
-        str | None: The path that was found, with a corresponding URL with content in the Datadok-API.
+        The path that was found, with a corresponding URL with content in the Datadok-API.
             If nothing is found returns None.
     """
     path_lib = convert_to_pathlib(path)
@@ -905,7 +903,7 @@ def bumpcheck_file_years_back(
         exts: The base extensions to explore.
 
     Returns:
-        Path | None :
+        Path to older version of the file.
     """
     # Looking X years back in time
     for looking_back in range(-1, YEARS_BACK_CHECK, -1):
@@ -938,7 +936,7 @@ def get_yr_char_ranges(path: str | Path) -> list[tuple[int, int]]:
         path: The filename to look at for character ranges.
 
     Returns:
-        list[tuple[int, int]]: A list of tuples, tuples have length 2,
+        A list of tuples, tuples have length 2,
             one int for the starting position of a year range, and one int for the last position.
     """
     path_lib = convert_to_pathlib(path)

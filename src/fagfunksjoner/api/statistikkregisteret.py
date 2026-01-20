@@ -10,7 +10,6 @@ import requests as rs
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
-
 TEXT = "#text"
 ENDRET = "@endret"
 DESKFLYT = "@deskFlyt"
@@ -63,7 +62,7 @@ class StatisticPublishingShort:
 
 @dataclass
 class MultiplePublishings:
-    """Contains multiple statisticss, like when getting all the data in the API."""
+    """Contains multiple statistics, like when getting all the data in the API."""
 
     publishings: list[StatisticPublishingShort]
     amount: int
@@ -107,6 +106,7 @@ class Contact:
         cellphone: The contact's cellphonee number.
         email: The contact's email address.
         initials: The contact's initials.
+        changed: The last modified timestamp.
     """
 
     name: Name
@@ -164,8 +164,7 @@ class SinglePublishing:
         old_subjectcodes: The old subject codes.
         firstpublishing: The first publication date.
         status: The status code.
-        owner_name: The ownership section name.
-        owner_code: The ownership section code.
+        owningsection: The ownership section.
         contacts: A list of contacts.
         triggerwords: A dictionary of trigger words.
         variants: A list of variants.
@@ -177,6 +176,11 @@ class SinglePublishing:
         changed: The last modified date.
         desk_flow: Desk flow status.
         dir_flow: Directory flow status.
+        created_date: Creation date.
+        annual_reporting: True if annual reporting, False otherwise.
+        start_year: Start year.
+        changes: List of changes.
+        publishings: List of publishings.
     """
 
     name: Name | str

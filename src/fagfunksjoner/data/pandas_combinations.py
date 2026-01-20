@@ -17,7 +17,6 @@ import pandas as pd
 
 from fagfunksjoner.fagfunksjoner_logger import logger
 
-
 # Having trouble importing these from pandas._typing
 AggFuncTypeBase: TypeAlias = Callable[[Any], Any] | str | np.ufunc
 HashableT = TypeVar("HashableT", bound=Hashable)
@@ -113,8 +112,8 @@ def check_column_arguments(
         - aggargs: Updated aggregation functions for each column in `valuecols`.
 
     Raises:
-        ValueError: If a column in `groupcols` or `valuecols` is not in `df`.
-        ValueError: If any column in `valuecols` is non-numeric and lacks an aggregation function.
+        ValueError: If a column in `groupcols` or `valuecols` is not in `df`. Or
+            if any column in `valuecols` is non-numeric and lacks an aggregation function.
 
     Example:
         >>> data = pd.DataFrame({

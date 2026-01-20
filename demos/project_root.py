@@ -18,7 +18,6 @@ import os
 
 from fagfunksjoner import ProjectRoot
 
-
 # %%
 print(os.getcwd())
 

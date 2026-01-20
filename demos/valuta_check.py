@@ -15,13 +15,11 @@
 # %%
 import fagfunksjoner
 
-
 print(fagfunksjoner.__version__)
 
 # %%
 
 from fagfunksjoner.api.valuta import download_exchange_rates
-
 
 exchange_rates = download_exchange_rates()
 exchange_rates.df  # noqa: B018

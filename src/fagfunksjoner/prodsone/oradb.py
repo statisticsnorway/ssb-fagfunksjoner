@@ -24,6 +24,12 @@ class Oracle:
         cur (oracledb.Cursor): database cursor if using context manager
     """
 
+    user: str
+    db: str
+    pw: str
+    conn: oracledb.Connection
+    cur: oracledb.Cursor
+
     def __init__(self, db: str, pw: str | None = None) -> None:
         """The instantiation of the class.
 
@@ -37,7 +43,6 @@ class Oracle:
         self.user = getuser()
         self.db = db
 
-        self.pw: str
         self._passw(pw)
 
     def _passw(self, pw: str | None = None) -> None:
@@ -61,10 +66,10 @@ class Oracle:
             sql: the SQL query statement
 
         Returns:
-            list[dict[str, Any]]: A list of dictionaries of every record, column names as keys.
+            A list of dictionaries of every record, column names as keys.
 
         Raises:
-            error: If the connection returns an error.
+            oracledb.Error: If the connection returns an error.
         """
         try:
             # create connection to database
@@ -97,7 +102,7 @@ class Oracle:
             update: list of record values to insert or update.
 
         Raises:
-            error: If the connection returns an error.
+            oracledb.Error: If the connection returns an error.
         """
         try:
             # create connection to database
@@ -130,7 +135,7 @@ class Oracle:
             list[dict[str, Any]]: A list of dictionaries of every record, column names as keys.
 
         Raises:
-            error: If the connection returns an error.
+            oracledb.Error: If the connection returns an error.
         """
         try:
             # create connection to database
