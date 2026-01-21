@@ -3,7 +3,6 @@
 from collections.abc import Hashable
 from typing import Any, TypeVar
 
-
 # Define a type variable that will match the type of the keys in the dictionary
 KeyType = TypeVar("KeyType", bound=Hashable)
 

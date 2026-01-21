@@ -1,6 +1,8 @@
+from pathlib import Path
 from unittest.mock import patch
 
 from fagfunksjoner.paths.versions import (
+    construct_file_pattern,
     get_fileversions,
     get_latest_fileversions,
     latest_version_number,
@@ -25,6 +27,63 @@ def test_get_latest_fileversions():
     assert sorted(get_latest_fileversions(paths)) == sorted(expected)
 
 
+def test_get_latest_fileversions_local():
+    paths = [
+        "/bucket/folder/file_v1__DOC.json",
+        "/bucket/folder/file_v2__DOC.json",
+        "/bucket/folder/file_v2.parquet",
+        "/bucket/folder/otherfile_v10.parquet",
+        "/bucket/folder/otherfile_v3.parquet",
+    ]
+    expected = [
+        "/bucket/folder/file_v2.parquet",
+        "/bucket/folder/otherfile_v10.parquet",
+        "/bucket/folder/file_v2__DOC.json",
+    ]
+    assert sorted(get_latest_fileversions(paths)) == sorted(expected)
+
+
+def test_construct_file_pattern():
+    file_path = "/bucket/folder/file_v102__DOC.json"
+    expected = "/bucket/folder/file_v*__DOC.json"
+    assert construct_file_pattern(file_path) == expected
+
+    file_path = "/bucket/folder/file_v1.parquet"
+    expected = "/bucket/folder/file_v*.parquet"
+    assert construct_file_pattern(file_path) == expected
+
+    file_path = "/bucket/folder/file_very_v1.parquet"
+    expected = "/bucket/folder/file_very_v*.parquet"
+    assert construct_file_pattern(file_path) == expected
+
+
+@patch("fagfunksjoner.paths.versions.glob.glob")
+@patch("fagfunksjoner.paths.versions.construct_file_pattern")
+def test_get_fileversions(mock_construct_file_pattern, mock_glob):
+    # Mock the return value of construct_file_pattern
+    mock_construct_file_pattern.return_value = "/local/folder/file_v*__DOC.json"
+
+    # Mock the return value of glob.glob
+    mock_glob.return_value = [
+        "/local/folder/file_v1__DOC.json",
+        "/local/folder/file_v2__DOC.json",
+    ]
+
+    # Call the function with a sample input
+    filepath = "/local/folder/file_v1__DOC.json"
+    result = get_fileversions(filepath)
+
+    # Assertions
+    mock_construct_file_pattern.assert_called_once_with(filepath)
+    mock_glob.assert_called_once_with("/local/folder/file_v*__DOC.json")
+    assert sorted(result) == sorted(
+        [
+            "/local/folder/file_v1__DOC.json",
+            "/local/folder/file_v2__DOC.json",
+        ]
+    )
+
+
 # Test for `latest_version_path` function with Google Storage path
 @patch("fagfunksjoner.paths.versions.get_fileversions")
 def test_latest_version_path_gs(mock_get_fileversions):
@@ -45,6 +104,29 @@ def test_latest_version_path_local(mock_get_fileversions):
     ]
     filepath = "/local/folder/file_v1.parquet"
     assert latest_version_path(filepath) == "/local/folder/file_v2.parquet"
+
+
+# Test for `latest_version_path` function with local path
+@patch("fagfunksjoner.paths.versions.get_fileversions")
+def test_latest_version_path_local_doc_json(mock_get_fileversions):
+    mock_get_fileversions.return_value = [
+        "/local/folder/file_v1__DOC.json",
+        "/local/folder/file_v2__DOC.json",
+    ]
+    filepath = "/local/folder/file_v1__DOC.json"
+    assert latest_version_path(filepath) == "/local/folder/file_v2__DOC.json"
+
+
+# Test for `latest_version_path` function with local path
+@patch("fagfunksjoner.paths.versions.get_fileversions")
+def test_latest_version_path_local_path(mock_get_fileversions):
+    mock_get_fileversions.return_value = [
+        Path("/local/folder/file_v1.parquet"),
+        Path("/local/folder/file_v2.parquet"),
+    ]
+    filepath = Path("/local/folder/file_v1.parquet")
+    assert isinstance(latest_version_path(filepath), Path)
+    assert latest_version_path(filepath) == Path("/local/folder/file_v2.parquet")
 
 
 # Test for `latest_version_number` function with Google Storage path

@@ -44,7 +44,7 @@ def dynarev_uttrekk(
 
         pivot_cols = ["enhets_id", "enhets_type", "delreg_nr", "lopenr", "rad_nr"]
         df_all_data_pivot = df_all_data.pivot_table(
-            index=pivot_cols, columns="felt_id", values="felt_verdi", aggfunc="first"
+            index=pivot_cols, columns="felt_id", values="felt_verdi", aggfunc="first"  # type: ignore[arg-type]
         ).reset_index()
         result: list[pd.DataFrame] = [df_all_data_pivot]
 

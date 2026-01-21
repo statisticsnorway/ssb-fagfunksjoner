@@ -5,26 +5,27 @@ and can help differentiate between the different places we develop code.
 """
 
 import os
+from typing import Any
 
-from dapla.auth import AuthClient
-from dapla.const import DaplaRegion
+from dapla_auth_client import AuthClient
+from dapla_auth_client.const import DaplaRegion
 
 
 def check_env(raise_err: bool = True) -> str:
     """Check if you are on Dapla or in prodsone.
 
     Args:
-        raise_err (bool): Set to False if you don't want the code to raise an error on an unrecognized environment.
+        raise_err: Set to False if you don't want the code to raise an error on an unrecognized environment.
 
     Returns:
-        str: "DAPLA" if on Dapla, "PROD" if in prodsone, otherwise "UNKNOWN".
+        "DAPLA" if on Dapla, "PROD" if in prodsone, otherwise "UNKNOWN".
 
     Raises:
         OSError: If no environment indications match (Dapla or Prod), and raise_err is set to True.
     """
     try:
-        current_region = AuthClient.get_dapla_region()
-        if current_region in [DaplaRegion.DAPLA_LAB, DaplaRegion.BIP]:
+        current_region: Any = AuthClient.get_dapla_region()
+        if current_region in [DaplaRegion.DAPLA_LAB]:
             return "DAPLA"
     except AttributeError:
         pass
@@ -47,7 +48,7 @@ def linux_shortcuts(insert_environ: bool = False) -> dict[str, str]:
             environment variables (os.environ).
 
     Returns:
-        dict[str, str]:  The "linux-forkortelser" as a dict
+        The "linux-forkortelser" as a dict
 
     Raises:
         ValueError: If the stamme_variabel file is wrongly formatted.

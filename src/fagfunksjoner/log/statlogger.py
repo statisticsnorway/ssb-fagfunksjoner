@@ -301,6 +301,12 @@ F = TypeVar("F", bound=Callable[..., Any])
 def log_function_enter_exit(func: F) -> F:
     """Decorator that logs the entry and exit of a function.
 
+    Args:
+        func: The function to be decorated.
+
+    Returns:
+        The decorated function.
+
     Example:
 
     .. code-block:: python

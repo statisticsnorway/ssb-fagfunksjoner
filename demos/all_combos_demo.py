@@ -16,14 +16,12 @@
 # %%
 import os
 
-
 os.chdir("../")
 # %%
 import pandas as pd
 from IPython.display import display
 
 from fagfunksjoner import all_combos_agg
-
 
 data = {
     "alder": [20, 60, 33, 33, 20],

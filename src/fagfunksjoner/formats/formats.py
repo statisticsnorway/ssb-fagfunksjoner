@@ -5,21 +5,20 @@ from typing import Any
 import pandas as pd
 from pandas._libs.missing import NAType
 
-
 SSBFORMAT_INPUT_TYPE = dict[str | int, Any] | dict[str, Any]
 
 
 class SsbFormat(dict[Any, Any]):
-    """Custom dictionary class designed to handle specific formatting conventions."""
+    """Custom dictionary class designed to handle specific formatting conventions, including mapping intervals (defined as range strings) even when they map to the same value."""
 
     def __init__(self, start_dict: SSBFORMAT_INPUT_TYPE | None = None) -> None:
         """Initializes the SsbFormat instance.
 
         Args:
-            start_dict (dict, optional): Initial dictionary to populate SsbFormat.
+            start_dict: Initial dictionary to populate SsbFormat.
         """
-        super(dict, self).__init__()
-        self.cached = True  # Switching the default to False, will f-up __setitem__
+        super().__init__()
+        self.cached = True  # Switching the default to False might f-up __setitem__
         if start_dict:
             for k, v in start_dict.items():
                 dict.__setitem__(self, k, v)
@@ -43,7 +42,7 @@ class SsbFormat(dict[Any, Any]):
             dict.__setitem__(self, key, value)
             if isinstance(key, str):
                 if "-" in key and key.count("-") == 1:
-                    self.store_ranges()
+                    self.store_ranges()  # update ranges after adding a new range key
                 if key.lower() == "other" and key != "other":
                     self.set_other_as_lowercase()
             if self.check_if_na(key):
@@ -52,17 +51,20 @@ class SsbFormat(dict[Any, Any]):
     def __missing__(self, key: str | int | float | NAType | None) -> Any:
         """Overrides the '__missing__' method of dictionary to handle missing keys.
 
+        Checks for integer/string confusion, NA values, or membership in a defined range.
+        If none apply and an 'other' key exists, its value is returned.
+
         Args:
-            key (str | int | float | NAType | None): Key that is missing in the dictionary.
+            key: Key that is missing in the dictionary.
 
         Returns:
-            Any: Value of key in any special conditions: confusion int/str, in one of the ranges, NA or if other is defined.
+            Any: The corresponding mapped value based on special conditions.
 
         Raises:
-            ValueError: If the key is not found in the format and no 'other' key is specified.
+            ValueError: If the key is not found and no 'other' key is defined.
         """
         int_str_confuse = self.int_str_confuse(key)
-        if int_str_confuse:
+        if int_str_confuse is not None:
             if self.cached:
                 self[key] = int_str_confuse
             return int_str_confuse
@@ -73,7 +75,7 @@ class SsbFormat(dict[Any, Any]):
             return self.na_value
 
         key_in_range = self.look_in_ranges(key)
-        if key_in_range:
+        if key_in_range is not None:
             if self.cached:
                 self[key] = key_in_range
             return key_in_range
@@ -87,50 +89,63 @@ class SsbFormat(dict[Any, Any]):
         raise ValueError(f"{key} not in format, and no other-key is specified.")
 
     def store_ranges(self) -> None:
-        """Stores ranges based on specified keys in the dictionary."""
-        self.ranges: dict[str, tuple[float, float]] = {}
+        """Stores ranges by converting range-string keys into tuple keys.
+
+        For example, a key "0-18" with value "A" will be stored as
+        {(0.0, 18.0): "A"}.
+        """
+        self.ranges: dict[tuple[float, float], Any] = {}
         for key, value in self.items():
             if isinstance(key, str) and "-" in key and key.count("-") == 1:
                 self._range_to_floats(key, value)
 
-    def _range_to_floats(self, key: str, value: str) -> None:
-        """Converts a range key to a tuple of floats.
+    def _range_to_floats(self, key: str, value: Any) -> None:
+        """Converts a range-string key to a tuple of floats and stores it.
 
         Args:
-            key: Key to be converted to a tuple of floats.
-            value (str): Value to be associated with the converted range.
+            key: A string representing a range in the format "lower-upper". The lower bound should be
+                       either a digit or "low" and the upper bound a digit or "high".
+            value: The value to be associated with the converted range in the ranges dictionary.
+
+        Raises:
+            ValueError: If either the lower or upper bound contains a '.' character, indicating a float-like
+                        value instead of an integer-like value.
         """
-        bottom, top = key.split("-")[0].strip(), key.split("-")[1].strip()
-        if (bottom.isdigit() or bottom.lower() == "low") and (
-            top.isdigit() or top.lower() == "high"
+        parts = key.split("-")
+        if len(parts) != 2:
+            return
+        bottom_str, top_str = parts[0].strip(), parts[1].strip()
+        if "." in bottom_str or "." in top_str:
+            raise ValueError(
+                f"Ranges must be int-like values not float-like {bottom_str}-{top_str}"
+            )
+        if (bottom_str.isdigit() or bottom_str.lower() == "low") and (
+            top_str.isdigit() or top_str.lower() == "high"
         ):
-            if bottom.lower() == "low":
-                bottom_float = float("-inf")
-            else:
-                bottom_float = float(bottom)
-            if top.lower() == "high":
-                top_float = float("inf")
-            else:
-                top_float = float(top)
-            self.ranges[value] = (bottom_float, top_float)
+            bottom_float = (
+                float("-inf") if bottom_str.lower() == "low" else float(bottom_str)
+            )
+            top_float = float("inf") if top_str.lower() == "high" else float(top_str)
+            self.ranges[(bottom_float, top_float)] = value
 
-    def look_in_ranges(self, key: str | int | float | NAType | None) -> None | str:
-        """Looks for the specified key within the stored ranges.
+    def look_in_ranges(self, key: str | int | float | NAType | None) -> None | Any:
+        """Returns the mapping value for the key if it falls within any defined range.
 
-        Args:
-            key: Key to search within the stored ranges.
-
-        Returns:
-            The value associated with the range containing the key, if found; otherwise, None.
+        The method attempts to convert the key to a float and then checks if it lies within
+        any of the stored range intervals. If the key is None, NA, or not of a convertible type,
+        the method returns None.
         """
-        if isinstance(key, str | int | float):
-            try:
-                key = float(key)
-            except ValueError:
-                return None
-            for range_key, (bottom, top) in self.ranges.items():
-                if key >= bottom and key <= top:
-                    return range_key
+        if key is None or pd.isna(key) or not isinstance(key, str | int | float):
+            return None
+
+        try:
+            key_value = float(key)
+        except (ValueError, TypeError):
+            return None
+
+        for (bottom, top), mapping_value in self.ranges.items():
+            if bottom <= key_value <= top:
+                return mapping_value
         return None
 
     def int_str_confuse(self, key: str | int | float | NAType | None) -> None | Any:
@@ -144,27 +159,30 @@ class SsbFormat(dict[Any, Any]):
         """
         if isinstance(key, str):
             try:
-                key = int(key)
-                if key in self:
-                    return self[key]
+                int_key = int(key)
+                if int_key in self:
+                    return self[int_key]
             except ValueError:
                 return None
         elif isinstance(key, int):
-            key = str(key)
-            if key in self:
-                return self[key]
+            str_key = str(key)
+            if str_key in self:
+                return self[str_key]
         return None
 
     def set_other_as_lowercase(self) -> None:
-        """Sets the key 'other' to lowercase if mixed cases are found."""
-        found = False
-        for key in self:
-            if isinstance(key, str) and key.lower() == "other":
-                found = True
-                break
-        if found:
-            value = self[key]
-            del self[key]
+        """Ensures that the 'other' key is stored in lowercase.
+
+        If a key matching 'other' in any other case is found, its value is reassigned to 'other'.
+        """
+        keys_to_update = [
+            k
+            for k in self
+            if isinstance(k, str) and k.lower() == "other" and k != "other"
+        ]
+        for k in keys_to_update:
+            value = self[k]
+            del self[k]
             self["other"] = value
 
     def set_na_value(self) -> bool:
@@ -181,7 +199,7 @@ class SsbFormat(dict[Any, Any]):
         return False
 
     @staticmethod
-    def check_if_na(key: str | Any) -> bool:
+    def check_if_na(key: Any) -> bool:
         """Checks if the specified key represents a NA (Not Available) value.
 
         Args:
@@ -205,8 +223,8 @@ class SsbFormat(dict[Any, Any]):
         """Stores the SsbFormat instance in a specified output path.
 
         Args:
-            output_path (str): Path where the format will be stored.
-            force (bool): Flag to force storing even for cached instances.
+            output_path: Path where the format will be stored.
+            force: Flag to force storing even for cached instances.
 
         Raises:
             ValueError: If storing a cached SsbFormat might lead to an unexpectedly large number of keys.
@@ -226,10 +244,10 @@ def get_format(filepath: str | Path) -> SsbFormat | None:
     """Retrieves the format from a json-format-file from path.
 
     Args:
-        filepath (str|Path): Send in the full path to the format directly.
+        filepath: Send in the full path to the format directly.
 
     Returns:
-        dict or defaultdict: The formatted dictionary or defaultdict for the specified format and date. If the format contains a "other" key, a defaultdict will be returned. If the
+        The formatted dictionary or defaultdict for the specified format and date. If the format contains a "other" key, a defaultdict will be returned. If the
             format contains the SAS-value for missing: ".", or another recognized "empty-datatype":
             Many known keys for empty values, will be inserted in the dict, to hopefully map these correctly.
     """
@@ -245,9 +263,9 @@ def store_format(
     """Takes a nested or unnested dictionary and saves it to prodsone-folder as a timestamped json.
 
     Args:
-        anyformat (dict[str, str]): Dictionary containing format information.
+        anyformat: Dictionary containing format information.
             The values of the dictionary are the dict contents of the formats.¨
-        output_path (str): Path to store the format data. Not including the filename itself, only the base folder.
+        output_path: Path to store the format data. Not including the filename itself, only the base folder.
     """
     if not isinstance(output_path, Path):
         output_path = Path(output_path)

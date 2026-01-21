@@ -7,7 +7,6 @@ import datetime as dt
 
 from pandas import Timestamp
 
-
 FORMATS: dict[str, str] = {
     "date_time": r"%Y-%m-%dT%H:%M:%S",
     "date": r"%Y-%m-%d",

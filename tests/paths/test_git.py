@@ -1,8 +1,9 @@
+from pathlib import Path
 from unittest import mock
 
 import pytest
 
-from fagfunksjoner.paths.git import name_from_gitconfig
+from fagfunksjoner.paths.git import name_from_gitconfig, repo_root_dir
 
 
 def test_name_from_gitconfig_found():
@@ -44,3 +45,18 @@ def test_name_from_gitconfig_correct_directory_revert():
                     name_from_gitconfig()
                     # Ensure os.chdir is called back to the original directory
                     mock_chdir.assert_any_call(mock_getcwd.return_value)
+
+
+def test_repo_root_dir() -> None:
+    # Directory in a git repo
+    repo_root = repo_root_dir()
+    assert repo_root is not None
+
+    # Directory outside a git repo
+    with pytest.raises(RuntimeError):
+        repo_root_dir(Path("/"))
+
+    # Directory as a string instead of pathlib.Path
+    dir_string = str(Path.cwd())
+    repo_root_str = repo_root_dir(dir_string)
+    assert repo_root_str is not None

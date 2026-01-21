@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/statisticsnorway/ssb-pypitemplate.git",
-  "commit": "0d33fca0d1c29c79aef9c7053e36d9e7cdd2bd20",
-  "checkout": "2025.2.19",
+  "commit": "1b94f545381a9ce08e205e7451d7a4f07eaef142",
+  "checkout": "2026.1.7",
   "context": {
     "cookiecutter": {
       "project_name": "ssb-fagfunksjoner",
@@ -12,10 +12,12 @@
       "author": "Carl F. Corneil",
       "email": "cfc@ssb.no",
       "github_organization": "statisticsnorway",
-      "version": "0.1.10",
+      "version": "1.1.2",
       "license": "MIT",
       "development_status": "Development Status :: 4 - Beta",
       "code_quality_level": "Medium",
+      "dependency_manager_tool": "poetry",
+      "department_number": "",
       "_copy_without_render": [
         "*.rst_t"
       ],
@@ -24,7 +26,7 @@
         "trim_blocks": true
       },
       "_template": "https://github.com/statisticsnorway/ssb-pypitemplate.git",
-      "_commit": "0d33fca0d1c29c79aef9c7053e36d9e7cdd2bd20"
+      "_commit": "1b94f545381a9ce08e205e7451d7a4f07eaef142"
     }
   },
   "directory": null

@@ -361,7 +361,7 @@ def test_import_archive_data_with_invalid_params(
     mock_open.return_value.read.return_value = xml_content()
 
     # Now, we expect a ValueError related to the dtype parameter
-    with pytest.raises(ValueError, match="You cannot pass dtype to pandas.fwf"):
+    with pytest.raises(ValueError, match=r"You cannot pass dtype to pandas.fwf"):
         datadok_extract.import_archive_data(
             archive_desc_xml="mock.xml",
             archive_file="mock_archive.txt",
@@ -463,7 +463,7 @@ def test_get_path_combinations_with_invalid_dollar_key(
 
     with pytest.raises(
         TypeError,
-        match="What we got out of the dollar-linux file was not a single string",
+        match=r"What we got out of the dollar-linux file was not a single string",
     ):
         datadok_extract.get_path_combinations("invalid/path/to/file")
 
@@ -475,7 +475,7 @@ def test_get_path_combinations_with_invalid_dollar_key(
 def test_file_with_ark_extension(
     mock_test_url, mock_import_archive_data, mock_get_key_by_value, mock_linux_shortcuts
 ):
-    utd_path, path, expected = utd_path_expected()
+    utd_path, _path, _expected = utd_path_expected()
     mock_linux_shortcuts.return_value = {"UTD": str(utd_path.as_posix())}
     mock_get_key_by_value.return_value = "UTD"
     mock_import_archive_data.return_value = datadok_extract.ArchiveData(
@@ -504,7 +504,7 @@ def test_file_with_ark_extension(
 def test_file_with_ark_extension_finds_dat(
     mock_test_url, mock_import_archive_data, mock_get_key_by_value, mock_linux_shortcuts
 ):
-    utd_path, path, expected = utd_path_expected()
+    utd_path, _path, _expected = utd_path_expected()
     mock_linux_shortcuts.return_value = {"UTD": str(utd_path.as_posix())}
     mock_get_key_by_value.return_value = "UTD"
     mock_import_archive_data.return_value = datadok_extract.ArchiveData(

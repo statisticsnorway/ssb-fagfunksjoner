@@ -5,7 +5,6 @@ import pytest
 
 from fagfunksjoner.api.valuta import ValutaData, download_exchange_rates, parse_response
 
-
 # Mock JSON response
 mock_json = {
     "meta": {
@@ -209,20 +208,22 @@ def test_parse_response():
             "BASE_CUR",
             "QUOTE_CUR",
             "TENOR",
-            "TIME_PERIOD",
             "FREQ_id",
             "BASE_CUR_id",
             "QUOTE_CUR_id",
             "TENOR_id",
+            "TIME_PERIOD_start",
+            "TIME_PERIOD_end",
             "TIME_PERIOD_id",
+            "TIME_PERIOD_name",
             "Observation",
             "DECIMALS",
-            "CALCULATED",
-            "UNIT_MULT",
-            "COLLECTION",
             "DECIMALS_id",
+            "CALCULATED",
             "CALCULATED_id",
+            "UNIT_MULT",
             "UNIT_MULT_id",
+            "COLLECTION",
             "COLLECTION_id",
         }
     )

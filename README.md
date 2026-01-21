@@ -18,7 +18,6 @@
 [pypi status]: https://pypi.org/project/ssb-fagfunksjoner/
 [documentation]: https://statisticsnorway.github.io/ssb-fagfunksjoner
 [tests]: https://github.com/statisticsnorway/ssb-fagfunksjoner/actions?workflow=Tests
-
 [sonarcov]: https://sonarcloud.io/summary/overall?id=statisticsnorway_ssb-fagfunksjoner
 [sonarquality]: https://sonarcloud.io/summary/overall?id=statisticsnorway_ssb-fagfunksjoner
 [pre-commit]: https://github.com/pre-commit/pre-commit
@@ -51,14 +50,12 @@ Check if you are on Dapla or in prodsone.
 ```python
 from fagfunksjoner import check_env
 
-
 check_env()
 ```
 
 Navigate to the root of your project and back again. Do stuff while in root, like importing local functions.
 ```python
 from fagfunksjoner import ProjectRoot
-
 
 with ProjectRoot():
     ... # Do your local imports here...
@@ -70,7 +67,6 @@ Setting up password with saspy
 ```python
 from fagfunksjoner.prodsone import saspy_ssb
 
-
 saspy_ssb.set_password() # Follow the instructions to set the password
 saspy_ssb.saspy_df_from_path("path")
 ```
@@ -79,8 +75,7 @@ saspy_ssb.saspy_df_from_path("path")
 ```python
 import logging
 
-from fagfunksjoner import StatLogger
-
+from fagfunksjoner.log.statlogger import StatLogger
 
 # Ved å opprette StatLogger så "hijacker" den den vanlige loggeren
 root_logger = StatLogger(log_file="custom_log_file.log")
@@ -90,12 +85,46 @@ logger = logging.getLogger(__name__)
 logger.info("This is an info message")
 ```
 
+
+
+### Export XMLs that can be imported into the KLASS UI
+```python
+from fagfunksjoner import make_klass_xml_codelist
+
+make_klass_xml_codelist(path="kjoenn.xml",
+    codes=["1", "2"],
+    names_bokmaal=["Mann", "Kvinne"])
+```
+
+
+### Round data UP
+
+```python
+import pandas as pd
+
+from fagfunksjoner import round_up
+
+print(round(2.5, 0), round_up(2.5, 0))
+
+round_up(pd.Series([1.5, 2.5, 3.5]), 0)  # Datatype blir Int64 når man runder til 0 desimaler
+round_up(pd.Series([1.15, 2.15, 3.15]), 1)  # Datatype blir Float64 når man runder til mer enn 0 desimaler
+
+df = pd.DataFrame(
+    {"col1": [1.5, 2.5, 1.2345, 1.2355],
+    "col2": [3.5, 4.5, 5.6789, 6.7891]}
+    ).astype({"col1": "Float64", "col2": "Float64"})
+rounded = round_up(df, decimal_places=0, col_names="col1")  # Avrunder kun col1, den endrer datatype til Int64
+
+rounded2 = round_up(df, col_names={"col1": 1, "col2": 2})  # Avrunder col1 til 1 desimal, col2 til 2 desimaler
+
+```
+
+
 ### Aggregation / Categories
 
 Aggregate on all exclusive combinations of codes in certain columns (maybe before sending to statbank? Like proc means?)
 ```python
 from fagfunksjoner import all_combos_agg
-
 
 ialt_koder = {
 "skolefylk": "01-99",
@@ -114,7 +143,6 @@ To aggregate on NON-EXCLUSIVE combinations of codes in certain columns, use the 
 
 ```python
 from fagfunksjoner import all_combos_agg_inclusive
-
 
 category_mappings = {
     "Alder": {
@@ -159,13 +187,12 @@ all_combos_agg_inclusive(
     grand_total=True)
 ```
 
-
+### "Formats" like in SAS
 
 Perform mapping using SsbFormat. Behaves like a dictionary. Has functionality for mapping ranges and 'other'-category and detecting different types of NaN-values. Does not handle non-exclusive / overlapping categories, please only use for exclusive categories.
 
 ```python
 from fagfunksjoner import SsbFormat
-
 
 age_frmt = {
 'low-18': '-18',
@@ -188,7 +215,6 @@ print(df['age_group'].value_counts())
 # save format
 from fagfunksjoner.formats import store_format
 
-
 store_format(path+'format_name_p2025-02.json')
 
 # or
@@ -198,16 +224,15 @@ ssb_age_frmt.store(path + 'format_name_p2025-02.json', force=True)
 # read format/import format (dictionary saved as .json) as SsbFormat
 from fagfunksjoner.formats import get_format
 
-
 some_frmt = get_format(path+'format_name.json')
 ```
 
 ### Opening archive-files based on Datadok-api in prodsone
+
 We have "flat files", which are not comma seperated. These need metadata to correctly open. In SAS we do this with "lastescript". But there is an API to old Datadok in prodsone, so these functions let you just specify a path, and attempt to open the flat files directly into pandas, with the metadata also available.
 
 ```python
 from fagfunksjoner import open_path_datadok
-
 
 archive_object = open_path_datadok("$TBF/project/arkiv/filename/g2022g2023")
 # The object now has several important attributes
@@ -220,6 +245,9 @@ archive_object.datatypes  # The datatypes the archivdata ended up having?
 archive_object.widths  # Width of each column in the flat file
 
 ```
+
+
+
 ### Operation to Oracle database
 
 Remember that any credidential values to the database should not be stored
@@ -230,10 +258,9 @@ Example for a normal select query where we expect not too many records:
 import os
 
 import pandas as pd
-from doteng import load_dotenv
+from dotenv import load_dotenv
 
 from fagfunksjoner.prodsone import Oracle
-
 
 load_dotenv()
 
@@ -252,10 +279,9 @@ Example for a select query where possibly many records:
 import os
 
 import pandas as pd
-from doteng import load_dotenv
+from dotenv import load_dotenv
 
 from fagfunksjoner.prodsone import Oracle
-
 
 load_dotenv()
 
@@ -275,10 +301,9 @@ the columns in sql query statement and data are important):
 import os
 
 import pandas as pd
-from doteng import load_dotenv
+from dotenv import load_dotenv
 
 from fagfunksjoner.prodsone import Oracle
-
 
 load_dotenv()
 
@@ -296,7 +321,7 @@ query = "insert into my_db_table(vare, pris) values(:vare, :pris)"
 ora = Oracle(pw=os.getenv("my-secret-password"),
              db=os.getenv("database-name"))
 
-ora.insert_or_update(sql=query, update=data)
+ora.update_or_insert(sql=query, update=data)
 
 ora.close()
 ```
@@ -308,7 +333,7 @@ Having some kind of ID to the records will be very usefull!):
 ```python
 import os
 import pandas as pd
-from doteng import load_dotenv
+from dotenv import load_dotenv
 from fagfunksjoner.prodsone import Oracle
 load_dotenv()
 
@@ -327,7 +352,7 @@ query = "update my_db_table set vare = :vare, pris = :pris where id = :id"
 ora = Oracle(pw=os.getenv("my-secret-password"),
              db=os.getenv("database-name"))
 
-ora.insert_or_update(sql=query, update=data)
+ora.update_or_insert(sql=query, update=data)
 
 ora.close()
 ```
@@ -342,7 +367,7 @@ import os
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from doteng import load_dotenv
+from dotenv import load_dotenv
 from fagfunksjoner.prodsone import Oracle, OraError
 load_dotenv()
 

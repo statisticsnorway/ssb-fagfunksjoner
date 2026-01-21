@@ -4,7 +4,6 @@ import pandas as pd
 from fagfunksjoner import SsbFormat
 from fagfunksjoner.formats import get_format, store_format
 
-
 # ### SsbFormat is a Class to give python dictionaries some functionalities found in SAS-formats, and then some.
 # * Mapping ranges: Define range as keys and corresponding categories as values.
 # * 'other'-category: Any values not found in keys during mapping will be grouped as 'other' if this key is spesified. You are free to specify corresponding value.

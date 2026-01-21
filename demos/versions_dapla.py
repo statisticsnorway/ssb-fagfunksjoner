@@ -15,7 +15,6 @@
 # %%
 import dapla as dp
 
-
 fs = dp.FileClient().get_gcs_file_system()
 
 # %%
@@ -45,7 +44,6 @@ for file in testfile_paths:
 
 # %%
 from fagfunksjoner.paths import versions
-
 
 # %%
 files = fs.glob(f"{base_path}/{folder_name}/*")

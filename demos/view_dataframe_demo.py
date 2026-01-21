@@ -21,10 +21,8 @@ import numpy as np
 import pandas as pd
 from IPython.display import display
 
-
 # %%
 from fagfunksjoner import view_dataframe
-
 
 # %% [markdown]
 # ## Generate test data
@@ -38,11 +36,11 @@ def generate_test_dataframe(
     """Generate testdataset to view with widget.
 
     Args:
-        num_rows (int): Number of rows you want in your testdataset. Defaults to 10.
-        missing_percentage (float): How many missingvalues you want as a percentage. Defaults to 0.1.
+        num_rows: Number of rows you want in your testdataset. Defaults to 10.
+        missing_percentage: How many missingvalues you want as a percentage. Defaults to 0.1.
 
     Returns:
-        pd.DataFrame: The testdataset.
+        The testdataset.
     """
     np.random.seed(42324)  # For reproducibility
 
