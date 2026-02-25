@@ -22,8 +22,8 @@ except ImportError:
     raise SystemExit(dedent(message)) from None
 
 package = "fagfunksjoner"
-python_versions = ["3.11", "3.12", "3.13"]
-python_versions_for_test = python_versions + ["3.10"]
+python_versions = ["3.11", "3.12", "3.13", "3.14"]
+python_versions_for_test = python_versions
 nox.needs_version = ">= 2025.2.9"
 nox.options.sessions = (
     "pre-commit",
@@ -138,7 +138,7 @@ def insert_header_in_hook(header: dict[str, str], lines: list[str]) -> str:
     return "\n".join(lines)
 
 
-@session(name="pre-commit", python=python_versions[0])
+@session(name="pre-commit", python=python_versions[-1])
 def precommit(session: Session) -> None:
     """Lint using pre-commit."""
     args = session.posargs or [
@@ -185,7 +185,7 @@ def tests(session: Session) -> None:
             session.notify("coverage", posargs=[])
 
 
-@session(python=python_versions[0])
+@session(python=python_versions[-1])
 def coverage(session: Session) -> None:
     """Produce the coverage report."""
     args = session.posargs or ["report", "--skip-empty"]
@@ -196,7 +196,7 @@ def coverage(session: Session) -> None:
     session.run("coverage", *args)
 
 
-@session(python=python_versions[0])
+@session(python=python_versions[-1])
 def typeguard(session: Session) -> None:
     """Runtime type checking using Typeguard."""
     session.install(".")
@@ -219,7 +219,7 @@ def xdoctest(session: Session) -> None:
     session.run("python", "-m", "xdoctest", *args)
 
 
-@session(name="docs-build", python=python_versions[0])
+@session(name="docs-build", python=python_versions[-1])
 def docs_build(session: Session) -> None:
     """Build the documentation."""
     args = session.posargs or ["docs", "docs/_build"]
@@ -236,7 +236,7 @@ def docs_build(session: Session) -> None:
     session.run("sphinx-build", *args)
 
 
-@session(python=python_versions[0])
+@session(python=python_versions[-1])
 def docs(session: Session) -> None:
     """Build and serve the documentation with live reloading on file changes."""
     args = session.posargs or ["--open-browser", "docs", "docs/_build"]
