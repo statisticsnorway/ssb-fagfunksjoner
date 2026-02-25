@@ -8,10 +8,9 @@ for example the __DOC.json-files, will not work, because they do not end with "_
 """
 
 import glob
+import gcsfs
 from pathlib import Path
 from typing import overload
-
-from dapla import FileClient
 
 from fagfunksjoner.fagfunksjoner_logger import logger, silence_logger
 
@@ -252,7 +251,7 @@ def get_fileversions(filepath: str | Path) -> list[str] | list[Path]:
         or file_str.startswith("ssb-")
     ):
         # Use a GCS file system client for cloud storage files.
-        fs = FileClient.get_gcs_file_system()
+        fs = gcsfs.GCSFileSystem()
         files_list = fs.glob(glob_pattern)
     else:
         # Use the standard glob module for local files.
