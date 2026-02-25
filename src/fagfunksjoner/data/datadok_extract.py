@@ -453,6 +453,9 @@ def handle_decimals(
         # Correct metadata
         metadata_df.loc[metadata_df["title"] == col, "type"] = "Float64"
 
+    for col in df.select_dtypes(include=["object", "string"]).columns:
+        df[col] = df[col].astype("string[pyarrow]")
+
     return df, metadata_df
 
 

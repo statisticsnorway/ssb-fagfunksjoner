@@ -34,7 +34,7 @@ def test_dtype_store_json():
     json_path = "dummy_path.json"
 
     expected_json = {
-        "col1": {"dtype": "category", "secondary_dtype": "object"},
+        "col1": {"dtype": "category", "secondary_dtype": "string[pyarrow]"},
         "col2": {"dtype": "int64", "secondary_dtype": None},
     }
 

@@ -71,6 +71,7 @@ dev = [
     "types-colorama>=0.4.15.20250801",
     "pyarrow-stubs>=20.0.0.20251215",
     "types-python-dateutil>=2.9.0.20251115",
+    "lxml >=6.0.2",
 ]
 
 [tool.poetry]
