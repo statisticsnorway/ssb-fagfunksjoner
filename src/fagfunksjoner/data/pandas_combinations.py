@@ -10,7 +10,7 @@ This has some similar functionality to "proc means" in SAS.
 import copy
 from collections.abc import Callable, Hashable, Mapping
 from itertools import combinations, product
-from typing import Any, TypeAlias, TypeVar, cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -18,9 +18,8 @@ import pandas as pd
 from fagfunksjoner.fagfunksjoner_logger import logger
 
 # Having trouble importing these from pandas._typing
-AggFuncTypeBase: TypeAlias = Callable[[Any], Any] | str | np.ufunc
-HashableT = TypeVar("HashableT", bound=Hashable)
-AggFuncTypeDictSeries: TypeAlias = Mapping[HashableT, AggFuncTypeBase]
+type AggFuncTypeBase = Callable[[Any], Any] | str | np.ufunc
+type AggFuncTypeDictSeries[HashableT: Hashable] = Mapping[HashableT, AggFuncTypeBase]
 
 
 def all_combos_agg(

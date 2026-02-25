@@ -1,13 +1,12 @@
 """Extra functionality operating on baseline dicts added to this module."""
 
 from collections.abc import Hashable
-from typing import Any, TypeVar
-
-# Define a type variable that will match the type of the keys in the dictionary
-KeyType = TypeVar("KeyType", bound=Hashable)
+from typing import Any
 
 
-def get_key_by_value(data: dict[KeyType, Any], value: Any) -> KeyType | list[KeyType]:
+def get_key_by_value[KeyType: Hashable](
+    data: dict[KeyType, Any], value: Any
+) -> KeyType | list[KeyType]:
     """Searches through the values in a dict for a match, returns the key.
 
     Args:
