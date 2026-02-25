@@ -14,9 +14,7 @@ def mock_file_system():
 
 
 @patch("fagfunksjoner.paths.versions.gcsfs.GCSFileSystem")
-def test_get_next_version_number(
-    mock_gcsfs: MagicMock, mock_file_system: Callable
-):
+def test_get_next_version_number(mock_gcsfs: MagicMock, mock_file_system: Callable):
     mock_gcsfs.return_value = mock_file_system
 
     # Test cases
