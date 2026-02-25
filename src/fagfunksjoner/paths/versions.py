@@ -11,7 +11,7 @@ import glob
 from pathlib import Path
 from typing import overload
 
-import gcsfs
+import gcsfs  # type: ignore[import-untyped]
 
 from fagfunksjoner.fagfunksjoner_logger import logger, silence_logger
 

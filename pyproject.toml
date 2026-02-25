@@ -122,9 +122,11 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = [
+    "gcsfs",
     "gcsfs.*",
 ]
 ignore_missing_imports = true
+disable_error_code = ["import-untyped"]
 
 [tool.isort]
 profile = "black"

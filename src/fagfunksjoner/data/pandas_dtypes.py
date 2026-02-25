@@ -7,10 +7,13 @@ The function you most likely want is "auto_dype".
 
 import gc
 import json
+from typing import Final, Literal
 
 import pandas as pd
 
 from fagfunksjoner.fagfunksjoner_logger import logger
+
+STRING_DTYPE: Final[Literal["string[pyarrow]"]] = "string[pyarrow]"
 
 
 def dtype_set_from_json(df: pd.DataFrame, json_path: str) -> pd.DataFrame:
@@ -33,8 +36,8 @@ def dtype_set_from_json(df: pd.DataFrame, json_path: str) -> pd.DataFrame:
 
 
 def _normalize_string_dtype(dtype: str) -> str:
-    if dtype in {"string", "string[python]", "string[pyarrow]", "str"}:
-        return "string[pyarrow]"
+    if dtype in {"string", "string[python]", STRING_DTYPE, "str"}:
+        return STRING_DTYPE
     return dtype
 
 
@@ -53,7 +56,7 @@ def dtype_store_json(df: pd.DataFrame, json_path: str) -> None:
             inferred = categories.inferred_type
             second_dtype = str(categories.dtype)
             if inferred in {"string", "unicode"}:
-                second_dtype = "string[pyarrow]"
+                second_dtype = STRING_DTYPE
         dtype = _normalize_string_dtype(str(dtype))
         if second_dtype is not None:
             second_dtype = _normalize_string_dtype(second_dtype)
@@ -151,24 +154,24 @@ def decode_bytes(
     if len(byte_cols):
         if copy_df:
             df = df.copy()
-    for col in byte_cols:
-        logger.info(f"Decoding {col}")
-        try:
-            df[col] = (
-                df[col]
-                .map(
-                    lambda value: (
-                        value.decode("utf-8") if isinstance(value, bytes) else value
+        for col in byte_cols:
+            logger.info(f"Decoding {col}")
+            try:
+                df[col] = (
+                    df[col]
+                    .map(
+                        lambda value: (
+                            value.decode("utf-8") if isinstance(value, bytes) else value
+                        )
                     )
+                    .astype(STRING_DTYPE)
                 )
-                .astype("string[pyarrow]")
-            )
-        except UnicodeDecodeError:
-            logger.info(f"\rFailed to decode {col} from bytes")
-            fails += [col]
-        # Shit is memory intensive, lets try collecting garbage...
-        # seems to work?
-        gc.collect()
+            except UnicodeDecodeError:
+                logger.info(f"\rFailed to decode {col} from bytes")
+                fails += [col]
+            # Shit is memory intensive, lets try collecting garbage...
+            # seems to work?
+            gc.collect()
     if fails:
         logger.warning("Decode failed on these:", fails)
     return df
@@ -188,7 +191,7 @@ def object_to_strings(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
         df = df.copy()
     for col in df.select_dtypes(include=["object", "string"]).columns:
         logger.info(f"Converting {col} to string")
-        df[col] = df[col].astype("string[pyarrow]").str.strip()
+        df[col] = df[col].astype(STRING_DTYPE).str.strip()
     return df
 
 
