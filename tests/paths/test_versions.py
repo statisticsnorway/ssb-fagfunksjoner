@@ -197,7 +197,7 @@ def test_several_startswith():
     assert sorted(get_latest_fileversions(inputs)) == sorted(expected)
 
 
-@patch("fagfunksjoner.paths.versions.FileClient.get_gcs_file_system")
+@patch("fagfunksjoner.paths.versions.gcsfs.GCSFileSystem")
 def test_without_version(mock_get_gcs_file_system):
     file_list = [
         "gs://bucket/folder/nevner_v1.parquet",

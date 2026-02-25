@@ -11,6 +11,13 @@ Here is a list of important resources for contributors:
 - [Issue Tracker]
 - [Code of Conduct]
 
+
+## Rebuild documentation
+```bash
+poetry run sphinx-apidoc -T -f -t ./docs/templates -o ./docs ./src
+```
+
+
 ## How to report a bug
 
 Report bugs on the [Issue Tracker].
@@ -32,7 +39,7 @@ Request features on the [Issue Tracker].
 
 ## How to set up your development environment
 
-You need Python 3.10+ and the following tools:
+You need Python 3.12+ and the following tools:
 
 - [Poetry]
 - [Nox]

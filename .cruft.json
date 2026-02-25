@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/statisticsnorway/ssb-pypitemplate.git",
-  "commit": "1b94f545381a9ce08e205e7451d7a4f07eaef142",
-  "checkout": "2026.1.7",
+  "commit": "dcc4de1788caf9123ee2a56ca3828eee8be383a8",
+  "checkout": null,
   "context": {
     "cookiecutter": {
       "project_name": "ssb-fagfunksjoner",
@@ -26,7 +26,7 @@
         "trim_blocks": true
       },
       "_template": "https://github.com/statisticsnorway/ssb-pypitemplate.git",
-      "_commit": "1b94f545381a9ce08e205e7451d7a4f07eaef142"
+      "_commit": "dcc4de1788caf9123ee2a56ca3828eee8be383a8"
     }
   },
   "directory": null

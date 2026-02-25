@@ -265,7 +265,7 @@ def test_handle_decimals_with_empty_metadata():
 
     # The dataframe should remain unchanged since no metadata information is provided
     assert df["col1"].iloc[0] == "1,23"  # No change
-    assert df["col1"].dtype == "object"  # No type change
+    assert df["col1"].dtype == "string[pyarrow]"  # Prefer pyarrow strings
 
 
 # Mocking the is_valid_url function to return True or False as needed

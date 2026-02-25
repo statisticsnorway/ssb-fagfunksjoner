@@ -47,11 +47,11 @@ def repo_root_dir(directory: Path | str | None = None) -> Path:
     Example:
     --------
     >>> from fagfunksjoner.paths.git import repo_root_dir
-    >>> import tomli
+    >>> import toml
     >>>
     >>> config_file = repo_root_dir() / "pyproject.toml"
-    >>> with open(config_file, mode="rb") as fp:
-    >>>     config = tomli.load(fp)
+    >>> with open(config_file, mode="r", encoding="utf-8") as fp:
+    >>>     config = toml.load(fp)
     """
     if directory is None:
         directory = Path.cwd()

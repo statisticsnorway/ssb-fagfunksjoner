@@ -7,10 +7,13 @@ The function you most likely want is "auto_dype".
 
 import gc
 import json
+from typing import Final, Literal
 
 import pandas as pd
 
 from fagfunksjoner.fagfunksjoner_logger import logger
+
+STRING_DTYPE: Final[Literal["string[pyarrow]"]] = "string[pyarrow]"
 
 
 def dtype_set_from_json(df: pd.DataFrame, json_path: str) -> pd.DataFrame:
@@ -32,6 +35,12 @@ def dtype_set_from_json(df: pd.DataFrame, json_path: str) -> pd.DataFrame:
     return df
 
 
+def _normalize_string_dtype(dtype: str) -> str:
+    if dtype in {"string", "string[python]", STRING_DTYPE, "str"}:
+        return STRING_DTYPE
+    return dtype
+
+
 def dtype_store_json(df: pd.DataFrame, json_path: str) -> None:
     """Store the dtypes of a dataframes columns as a json for later reference.
 
@@ -43,8 +52,14 @@ def dtype_store_json(df: pd.DataFrame, json_path: str) -> None:
     for col, dtype in df.dtypes.items():
         second_dtype = None
         if dtype == "category":
-            second_dtype = str(df[col].cat.categories.dtype)
-        dtype = str(dtype)
+            categories = df[col].cat.categories
+            inferred = categories.inferred_type
+            second_dtype = str(categories.dtype)
+            if inferred in {"string", "unicode"}:
+                second_dtype = STRING_DTYPE
+        dtype = _normalize_string_dtype(str(dtype))
+        if second_dtype is not None:
+            second_dtype = _normalize_string_dtype(second_dtype)
         dtype_metadata[col] = {"dtype": dtype, "secondary_dtype": second_dtype}
     with open(json_path, "w") as json_file:
         json_file.write(
@@ -139,10 +154,18 @@ def decode_bytes(
     if len(byte_cols):
         if copy_df:
             df = df.copy()
-        for col in df.select_dtypes(include=["object", "string"]).columns:
+        for col in byte_cols:
             logger.info(f"Decoding {col}")
             try:
-                df[col] = df[col].str.decode("utf-8").astype("string[pyarrow]")
+                df[col] = (
+                    df[col]
+                    .map(
+                        lambda value: (
+                            value.decode("utf-8") if isinstance(value, bytes) else value
+                        )
+                    )
+                    .astype(STRING_DTYPE)
+                )
             except UnicodeDecodeError:
                 logger.info(f"\rFailed to decode {col} from bytes")
                 fails += [col]
@@ -168,7 +191,7 @@ def object_to_strings(df: pd.DataFrame, copy_df: bool = True) -> pd.DataFrame:
         df = df.copy()
     for col in df.select_dtypes(include=["object", "string"]).columns:
         logger.info(f"Converting {col} to string")
-        df[col] = df[col].astype("string[pyarrow]").str.strip()
+        df[col] = df[col].astype(STRING_DTYPE).str.strip()
     return df
 
 

@@ -2,7 +2,6 @@ from collections.abc import Callable
 from unittest.mock import MagicMock, patch
 
 import pytest
-from dapla import FileClient
 
 from fagfunksjoner.paths.versions import next_version_number
 
@@ -14,11 +13,9 @@ def mock_file_system():
     return mock_fs
 
 
-@patch.object(FileClient, "get_gcs_file_system")
-def test_get_next_version_number(
-    mock_get_gcs_file_system: FileClient, mock_file_system: Callable
-):
-    mock_get_gcs_file_system.return_value = mock_file_system
+@patch("fagfunksjoner.paths.versions.gcsfs.GCSFileSystem")
+def test_get_next_version_number(mock_gcsfs: MagicMock, mock_file_system: Callable):
+    mock_gcsfs.return_value = mock_file_system
 
     # Test cases
     test_cases = [
