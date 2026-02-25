@@ -8,9 +8,10 @@ for example the __DOC.json-files, will not work, because they do not end with "_
 """
 
 import glob
-import gcsfs
 from pathlib import Path
 from typing import overload
+
+import gcsfs
 
 from fagfunksjoner.fagfunksjoner_logger import logger, silence_logger
 
