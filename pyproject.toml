@@ -11,12 +11,11 @@ dependencies = [
     "colorama>=0.4.6",
     "colorlog>=6.9.0",
     "dapla-auth-client>=1.2.5",
-    "dapla-toolbelt>=4.0.0",
     "ipython>=8.37.0",
     "numpy>=2.2",
     "oracledb>=2.3.0",
-    "pandas>=2.0.0",
-    "pyarrow>=14.0.1",
+    "pandas>=2.3.3",
+    "pyarrow>=20.0.0",
     "python-dateutil>=2.9.0",
     "requests>=2.31.0",
     "saspy>=5.2.1",
@@ -31,9 +30,6 @@ repository = "https://github.com/statisticsnorway/ssb-fagfunksjoner"
 documentation = "https://statisticsnorway.github.io/ssb-fagfunksjoner"
 Changelog = "https://github.com/statisticsnorway/ssb-fagfunksjoner/releases"
 
-[project.scripts]
-ssb-fagfunksjoner = "fagfunksjoner.__main__:main"
-
 [dependency-groups]
 lint = [
     "black[jupyter]>=25.11.0",
@@ -45,10 +41,10 @@ lint = [
 ]
 doc = [
     "furo>=2025.9.25",
-    "myst-parser>=4.0.1",
-    "sphinx>=8.2.3",
-    "sphinx-autobuild>=2025.8.25",
-    "sphinx-autodoc-typehints>=3.5.2",
+    "myst-parser>=4.0.1; python_version >= '3.11'",
+    "sphinx>=8.2.3; python_version >= '3.11'",
+    "sphinx-autobuild>=2025.8.25; python_version >= '3.11'",
+    "sphinx-autodoc-typehints>=3.5.2; python_version >= '3.11'",
     "sphinx-click>=6.1.0",
 ]
 
