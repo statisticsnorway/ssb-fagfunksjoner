@@ -119,6 +119,12 @@ module = [
 ]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = [
+    "gcsfs.*",
+]
+ignore_missing_imports = true
+
 [tool.isort]
 profile = "black"
 skip_gitignore = true
