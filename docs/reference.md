@@ -24,27 +24,18 @@ Subpackages
    fagfunksjoner.api
    fagfunksjoner.dapla
    fagfunksjoner.data
+   fagfunksjoner.formats
    fagfunksjoner.log
    fagfunksjoner.paths
    fagfunksjoner.prodsone
 
-Submodules
-----------
 
 fagfunksjoner.fagfunksjoner\_logger module
 ------------------------------------------
 
 .. automodule:: fagfunksjoner.fagfunksjoner_logger
    :members:
-   :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: fagfunksjoner
-   :members:
    :undoc-members:
-   :show-inheritance:
 
 ```

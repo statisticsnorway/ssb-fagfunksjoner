@@ -9,13 +9,6 @@ Subpackages
 
    fagfunksjoner.dapla.standards
 
-Module contents
----------------
-
-.. automodule:: fagfunksjoner.dapla
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 fagfunksjoner.dapla.gsm module
 ------------------------------
