@@ -11,6 +11,13 @@ Here is a list of important resources for contributors:
 - [Issue Tracker]
 - [Code of Conduct]
 
+
+## Rebuild documentation
+```bash
+poetry run sphinx-apidoc -T -f -t ./docs/templates -o ./docs ./src
+```
+
+
 ## How to report a bug
 
 Report bugs on the [Issue Tracker].

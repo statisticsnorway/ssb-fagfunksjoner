@@ -68,7 +68,7 @@ from functools import wraps
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from threading import Lock
-from typing import Any, Literal, cast
+from typing import Any, Literal, TypeVar, cast
 
 from colorlog import ColoredFormatter
 
@@ -294,7 +294,11 @@ class JsonlFormatter(logging.Formatter):
         return json.dumps(log_record) if log_record else ""
 
 
-def log_function_enter_exit[F: Callable[..., Any]](func: F) -> F:
+# Type variable to represent any function signature
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def log_function_enter_exit(func: F) -> F:
     """Decorator that logs the entry and exit of a function.
 
     Args:
