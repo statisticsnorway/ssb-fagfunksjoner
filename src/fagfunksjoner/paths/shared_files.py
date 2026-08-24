@@ -7,9 +7,9 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from fagfunksjoner import get_latest_fileversions, repo_root_dir
-from fagfunksjoner.fagfunksjoner_logger import silence_logger
-from fagfunksjoner.paths.versions import get_version_number
+from ..fagfunksjoner_logger import silence_logger
+from .git import repo_root_dir
+from .versions import get_latest_fileversions, get_version_number
 
 
 REQUIRED_FILE_KEYS = {"name", "path"}
