@@ -106,9 +106,11 @@ class FileStatusReport:
         )
 
     def __repr__(self) -> str:
+        """Return the formatted status report."""
         return self._format_report()
 
     def __str__(self) -> str:
+        """Return the formatted status report."""
         return self._format_report()
 
     def _format_report(self) -> str:
@@ -154,7 +156,7 @@ class FileStatusReport:
             version = (
                 f"v{file.version}"
                 if file.version is not None
-                else "–"
+                else "-"
             )
 
             modified = (
@@ -273,8 +275,10 @@ def _check_file(
             year=year,
             state=FileState.MISSING,
             warnings=(
-                f"Fant filer for '{spec.name}', "
-                "men kunne ikke bestemme siste versjon.",
+                (
+                    f"Fant filer for '{spec.name}', "
+                    "men kunne ikke bestemme siste versjon."
+                ),
             ),
         )
 
@@ -329,11 +333,6 @@ def check_shared_files(
     status. If no file is found for the requested year, the file gets
     red status.
 
-    The modification time is read from the mounted filesystem using
-    ``Path.stat().st_mtime``. For mounted Google Cloud Storage buckets,
-    this represents the modification time exposed by Cloud Storage FUSE,
-    not the GCS object's ``timeCreated`` metadata.
-
     Absolute paths, such as paths below ``/buckets``, are used directly.
     Relative paths are resolved from the root of the current Git
     repository using ``repo_root_dir``.
@@ -342,31 +341,29 @@ def check_shared_files(
         files:
             Sequence of dict-like file specifications. Each item must
             contain ``name`` and ``path``. ``description`` is optional.
-
-            Example:
-
-                [
-                    {
-                        "name": "observasjoner-mnd",
-                        "path": "/buckets/shared/data",
-                        "description": "Observasjoner per måned",
-                    },
-                    {
-                        "name": "observasjoner-imputert",
-                        "path": "/buckets/shared/data",
-                        "description": "Imputerte observasjoner",
-                    },
-                ]
-
-            The input can for example come directly from Dynaconf using
-            ``settings.shared_files``.
-
         year:
             Reference year to check, for example ``2025``.
 
     Returns:
         FileStatusReport containing status, latest version, filename and
         modification time for each configured file.
+
+    Example:
+        ::
+
+            files = [
+                {
+                    "name": "observasjoner-mnd",
+                    "path": "/buckets/shared/data",
+                    "description": "Observasjoner per måned",
+                },
+                {
+                    "name": "observasjoner-imputert",
+                    "path": "/buckets/shared/data",
+                },
+            ]
+
+            report = check_shared_files(files, year=2025)
     """
     specs = _parse_file_specs(files)
 
