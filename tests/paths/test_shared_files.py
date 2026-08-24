@@ -274,3 +274,53 @@ def test_report_output(tmp_path: Path) -> None:
     assert "Observasjoner per måned" in output
     assert "v2" in output
     assert "🟢" in output
+
+
+def test_latest_version_with_two_digits(tmp_path: Path) -> None:
+    make_file(tmp_path, "observasjoner_p2025_v2.parquet")
+    make_file(tmp_path, "observasjoner_p2025_v10.parquet")
+
+    files = [
+        {
+            "name": "observasjoner",
+            "path": tmp_path,
+        }
+    ]
+
+    report = check_shared_files(files, year=2025)
+
+    assert report.files[0].version == 10
+    assert report.files[0].file_name == "observasjoner_p2025_v10.parquet"
+
+
+def test_non_parquet_files_are_ignored(tmp_path: Path) -> None:
+    make_file(tmp_path, "observasjoner_p2025_v1.parquet")
+    make_file(tmp_path, "observasjoner_p2025_v2.json")
+
+    files = [
+        {
+            "name": "observasjoner",
+            "path": tmp_path,
+        }
+    ]
+
+    report = check_shared_files(files, year=2025)
+
+    assert report.files[0].version == 1
+    assert report.files[0].file_path.suffix == ".parquet"
+
+
+def test_invalid_version_filename_is_ignored(tmp_path: Path) -> None:
+    make_file(tmp_path, "observasjoner_p2025_v2.parquet")
+    make_file(tmp_path, "observasjoner_p2025_vfinal.parquet")
+
+    files = [
+        {
+            "name": "observasjoner",
+            "path": tmp_path,
+        }
+    ]
+
+    report = check_shared_files(files, year=2025)
+
+    assert report.files[0].version == 2
