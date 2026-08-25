@@ -31,8 +31,8 @@ def test_get_next_version_number(mock_gcsfs: MagicMock, mock_file_system: Callab
         {
             "filepath": "gs://bucket/data/2023/data_file_v1.parquet",
             "files": [
-                "gs://bucket/data/2023/data_file.parquet"
-                "gs://bucket/data/2023/data_file_v1.parquet"
+                "gs://bucket/data/2023/data_file.parquet",
+                "gs://bucket/data/2023/data_file_v1.parquet",
             ],
             "expected": 2,
         },
