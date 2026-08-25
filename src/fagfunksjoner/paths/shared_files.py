@@ -11,10 +11,10 @@ from ..fagfunksjoner_logger import silence_logger
 from .git import repo_root_dir
 from .versions import get_latest_fileversions, get_version_number
 
-
 REQUIRED_FILE_KEYS = {"name", "path"}
 OPTIONAL_FILE_KEYS = {"description"}
 ALLOWED_FILE_KEYS = REQUIRED_FILE_KEYS | OPTIONAL_FILE_KEYS
+
 
 class FileState(StrEnum):
     """Status for a shared file."""
@@ -74,36 +74,22 @@ class FileStatusReport:
     @property
     def ready(self) -> list[FileStatus]:
         """Return files with version 1 or higher."""
-        return [
-            file
-            for file in self.files
-            if file.state is FileState.READY
-        ]
+        return [file for file in self.files if file.state is FileState.READY]
 
     @property
     def draft(self) -> list[FileStatus]:
         """Return files with version 0."""
-        return [
-            file
-            for file in self.files
-            if file.state is FileState.DRAFT
-        ]
+        return [file for file in self.files if file.state is FileState.DRAFT]
 
     @property
     def missing(self) -> list[FileStatus]:
         """Return files not found for the requested year."""
-        return [
-            file
-            for file in self.files
-            if file.state is FileState.MISSING
-        ]
+        return [file for file in self.files if file.state is FileState.MISSING]
 
     @property
     def all_ready(self) -> bool:
         """Return whether all configured files are ready."""
-        return bool(self.files) and all(
-            file.is_ready for file in self.files
-        )
+        return bool(self.files) and all(file.is_ready for file in self.files)
 
     def __repr__(self) -> str:
         """Return the formatted status report."""
@@ -127,13 +113,11 @@ class FileStatusReport:
         modified_header = "Modified at"
 
         name_width = max(
-            [len(name_header)]
-            + [len(file.file_name) for file in self.files]
+            [len(name_header)] + [len(file.file_name) for file in self.files]
         )
 
         description_width = max(
-            [len(description_header)]
-            + [len(file.description) for file in self.files]
+            [len(description_header)] + [len(file.description) for file in self.files]
         )
 
         version_width = len(version_header)
@@ -153,11 +137,7 @@ class FileStatusReport:
         for file in self.files:
             icon = icons[file.state]
 
-            version = (
-                f"v{file.version}"
-                if file.version is not None
-                else "-"
-            )
+            version = f"v{file.version}" if file.version is not None else "-"
 
             modified = (
                 file.modified_at.strftime("%Y-%m-%d %H:%M")
@@ -180,18 +160,11 @@ class FileStatusReport:
             ]
         )
 
-        warnings = [
-            warning
-            for file in self.files
-            for warning in file.warnings
-        ]
+        warnings = [warning for file in self.files for warning in file.warnings]
 
         if warnings:
             lines.extend(["", "Advarsler:"])
-            lines.extend(
-                f"⚠️ {warning}"
-                for warning in warnings
-            )
+            lines.extend(f"⚠️ {warning}" for warning in warnings)
 
         return "\n".join(lines)
 
@@ -285,26 +258,16 @@ def _check_file(
     latest_file = Path(latest_files[0])
     version = get_version_number(latest_file)
 
-    state = (
-        FileState.DRAFT
-        if version == 0
-        else FileState.READY
-    )
+    state = FileState.DRAFT if version == 0 else FileState.READY
 
-    modified_at = datetime.fromtimestamp(
-        latest_file.stat().st_mtime
-    )
+    modified_at = datetime.fromtimestamp(latest_file.stat().st_mtime)
 
     warnings: list[str] = []
 
     if len(latest_files) > 1:
         warnings.append(
             f"Fant flere siste filversjoner for "
-            f"'{spec.name}': "
-            + ", ".join(
-                Path(file).name
-                for file in latest_files
-            )
+            f"'{spec.name}': " + ", ".join(Path(file).name for file in latest_files)
         )
 
     return FileStatus(
@@ -367,10 +330,7 @@ def check_shared_files(
     """
     specs = _parse_file_specs(files)
 
-    statuses = [
-        _check_file(spec, year)
-        for spec in specs
-    ]
+    statuses = [_check_file(spec, year) for spec in specs]
 
     return FileStatusReport(
         year=year,
