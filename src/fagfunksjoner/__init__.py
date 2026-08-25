@@ -58,6 +58,7 @@ from fagfunksjoner.formats.formats import SsbFormat
 from fagfunksjoner.log.statlogger import StatLogger
 from fagfunksjoner.paths.git import repo_root_dir
 from fagfunksjoner.paths.project_root import ProjectRoot
+from fagfunksjoner.paths.shared_files import check_shared_files
 from fagfunksjoner.paths.versions import (
     get_latest_fileversions,
     latest_version_path,
@@ -74,6 +75,7 @@ __all__ = [
     "all_combos_agg_inclusive",
     "auto_dtype",
     "check_env",
+    "check_shared_files",
     "get_latest_fileversions",
     "latest_version_path",
     "linux_shortcuts",
