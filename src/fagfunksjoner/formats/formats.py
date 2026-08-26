@@ -128,7 +128,7 @@ class SsbFormat(dict[Any, Any]):
             top_float = float("inf") if top_str.lower() == "high" else float(top_str)
             self.ranges[(bottom_float, top_float)] = value
 
-    def look_in_ranges(self, key: str | int | float | NAType | None) -> None | Any:
+    def look_in_ranges(self, key: str | int | float | NAType | None) -> Any | None:
         """Returns the mapping value for the key if it falls within any defined range.
 
         The method attempts to convert the key to a float and then checks if it lies within
@@ -148,7 +148,7 @@ class SsbFormat(dict[Any, Any]):
                 return mapping_value
         return None
 
-    def int_str_confuse(self, key: str | int | float | NAType | None) -> None | Any:
+    def int_str_confuse(self, key: str | int | float | NAType | None) -> Any | None:
         """Handles conversion between integer and string keys.
 
         Args:
