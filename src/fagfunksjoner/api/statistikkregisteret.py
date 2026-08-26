@@ -57,7 +57,7 @@ class StatisticPublishingShort:
     variant: str
     desk_flow: str
     time_changed: datetime.datetime
-    specifics: None | PublishingSpecifics
+    specifics: PublishingSpecifics | None
 
 
 @dataclass
@@ -80,7 +80,7 @@ class LangText:
     """
 
     lang: str
-    text: None | str
+    text: str | None
     name: None
 
 

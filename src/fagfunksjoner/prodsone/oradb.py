@@ -185,9 +185,9 @@ class Oracle:
 
     def __exit__(
         self,
-        exc_type: None | type[BaseException],
-        exc_value: None | BaseException,
-        traceback: None | TracebackType,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> bool:
         """Exit the context manager mode.
 

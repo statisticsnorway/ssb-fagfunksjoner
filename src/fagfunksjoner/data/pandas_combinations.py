@@ -399,11 +399,11 @@ def parse_mapping(
 
 def all_combos_agg_inclusive(
     df: pd.DataFrame,
-    groupcols: None | list[str] = None,
-    category_mappings: None | dict[str, dict[str, list[Any] | str] | Any] = None,
-    valuecols: None | list[str] = None,
-    aggargs: None | dict[str, Any] | Callable[..., Any] | str | list[Any] = None,
-    totalcodes: None | dict[str, str] = None,
+    groupcols: list[str] | None = None,
+    category_mappings: dict[str, dict[str, list[Any] | str] | Any] | None = None,
+    valuecols: list[str] | None = None,
+    aggargs: dict[str, Any] | Callable[..., Any] | str | list[Any] | None = None,
+    totalcodes: dict[str, str] | None = None,
     keep_empty: bool = False,
     grand_total: bool = True,
 ) -> pd.DataFrame:

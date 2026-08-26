@@ -684,7 +684,7 @@ def test_url(url: str) -> bool:
         return False
 
 
-def test_url_combos(combinations: list[tuple[Path, str]]) -> None | str | Path:
+def test_url_combos(combinations: list[tuple[Path, str]]) -> str | Path | None:
     """Tests a set of path combinations for valid responses from the Datadok-API.
 
     Args:

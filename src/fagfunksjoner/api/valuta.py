@@ -411,7 +411,7 @@ def download_exchange_rates(
     currency: str = "",
     frequency: str = "M",
     date_from: str = "2021-01-01",
-    date_to: None | str = None,
+    date_to: str | None = None,
     language: str = "no",
     detail: str = "full",
 ) -> ValutaData:
