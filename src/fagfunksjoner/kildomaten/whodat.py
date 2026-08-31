@@ -5,6 +5,14 @@ from dapla_whodat import Whodat
 from .fileconfig import FileConfig, WhodatSearchStrategy
 from .globals import logger
 
+_DIGIT_ONLY_WHODAT_COLUMNS = {
+    "foedselsaarFraOgMed",
+    "foedselsaarTilOgMed",
+    "postnummer",
+    "kommunenummer",
+    "fylkesnummer",
+}
+
 
 def _normalize_gender_for_whodat(
     gender: pd.Series,
@@ -41,6 +49,16 @@ def _prepare_whodat_work_columns(
                     .str.strip()
                     .str.replace(r"\D", "", regex=True)
                 )
+        elif column in _DIGIT_ONLY_WHODAT_COLUMNS:
+            value = df[column]
+            if pd.api.types.is_datetime64_any_dtype(value):
+                df[column] = value.dt.strftime("%Y")
+            else:
+                df[column] = (
+                    value.astype("string[pyarrow]")
+                    .str.strip()
+                    .str.replace(r"\D", "", regex=True)
+                )
         else:
             df[column] = df[column].astype("string[pyarrow]").str.strip()
     return df
@@ -50,7 +68,13 @@ def _available_whodat_columns(
     df: pd.DataFrame,
     file_config: FileConfig,
 ) -> list[str]:
-    return [column for column in file_config.fnrleting_cols if column in df.columns]
+    configured_columns = [*file_config.fnrleting_cols]
+    for strategy in file_config.fnrleting_search_strategies:
+        configured_columns.extend(strategy.variables)
+
+    return [
+        column for column in dict.fromkeys(configured_columns) if column in df.columns
+    ]
 
 
 def _missing_whodat_columns(
