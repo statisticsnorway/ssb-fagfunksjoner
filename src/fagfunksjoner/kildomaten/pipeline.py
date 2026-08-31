@@ -4,7 +4,7 @@ import pandas as pd
 
 from .dtypes import normalize_dtypes
 from .fileconfig import FileConfig
-from .globals import logger
+from .kilde_logging import logger
 from .pii import _drop_original_fnr_columns, drop_sensitive_columns
 from .preprocess import _apply_configured_preprocessing
 from .pseudo import pseudo_and_snr
@@ -113,11 +113,11 @@ def run_kildomaten_pipeline(
         step = "write_parquet"
         if dry_run:
             logger.info(
-                "Dry-run: skipping parquet write for output with rows=%d columns=%d.",
+                "Dry-run: skipping parquet write for output with rows=%d columns=%d. Outputting changed dataframe instead of path.",
                 len(out_df),
                 len(out_df.columns),
             )
-            return output_path
+            return out_df
 
         logger.info(
             "Writing output: rows=%d columns=%d", len(out_df), len(out_df.columns)

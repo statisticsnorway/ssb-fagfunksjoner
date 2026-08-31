@@ -1,7 +1,7 @@
 import pandas as pd
 
 from .fileconfig import FileConfig
-from .globals import logger
+from .kilde_logging import logger
 
 
 def _has_person_data(df: pd.DataFrame, file_config: FileConfig) -> bool:

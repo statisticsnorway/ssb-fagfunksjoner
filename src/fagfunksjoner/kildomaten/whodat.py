@@ -3,7 +3,7 @@ from dapla_pseudo import Validator
 from dapla_whodat import Whodat
 
 from .fileconfig import FileConfig, WhodatSearchStrategy
-from .globals import logger
+from .kilde_logging import logger
 
 _DIGIT_ONLY_WHODAT_COLUMNS = {
     "foedselsaarFraOgMed",

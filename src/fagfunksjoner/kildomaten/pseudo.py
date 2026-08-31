@@ -2,7 +2,7 @@ import pandas as pd
 from dapla_pseudo import Pseudonymize
 
 from .fileconfig import FileConfig
-from .globals import logger
+from .kilde_logging import logger
 from .snr_uuid import _fill_uuid_for_missing_snr
 
 
