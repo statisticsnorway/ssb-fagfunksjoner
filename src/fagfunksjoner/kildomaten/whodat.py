@@ -1,16 +1,155 @@
 import pandas as pd
 from dapla_whodat import Whodat
 
-from .globals import CANON_FNR, CANON_GENDER, WHODAT_VARIABLE_MAP, WORK_COLS, logger
+from .fileconfig import FileConfig, WhodatSearchStrategy
+from .globals import logger
+
+
+def _valid_fnr_mask(df: pd.DataFrame, fnr_col: str) -> pd.Series:
+    fnr = df[fnr_col].astype("string[pyarrow]").str.strip()
+    return fnr.notna() & (fnr != "") & fnr.str.match(r"^\d{11}$")
+
+
+def _normalize_gender_for_whodat(
+    gender: pd.Series,
+    file_config: FileConfig,
+) -> pd.Series:
+    """Convert configured gender values to WhoDat format ('mann'/'kvinne')."""
+    x = (
+        gender.astype("string[pyarrow]")
+        .str.strip()
+        .str.lower()
+        .str.replace(r"\s+", "", regex=True)
+    )
+    return x.map(file_config.gender_values).astype("string[pyarrow]")
+
+
+def _prepare_whodat_work_columns(
+    df: pd.DataFrame,
+    file_config: FileConfig,
+) -> pd.DataFrame:
+    """Normalize configured WhoDat columns to the formats expected by WhoDat."""
+    df = df.copy()
+    for column in file_config.whodat_columns:
+        if column not in df.columns:
+            continue
+        if column == "kjoenn":
+            df[column] = _normalize_gender_for_whodat(df[column], file_config)
+        elif column == "foedselsdato":
+            value = df[column]
+            if pd.api.types.is_datetime64_any_dtype(value):
+                df[column] = value.dt.strftime("%Y%m%d")
+            else:
+                df[column] = (
+                    value.astype("string[pyarrow]")
+                    .str.strip()
+                    .str.replace(r"\D", "", regex=True)
+                )
+        else:
+            df[column] = df[column].astype("string[pyarrow]").str.strip()
+    return df
+
+
+def _available_whodat_columns(
+    df: pd.DataFrame,
+    file_config: FileConfig,
+) -> list[str]:
+    return [column for column in file_config.fnrleting_cols if column in df.columns]
+
+
+def _dedupe_strategies(
+    strategies: list[WhodatSearchStrategy],
+) -> list[WhodatSearchStrategy]:
+    seen: set[tuple[tuple[str, ...], bool, bool, bool, str]] = set()
+    deduped = []
+    for strategy in strategies:
+        key = (
+            tuple(strategy.variables),
+            strategy.inkluder_oppholdsadresse,
+            strategy.soek_fonetisk,
+            strategy.inkluder_doede,
+            strategy.opplysningsgrunnlag,
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(strategy)
+    return deduped
+
+
+def _build_search_strategies(
+    available_cols: list[str],
+    file_config: FileConfig,
+) -> list[WhodatSearchStrategy]:
+    strategies = []
+    if file_config.fnrleting_search_strategies:
+        for strategy in file_config.fnrleting_search_strategies:
+            variables = [
+                column for column in strategy.variables if column in available_cols
+            ]
+            if variables:
+                strategies.append(strategy.model_copy(update={"variables": variables}))
+    else:
+        strategies.extend(
+            WhodatSearchStrategy(variables=available_cols[:i])
+            for i in range(1, len(available_cols) + 1)
+        )
+
+    if file_config.add_relaxed_fnrleting_strategy and available_cols:
+        strategies.append(
+            WhodatSearchStrategy(
+                variables=available_cols,
+                inkluder_doede=True,
+                soek_fonetisk=True,
+            )
+        )
+
+    return _dedupe_strategies(strategies)
+
+
+def drop_work_columns(
+    df: pd.DataFrame,
+    file_config: FileConfig,
+) -> pd.DataFrame:
+    """Drop WhoDat work columns from a DataFrame.
+
+    Args:
+        df: DataFrame that may contain WhoDat work columns.
+        file_config: File-specific processing configuration.
+
+    Returns:
+        pd.DataFrame: The DataFrame without WhoDat work columns.
+    """
+    drop_cols = [
+        column for column in file_config.whodat_columns if column in df.columns
+    ]
+    return df.drop(columns=drop_cols) if drop_cols else df
+
+
+def should_run_whodat(
+    df: pd.DataFrame,
+    file_config: FileConfig,
+) -> bool:
+    """Return whether WhoDat lookup should run for a DataFrame.
+
+    Args:
+        df: DataFrame to inspect for configured FNR lookup input.
+        file_config: File-specific processing configuration.
+
+    Returns:
+        bool: True when WhoDat lookup is configured and has usable inputs.
+    """
+    return (
+        file_config.bruk_fnrleting
+        and file_config.fnr_col in df.columns
+        and bool(_available_whodat_columns(df, file_config))
+    )
 
 
 def whodat_lookup_fnr(
     df: pd.DataFrame,
-    *,
-    chunk_size: int = 250,
-    max_whodat_share: float = 0.10,
-    max_whodat_rows: int = 50_000,
-) -> tuple[pd.DataFrame, dict]:
+    file_config: FileConfig,
+) -> tuple[pd.DataFrame, dict[str, int | float]]:
     """Look up FNR values in WhoDat when they are missing or invalid.
 
     Lookup is only attempted for rows that have a missing or invalid FNR,
@@ -19,16 +158,13 @@ def whodat_lookup_fnr(
     risk of 413 Payload Too Large responses.
 
     Args:
-        df: Input data with canonical and prepared WhoDat columns.
-        chunk_size: Number of rows to include in each WhoDat request.
-        max_whodat_share: Maximum share of input rows allowed for lookup.
-        max_whodat_rows: Maximum number of input rows allowed for lookup.
+        df: Input data with configured WhoDat columns.
+        file_config: File-specific processing configuration.
 
     Returns:
         tuple[pd.DataFrame, dict]: The updated DataFrame and lookup statistics.
     """
-    df = df.copy()
-
+    df = _prepare_whodat_work_columns(df, file_config)
     base_stats = {
         "needs_lookup": 0,
         "missing_fnr": 0,
@@ -39,11 +175,13 @@ def whodat_lookup_fnr(
         "whodat_hits": 0,
     }
 
-    if CANON_FNR not in df.columns:
-        logger.info("WhoDat: hopper over, mangler fnr-kolonne.")
+    if not file_config.fnr_col or file_config.fnr_col not in df.columns:
+        logger.info(
+            "WhoDat: skipping lookup because the configured FNR column is missing."
+        )
         return df, base_stats
 
-    fnr = df[CANON_FNR].astype("string[pyarrow]").str.strip()
+    fnr = df[file_config.fnr_col].astype("string[pyarrow]").str.strip()
     missing = fnr.isna() | (fnr == "")
     bad = fnr.notna() & (fnr != "") & ~fnr.str.match(r"^\d{11}$")
     needs = missing | bad
@@ -56,21 +194,18 @@ def whodat_lookup_fnr(
     }
 
     if not stats["needs_lookup"]:
-        logger.info("WhoDat: ingen rader trenger oppslag.")
+        logger.info("WhoDat: no rows need lookup.")
         return df, stats
 
-    work_cols_available = [c for c in WORK_COLS if c in df.columns]
-    if not work_cols_available:
-        logger.info("WhoDat: ingen arbeidskolonner tilgjengelig.")
+    available_cols = _available_whodat_columns(df, file_config)
+    if not available_cols:
+        logger.info("WhoDat: no configured helper columns are available.")
         return df, stats
-
-    searchable_cols = [c for c in ("navn", "kjoenn", "foedselsdato") if c in df.columns]
 
     has_searchable = pd.Series(False, index=df.index)
-
-    for col in searchable_cols:
-        s = df[col].astype("string[pyarrow]").str.strip()
-        has_searchable = has_searchable | (s.notna() & (s != ""))
+    for column in available_cols:
+        values = df[column].astype("string[pyarrow]").str.strip()
+        has_searchable = has_searchable | (values.notna() & (values != ""))
 
     mask_lookup = needs & has_searchable
 
@@ -80,82 +215,75 @@ def whodat_lookup_fnr(
 
     if not stats["to_whodat"]:
         logger.info(
-            "WhoDat: ingen rader til oppslag. Skippet uten søkbar opplysning=%d.",
+            "WhoDat: no rows sent to lookup. Skipped without searchable values=%d.",
             stats["skipped_no_searchable"],
         )
         return df, stats
 
     if (
-        stats["to_whodat"] > max_whodat_rows
-        or stats["to_whodat_share"] > max_whodat_share
+        stats["to_whodat"] > file_config.max_whodat_rows
+        or stats["to_whodat_share"] > file_config.max_whodat_share
     ):
         logger.warning(
-            "WhoDat: hopper over oppslag fordi for mange rader kvalifiserer. "
-            "to_whodat=%d, andel=%.4f, max_rader=%d, max_andel=%.4f. "
-            "Dette tyder på feil/blank fnr-kolonne eller for lav datakvalitet.",
+            "WhoDat: skipping lookup because too many rows qualify. "
+            "to_whodat=%d, share=%.4f, max_rows=%d, max_share=%.4f.",
             stats["to_whodat"],
             stats["to_whodat_share"],
-            max_whodat_rows,
-            max_whodat_share,
+            file_config.max_whodat_rows,
+            file_config.max_whodat_share,
         )
         return df, stats
 
-    if "fnr_orig" not in df.columns:
-        df["fnr_orig"] = df[CANON_FNR]
-
-    cols_prio = [
-        c
-        for c in ("navn", "kjoenn", "foedselsdato", "kommunenummer", "fylkesnummer")
-        if c in work_cols_available
-    ]
+    original_fnr_col = f"{file_config.fnr_col}_orig"
+    if original_fnr_col not in df.columns:
+        df[original_fnr_col] = df[file_config.fnr_col]
 
     lookup_indices = df.index[mask_lookup].tolist()
-    all_mappings: dict = {}
-    n_chunks = -(-len(lookup_indices) // chunk_size)
+    all_mappings: dict[int, str] = {}
+    n_chunks = -(-len(lookup_indices) // file_config.chunk_size)
+    strategies = _build_search_strategies(available_cols, file_config)
 
     logger.info(
-        "WhoDat: starter oppslag. Rader=%d, chunks=%d, andel=%.4f, variabler=%s.",
+        "WhoDat: starting lookup. Rows=%d, chunks=%d, share=%.4f, strategies=%s.",
         stats["to_whodat"],
         n_chunks,
         stats["to_whodat_share"],
-        cols_prio,
+        [strategy.variables for strategy in strategies],
     )
 
-    for i in range(0, len(lookup_indices), chunk_size):
-        chunk_no = i // chunk_size + 1
-        chunk_idx = lookup_indices[i : i + chunk_size]
-        work = df.loc[chunk_idx, work_cols_available].copy()
+    for i in range(0, len(lookup_indices), file_config.chunk_size):
+        chunk_no = i // file_config.chunk_size + 1
+        chunk_idx = lookup_indices[i : i + file_config.chunk_size]
+        work = df.loc[chunk_idx, available_cols].copy()
 
         process = Whodat.from_pandas(work).search_fnr()
-
-        for j in range(1, len(cols_prio) + 1):
-            process = process.with_search_strategy(variables=cols_prio[:j])
-            if j == len(cols_prio):
-                process = process.with_search_strategy(
-                    variables=cols_prio[:j],
-                    inkluder_doede=True,
-                    soek_fonetisk=True,
-                )
+        for strategy in strategies:
+            process = process.with_search_strategy(
+                variables=strategy.variables,
+                inkluder_oppholdsadresse=strategy.inkluder_oppholdsadresse,
+                soek_fonetisk=strategy.soek_fonetisk,
+                inkluder_doede=strategy.inkluder_doede,
+                opplysningsgrunnlag=strategy.opplysningsgrunnlag,
+            )
 
         logger.info(
-            "WhoDat chunk %d/%d: rader=%d. Variabler=%s.",
+            "WhoDat chunk %d/%d: rows=%d.",
             chunk_no,
             n_chunks,
             len(work),
-            cols_prio,
         )
 
         try:
             result = process.run()
         except Exception as e:
-            logger.exception("WhoDat chunk %d/%d feilet: %s", chunk_no, n_chunks, e)
+            logger.exception("WhoDat chunk %d/%d failed: %s", chunk_no, n_chunks, e)
             continue
 
         mapping = result.to_dict_from_original_indices()
         all_mappings.update(mapping)
 
         logger.info(
-            "WhoDat chunk %d/%d: treff=%d.",
+            "WhoDat chunk %d/%d: hits=%d.",
             chunk_no,
             n_chunks,
             len(mapping),
@@ -163,74 +291,18 @@ def whodat_lookup_fnr(
 
     stats["whodat_hits"] = len(all_mappings)
 
-    df.loc[mask_lookup, CANON_FNR] = (
+    df.loc[mask_lookup, file_config.fnr_col] = (
         df.loc[mask_lookup]
         .index.to_series()
         .map(all_mappings)
-        .combine_first(df.loc[mask_lookup, "fnr_orig"])
+        .combine_first(df.loc[mask_lookup, original_fnr_col])
     )
 
     logger.info(
-        "WhoDat: treff=%d / %d. Skippet uten søkbar opplysning=%d.",
+        "WhoDat: hits=%d / %d. Skipped without searchable values=%d.",
         stats["whodat_hits"],
         stats["to_whodat"],
         stats["skipped_no_searchable"],
     )
 
     return df, stats
-
-
-def _normalize_gender_for_whodat(pers_kjoenn: pd.Series) -> pd.Series:
-    """Convert canonical pers_kjoenn ('1'/'2') to WhoDat format ('mann'/'kvinne')."""
-    x = (
-        pers_kjoenn.astype("string[pyarrow]")
-        .str.strip()
-        .str.lower()
-        .str.replace(r"\s+", "", regex=True)
-    )
-    out = pd.Series(pd.NA, index=pers_kjoenn.index, dtype="string[pyarrow]")
-    out = out.where(~x.isin({"2", "k", "kvinne", "f"}), "kvinne")
-    out = out.where(~x.isin({"1", "m", "mann"}), "mann")
-    return out
-
-
-def _prepare_whodat_work_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Derive WhoDat work columns from canonical columns.
-
-    WhoDat requires specific column names (navn, kjoenn, foedselsdato,
-    kommunenummer, fylkesnummer), which are derived from canonical names.
-    """
-    df = df.copy()
-    for canon_col, work_col in WHODAT_VARIABLE_MAP.items():
-        if canon_col not in df.columns or work_col in df.columns:
-            continue
-        if canon_col == CANON_GENDER:
-            df[work_col] = _normalize_gender_for_whodat(df[canon_col])
-        else:
-            df[work_col] = df[canon_col].astype("string[pyarrow]").str.strip()
-    return df
-
-
-def drop_work_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Drop WhoDat work columns from a DataFrame.
-
-    Args:
-        df: DataFrame that may contain WhoDat work columns.
-
-    Returns:
-        pd.DataFrame: The DataFrame without WhoDat work columns.
-    """
-    drop_cols = [c for c in WORK_COLS if c in df.columns]
-    return df.drop(columns=drop_cols) if drop_cols else df
-
-
-def should_run_whodat(df: pd.DataFrame) -> bool:
-    """Return whether WhoDat lookup should run for a DataFrame.
-
-    Args:
-        df: DataFrame to inspect for the canonical FNR column.
-
-    Returns:
-        bool: True when the DataFrame has the canonical FNR column.
-    """
-    return CANON_FNR in df.columns

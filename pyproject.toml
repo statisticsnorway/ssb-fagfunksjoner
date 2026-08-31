@@ -25,6 +25,7 @@ dependencies = [
     "gcsfs>=2026.2.0",
     "dapla-toolbelt-pseudo >=6.2.0; python_version >= '3.11' and python_version < '4.0'",
     "dapla-toolbelt-whodat >=1.2.1; python_version >= '3.10' and python_version < '4.0'",
+    "pydantic (>=2.13.5,<3.0.0)",
 ]
 
 [project.urls]

@@ -1,13 +1,17 @@
 import pandas as pd
 
-from .globals import CANON_SNR_MRK
+from .fileconfig import FileConfig
 
 
-def normalize_dtypes(df: pd.DataFrame) -> pd.DataFrame:
+def normalize_dtypes(
+    df: pd.DataFrame,
+    file_config: FileConfig,
+) -> pd.DataFrame:
     """Normalize DataFrame columns to canonical pyarrow dtypes.
 
     Args:
         df: DataFrame to normalize.
+        file_config: File-specific processing configuration.
 
     Returns:
         pd.DataFrame: A copy of the DataFrame with canonical pyarrow dtypes.
@@ -16,7 +20,7 @@ def normalize_dtypes(df: pd.DataFrame) -> pd.DataFrame:
     out = out.convert_dtypes(dtype_backend="pyarrow")
     for col in out.columns:
         dtype = str(out[col].dtype)
-        if col == CANON_SNR_MRK:
+        if col == file_config.snr_mark_col:
             out[col] = out[col].astype("bool[pyarrow]")
         elif dtype in ("boolean", "bool"):
             out[col] = out[col].astype("bool[pyarrow]")
