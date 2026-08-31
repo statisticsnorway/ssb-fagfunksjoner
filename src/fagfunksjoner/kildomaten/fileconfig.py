@@ -80,7 +80,7 @@ class FileConfig(BaseModel):
     snr_col: str = "snr"
     snr_mark_col: str = "snr_mrk"
     rename_map: dict[str, str] = Field(default_factory=dict)
-    copy_cols: dict[str, str] = Field(default_factory=dict)
+    copy_cols_new_old: dict[str, str] = Field(default_factory=dict)
     drop_cols: list[str] = Field(default_factory=list)
     sensitive_cols: list[str] = Field(default_factory=lambda: ["pers_personnummer"])
     preprocess_func: Callable[[pd.DataFrame], pd.DataFrame] | None = None

@@ -18,8 +18,8 @@ def _apply_configured_preprocessing(
         df = file_config.preprocess_func(df)
     if file_config.rename_map:
         df = df.rename(columns=file_config.rename_map)
-    if file_config.copy_cols:
-        for old_col, new_col in file_config.copy_cols.items():
+    if file_config.copy_cols_new_old:
+        for new_col, old_col in file_config.copy_cols_new_old.items():
             df[new_col] = df[old_col].copy()
     df = _normalize_column_names(df)
     return df
