@@ -48,7 +48,7 @@ def _unique(values: Iterable[str]) -> list[str]:
 class WhodatSearchStrategy(BaseModel):
     """A WhoDat search strategy for one lookup attempt."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     variables: list[str] = Field(min_length=1)
     inkluder_oppholdsadresse: bool = False
@@ -69,16 +69,14 @@ class WhodatSearchStrategy(BaseModel):
 class FileConfig(BaseModel):
     """Configuration for processing one source file type."""
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
 
     fnr_col: str | None = None
     pseudo_cols: list[str] = Field(default_factory=list)
-    bruk_fnrleting: bool = False
-    fnrleting_cols: list[str] = Field(default_factory=list)
-    fnrleting_search_strategies: list[WhodatSearchStrategy] = Field(
-        default_factory=list
-    )
-    add_relaxed_fnrleting_strategy: bool = True
+    use_fnrsearch: bool = False
+    fnrsearch_cols: list[str] = Field(default_factory=list)
+    fnrsearch_strategies: list[WhodatSearchStrategy] = Field(default_factory=list)
+    add_relaxed_fnrsearch_strategy: bool = True
     rename_map: dict[str, str] = Field(default_factory=dict)
     drop_cols: list[str] = Field(default_factory=list)
     sensitive_cols: list[str] = Field(default_factory=lambda: ["pers_personnummer"])
@@ -123,13 +121,13 @@ class FileConfig(BaseModel):
             return values
         return _unique(_clean_columns(values))
 
-    @field_validator("fnrleting_cols", mode="before")
+    @field_validator("fnrsearch_cols", mode="before")
     @classmethod
-    def _validate_fnrleting_cols(cls, values: object) -> object:
+    def _validate_fnrsearch_cols(cls, values: object) -> object:
         if values is None:
             return []
         if isinstance(values, str):
-            raise ValueError("fnrleting_cols must be a list, not a string")
+            raise ValueError("fnrsearch_cols must be a list, not a string")
         if not isinstance(values, Iterable):
             return values
         cleaned = _unique(_clean_columns(values))
@@ -164,14 +162,14 @@ class FileConfig(BaseModel):
 
     @model_validator(mode="after")
     def _validate_config(self) -> "FileConfig":
-        if self.bruk_fnrleting and not self.fnr_col:
-            raise ValueError("fnr_col is required when bruk_fnrleting=True")
-        if self.bruk_fnrleting and not (
-            self.fnrleting_cols or self.fnrleting_search_strategies
+        if self.use_fnrsearch and not self.fnr_col:
+            raise ValueError("fnr_col is required when use_fnrsearch=True")
+        if self.use_fnrsearch and not (
+            self.fnrsearch_cols or self.fnrsearch_strategies
         ):
             raise ValueError(
-                "fnrleting_cols or fnrleting_search_strategies is required "
-                "when bruk_fnrleting=True"
+                "fnrsearch_cols or fnrsearch_strategies is required "
+                "when use_fnrsearch=True"
             )
         if self.fnr_col and self.fnr_col in {self.snr_col, self.snr_mark_col}:
             raise ValueError("fnr_col cannot be the same as an output SNR column")
@@ -184,10 +182,10 @@ class FileConfig(BaseModel):
         """Return all configured WhoDat columns."""
         strategy_cols = {
             column
-            for strategy in self.fnrleting_search_strategies
+            for strategy in self.fnrsearch_strategies
             for column in strategy.variables
         }
-        return set(self.fnrleting_cols) | strategy_cols
+        return set(self.fnrsearch_cols) | strategy_cols
 
     @property
     def person_columns(self) -> set[str]:

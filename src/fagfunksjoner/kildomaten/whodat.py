@@ -68,8 +68,8 @@ def _available_whodat_columns(
     df: pd.DataFrame,
     file_config: FileConfig,
 ) -> list[str]:
-    configured_columns = [*file_config.fnrleting_cols]
-    for strategy in file_config.fnrleting_search_strategies:
+    configured_columns = [*file_config.fnrsearch_cols]
+    for strategy in file_config.fnrsearch_strategies:
         configured_columns.extend(strategy.variables)
 
     return [
@@ -142,8 +142,8 @@ def _build_search_strategies(
     file_config: FileConfig,
 ) -> list[WhodatSearchStrategy]:
     strategies = []
-    if file_config.fnrleting_search_strategies:
-        for strategy in file_config.fnrleting_search_strategies:
+    if file_config.fnrsearch_strategies:
+        for strategy in file_config.fnrsearch_strategies:
             variables = [
                 column for column in strategy.variables if column in available_cols
             ]
@@ -155,7 +155,7 @@ def _build_search_strategies(
             for i in range(1, len(available_cols) + 1)
         )
 
-    if file_config.add_relaxed_fnrleting_strategy and available_cols:
+    if file_config.add_relaxed_fnrsearch_strategy and available_cols:
         strategies.append(
             WhodatSearchStrategy(
                 variables=available_cols,
@@ -178,7 +178,7 @@ def _strategy_label(strategy: WhodatSearchStrategy) -> str:
     if strategy.opplysningsgrunnlag != "gjeldende":
         options.append(f"opplysningsgrunnlag={strategy.opplysningsgrunnlag}")
     suffix = f", {', '.join(options)}" if options else ""
-    return f"Fnrleting: {strategy.variables}{suffix}"
+    return f"FNR search: {strategy.variables}{suffix}"
 
 
 def _log_whodat_step_hits(
@@ -241,7 +241,7 @@ def should_run_whodat(
         bool: True when WhoDat lookup is configured and has usable inputs.
     """
     return (
-        file_config.bruk_fnrleting
+        file_config.use_fnrsearch
         and file_config.fnr_col in df.columns
         and bool(_available_whodat_columns(df, file_config))
     )

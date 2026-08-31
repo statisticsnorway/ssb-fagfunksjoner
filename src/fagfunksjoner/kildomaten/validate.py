@@ -45,7 +45,7 @@ def assert_prepped_input(df: pd.DataFrame, file_config: FileConfig) -> None:
     available_whodat = [
         column for column in file_config.whodat_columns if column in df.columns
     ]
-    if file_config.bruk_fnrleting and not available_whodat:
+    if file_config.use_fnrsearch and not available_whodat:
         logger.warning("No configured WhoDat helper columns found, skipping WhoDat.")
     elif available_whodat:
         logger.info("Available WhoDat variables: %s", available_whodat)

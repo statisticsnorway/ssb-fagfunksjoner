@@ -46,8 +46,8 @@ def test_file_config_validates_user_supplied_whodat_columns():
     config = FileConfig(
         fnr_col="fnr",
         pseudo_cols=["fnr"],
-        bruk_fnrleting=True,
-        fnrleting_cols=list(documented_variables),
+        use_fnrsearch=True,
+        fnrsearch_cols=list(documented_variables),
     )
     assert config.whodat_columns == documented_variables
 
@@ -55,14 +55,23 @@ def test_file_config_validates_user_supplied_whodat_columns():
         FileConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
-            bruk_fnrleting=True,
-            fnrleting_cols=["navn", "not_a_whodat_column"],
+            use_fnrsearch=True,
+            fnrsearch_cols=["navn", "not_a_whodat_column"],
         )
 
 
 def test_file_config_rejects_string_where_list_is_expected():
     with pytest.raises(ValidationError, match="lists, not strings"):
         FileConfig(fnr_col="fnr", pseudo_cols="fnr")
+
+
+def test_file_config_rejects_unknown_field_names():
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        FileConfig(
+            fnr_col="fnr",
+            pseudo_cols=["fnr"],
+            unknown_setting=True,
+        )
 
 
 def test_whodat_search_strategy_validates_options_and_variables():
@@ -102,8 +111,8 @@ def test_dataframe_dry_run_does_not_require_output_path_or_call_services(monkeyp
         FileConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
-            bruk_fnrleting=True,
-            fnrleting_cols=["navn"],
+            use_fnrsearch=True,
+            fnrsearch_cols=["navn"],
         ),
         dry_run=True,
     )
@@ -173,8 +182,8 @@ def test_dry_run_applies_preprocess_rename_and_drop_logic_without_writing():
             FileConfig(
                 fnr_col="fnr",
                 pseudo_cols=["fnr"],
-                bruk_fnrleting=True,
-                fnrleting_cols=["navn"],
+                use_fnrsearch=True,
+                fnrsearch_cols=["navn"],
                 rename_map={"foedselsnummer": "fnr"},
                 drop_cols=["sensitive_name"],
                 preprocess_func=preprocess,
@@ -208,8 +217,8 @@ def test_whodat_dry_run_counts_rows_that_would_be_sent_and_skips_blank_pii(
         FileConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
-            bruk_fnrleting=True,
-            fnrleting_cols=["navn"],
+            use_fnrsearch=True,
+            fnrsearch_cols=["navn"],
         ),
         dry_run=True,
     )
@@ -247,8 +256,8 @@ def test_whodat_dry_run_normalizes_configured_helper_columns():
         FileConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
-            bruk_fnrleting=True,
-            fnrleting_cols=[
+            use_fnrsearch=True,
+            fnrsearch_cols=[
                 "navn",
                 "kjoenn",
                 "foedselsdato",
@@ -294,15 +303,15 @@ def test_whodat_strategy_only_config_uses_documented_helper_columns_in_dry_run(
     config = FileConfig(
         fnr_col="fnr",
         pseudo_cols=["fnr"],
-        bruk_fnrleting=True,
-        fnrleting_search_strategies=[
+        use_fnrsearch=True,
+        fnrsearch_strategies=[
             WhodatSearchStrategy(
                 variables=["navn", "adressenavn", "postnummer"],
                 inkluder_doede=True,
                 inkluder_oppholdsadresse=True,
             )
         ],
-        add_relaxed_fnrleting_strategy=False,
+        add_relaxed_fnrsearch_strategy=False,
     )
 
     out, stats = whodat_lookup_fnr(df, config, dry_run=True)
