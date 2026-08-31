@@ -56,11 +56,15 @@ def _apply_configured_preprocessing(
 def _resolve_output_path(
     source_path: Path | None,
     file_config: FileConfig,
+    *,
+    dry_run: bool = False,
 ) -> Path:
     if file_config.output_path:
         return file_config.output_path
 
     if source_path is None:
+        if dry_run:
+            return Path("dry_run_output.parquet")
         raise ValueError("file_config.output_path is required for DataFrame input")
 
     output_name = build_output_name(
@@ -85,15 +89,19 @@ def _drop_original_fnr_columns(
 def run_kildomaten_pipeline(
     df: pd.DataFrame | str | Path,
     file_config: FileConfig,
+    *,
+    dry_run: bool = False,
 ) -> Path:
     """Run the Kildomaten processing pipeline for one DataFrame or parquet file.
 
     Args:
         df: Input DataFrame or path to a parquet file.
         file_config: File-specific processing configuration.
+        dry_run: Whether to skip environment-dependent services and writing.
 
     Returns:
-        Path: Path to the written parquet output.
+        Path: Path to the written parquet output, or the would-be output path
+            during dry-runs.
 
     Raises:
         Exception: Re-raises any exception from the processing step that fails.
@@ -112,7 +120,11 @@ def run_kildomaten_pipeline(
         )
 
         step = "resolve_output_path"
-        output_path = _resolve_output_path(source_path, file_config)
+        output_path = _resolve_output_path(
+            source_path,
+            file_config,
+            dry_run=dry_run,
+        )
         logger.info("Output: %s", output_path)
 
         step = "assert_prepped_input"
@@ -129,13 +141,21 @@ def run_kildomaten_pipeline(
         else:
             step = "whodat"
             if should_run_whodat(working_df, file_config):
-                working_df, whodat_stats = whodat_lookup_fnr(working_df, file_config)
+                working_df, whodat_stats = whodat_lookup_fnr(
+                    working_df,
+                    file_config,
+                    dry_run=dry_run,
+                )
                 logger.info("WhoDat stats: %s", whodat_stats)
             else:
                 logger.info("WhoDat: not configured or no helper variables available.")
 
             step = "pseudo_and_snr"
-            pseudo_df, pseudo_stats = pseudo_and_snr(working_df, file_config)
+            pseudo_df, pseudo_stats = pseudo_and_snr(
+                working_df,
+                file_config,
+                dry_run=dry_run,
+            )
             logger.info("Pseudo stats: %s", pseudo_stats)
 
             step = "cleanup"
@@ -154,6 +174,14 @@ def run_kildomaten_pipeline(
             )
 
         step = "write_parquet"
+        if dry_run:
+            logger.info(
+                "Dry-run: skipping parquet write for output with rows=%d columns=%d.",
+                len(out_df),
+                len(out_df.columns),
+            )
+            return output_path
+
         logger.info(
             "Writing output: rows=%d columns=%d", len(out_df), len(out_df.columns)
         )

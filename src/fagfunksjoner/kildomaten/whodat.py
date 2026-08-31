@@ -1,13 +1,9 @@
 import pandas as pd
+from dapla_pseudo import Validator
 from dapla_whodat import Whodat
 
 from .fileconfig import FileConfig, WhodatSearchStrategy
 from .globals import logger
-
-
-def _valid_fnr_mask(df: pd.DataFrame, fnr_col: str) -> pd.Series:
-    fnr = df[fnr_col].astype("string[pyarrow]").str.strip()
-    return fnr.notna() & (fnr != "") & fnr.str.match(r"^\d{11}$")
 
 
 def _normalize_gender_for_whodat(
@@ -55,6 +51,46 @@ def _available_whodat_columns(
     file_config: FileConfig,
 ) -> list[str]:
     return [column for column in file_config.fnrleting_cols if column in df.columns]
+
+
+def _missing_whodat_columns(
+    df: pd.DataFrame,
+    file_config: FileConfig,
+) -> list[str]:
+    return sorted(column for column in file_config.whodat_columns if column not in df)
+
+
+def _needs_whodat_lookup_mask(
+    df: pd.DataFrame,
+    fnr_col: str,
+    *,
+    dry_run: bool = False,
+) -> pd.Series:
+    if dry_run:
+        fnr = df[fnr_col].astype("string[pyarrow]").str.strip()
+        has_bad_shape = (
+            fnr.notna() & (fnr != "") & ~fnr.str.match(r"^\d{11}$").fillna(False)
+        )
+        return fnr.isna() | (fnr == "") | has_bad_shape
+
+    validation_df = (
+        Validator.from_pandas(df[[fnr_col]].copy())
+        .on_field(fnr_col)
+        .validate_map_to_stable_id()
+        .to_pandas()
+    )
+    return df[fnr_col].isin(validation_df[fnr_col])
+
+
+def _has_searchable_pii(
+    df: pd.DataFrame,
+    available_cols: list[str],
+) -> pd.Series:
+    has_searchable = pd.Series(False, index=df.index)
+    for column in available_cols:
+        values = df[column].astype("string[pyarrow]").str.strip()
+        has_searchable = has_searchable | (values.notna() & (values != ""))
+    return has_searchable
 
 
 def _dedupe_strategies(
@@ -107,6 +143,47 @@ def _build_search_strategies(
     return _dedupe_strategies(strategies)
 
 
+def _strategy_label(strategy: WhodatSearchStrategy) -> str:
+    options = []
+    if strategy.inkluder_doede:
+        options.append("inkluder_doede=True")
+    if strategy.soek_fonetisk:
+        options.append("soek_fonetisk=True")
+    if strategy.inkluder_oppholdsadresse:
+        options.append("inkluder_oppholdsadresse=True")
+    if strategy.opplysningsgrunnlag != "gjeldende":
+        options.append(f"opplysningsgrunnlag={strategy.opplysningsgrunnlag}")
+    suffix = f", {', '.join(options)}" if options else ""
+    return f"Fnrleting: {strategy.variables}{suffix}"
+
+
+def _log_whodat_step_hits(
+    result: object,
+    strategies: list[WhodatSearchStrategy],
+) -> None:
+    details = getattr(result, "details", None)
+    if details is None:
+        logger.info("WhoDat: no details available for search step distribution.")
+        return
+
+    stepnames = [_strategy_label(strategy) for strategy in strategies]
+    try:
+        hits = {}
+        for item in details:
+            original_index = item["index_original_df"]
+            step_number = item["unique_response_step_number"]
+            if step_number is None:
+                hits[original_index] = "No FNR hit after all configured attempts."
+            else:
+                hits[original_index] = stepnames[int(step_number) - 1]
+        logger.info(
+            "WhoDat search step hits: %s",
+            pd.Series(hits).value_counts(dropna=True).to_dict(),
+        )
+    except Exception as e:
+        logger.info("Could not log WhoDat search step distribution: %s", e)
+
+
 def drop_work_columns(
     df: pd.DataFrame,
     file_config: FileConfig,
@@ -149,6 +226,8 @@ def should_run_whodat(
 def whodat_lookup_fnr(
     df: pd.DataFrame,
     file_config: FileConfig,
+    *,
+    dry_run: bool = False,
 ) -> tuple[pd.DataFrame, dict[str, int | float]]:
     """Look up FNR values in WhoDat when they are missing or invalid.
 
@@ -160,6 +239,7 @@ def whodat_lookup_fnr(
     Args:
         df: Input data with configured WhoDat columns.
         file_config: File-specific processing configuration.
+        dry_run: Whether to skip external Validator and WhoDat calls.
 
     Returns:
         tuple[pd.DataFrame, dict]: The updated DataFrame and lookup statistics.
@@ -168,11 +248,12 @@ def whodat_lookup_fnr(
     base_stats = {
         "needs_lookup": 0,
         "missing_fnr": 0,
-        "bad_fnr_format": 0,
+        "invalid_fnr": 0,
         "skipped_no_searchable": 0,
         "to_whodat": 0,
         "to_whodat_share": 0.0,
         "whodat_hits": 0,
+        "dry_run": int(dry_run),
     }
 
     if not file_config.fnr_col or file_config.fnr_col not in df.columns:
@@ -183,30 +264,40 @@ def whodat_lookup_fnr(
 
     fnr = df[file_config.fnr_col].astype("string[pyarrow]").str.strip()
     missing = fnr.isna() | (fnr == "")
-    bad = fnr.notna() & (fnr != "") & ~fnr.str.match(r"^\d{11}$")
-    needs = missing | bad
+    needs = _needs_whodat_lookup_mask(
+        df,
+        file_config.fnr_col,
+        dry_run=dry_run,
+    )
 
     stats = {
         **base_stats,
         "needs_lookup": int(needs.sum()),
         "missing_fnr": int(missing.sum()),
-        "bad_fnr_format": int(bad.sum()),
+        "invalid_fnr": int((needs & ~missing).sum()),
     }
 
     if not stats["needs_lookup"]:
-        logger.info("WhoDat: no rows need lookup.")
+        if dry_run:
+            logger.info("WhoDat dry-run: no rows would be selected for lookup.")
+        else:
+            logger.info(
+                "WhoDat: no rows need lookup after FNR validation against stable ID."
+            )
         return df, stats
 
     available_cols = _available_whodat_columns(df, file_config)
+    missing_cols = _missing_whodat_columns(df, file_config)
+    if missing_cols:
+        logger.warning(
+            "WhoDat: configured helper columns not found in input: %s",
+            missing_cols,
+        )
     if not available_cols:
         logger.info("WhoDat: no configured helper columns are available.")
         return df, stats
 
-    has_searchable = pd.Series(False, index=df.index)
-    for column in available_cols:
-        values = df[column].astype("string[pyarrow]").str.strip()
-        has_searchable = has_searchable | (values.notna() & (values != ""))
-
+    has_searchable = _has_searchable_pii(df, available_cols)
     mask_lookup = needs & has_searchable
 
     stats["skipped_no_searchable"] = int((needs & ~has_searchable).sum())
@@ -217,6 +308,14 @@ def whodat_lookup_fnr(
         logger.info(
             "WhoDat: no rows sent to lookup. Skipped without searchable values=%d.",
             stats["skipped_no_searchable"],
+        )
+        return df, stats
+
+    if dry_run:
+        logger.info(
+            "WhoDat dry-run: skipping Validator/WhoDat service calls. "
+            "Rows that would be sent=%d.",
+            stats["to_whodat"],
         )
         return df, stats
 
@@ -281,6 +380,7 @@ def whodat_lookup_fnr(
 
         mapping = result.to_dict_from_original_indices()
         all_mappings.update(mapping)
+        _log_whodat_step_hits(result, strategies)
 
         logger.info(
             "WhoDat chunk %d/%d: hits=%d.",

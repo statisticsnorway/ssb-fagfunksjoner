@@ -14,6 +14,8 @@ def _valid_fnr_mask(df: pd.DataFrame, fnr_col: str) -> pd.Series:
 def pseudo_and_snr(
     df: pd.DataFrame,
     file_config: FileConfig,
+    *,
+    dry_run: bool = False,
 ) -> tuple[pd.DataFrame, dict[str, object]]:
     """Pseudonymize FNR values into SNR values.
 
@@ -25,6 +27,7 @@ def pseudo_and_snr(
     Args:
         df: Input DataFrame containing the configured FNR columns.
         file_config: File-specific processing configuration.
+        dry_run: Whether to skip external pseudonymization calls.
 
     Returns:
         tuple[pd.DataFrame, dict]: The pseudonymized DataFrame and processing statistics.
@@ -37,6 +40,7 @@ def pseudo_and_snr(
             "snr_from_stable_id": 0,
             "snr_uuid_filled": 0,
             "pseudo_cols": {},
+            "dry_run": dry_run,
         }
 
     df = df.copy()
@@ -52,6 +56,7 @@ def pseudo_and_snr(
         "pseudo_cols": {
             column: int(_valid_fnr_mask(df, column).sum()) for column in pseudo_cols
         },
+        "dry_run": dry_run,
     }
 
     df[file_config.snr_col] = pd.Series(
@@ -69,6 +74,23 @@ def pseudo_and_snr(
         df.loc[has_fnr, file_config.snr_col] = (
             df.loc[has_fnr, file_config.fnr_col].astype("string[pyarrow]").str.strip()
         )
+
+    if dry_run:
+        logger.info(
+            "Pseudo dry-run: skipping Pseudonymize service calls for columns=%s.",
+            pseudo_cols,
+        )
+        df[file_config.snr_col] = pd.Series(
+            pd.NA,
+            index=df.index,
+            dtype="string[pyarrow]",
+        )
+        df[file_config.snr_mark_col] = pd.Series(
+            True,
+            index=df.index,
+            dtype="bool[pyarrow]",
+        )
+        return df, stats
 
     if not stats["has_fnr_11digits"] and not pseudo_cols:
         logger.info("Pseudo: no valid FNR values found, filling SNR with UUIDs.")
