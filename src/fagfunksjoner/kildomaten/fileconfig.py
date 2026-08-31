@@ -77,12 +77,13 @@ class FileConfig(BaseModel):
     fnrsearch_cols: list[str] = Field(default_factory=list)
     fnrsearch_strategies: list[WhodatSearchStrategy] = Field(default_factory=list)
     add_relaxed_fnrsearch_strategy: bool = True
+    snr_col: str = "snr"
+    snr_mark_col: str = "snr_mrk"
     rename_map: dict[str, str] = Field(default_factory=dict)
+    copy_cols: dict[str, str] = Field(default_factory=dict)
     drop_cols: list[str] = Field(default_factory=list)
     sensitive_cols: list[str] = Field(default_factory=lambda: ["pers_personnummer"])
     preprocess_func: Callable[[pd.DataFrame], pd.DataFrame] | None = None
-    snr_col: str = "snr"
-    snr_mark_col: str = "snr_mrk"
     output_path: Path | None = None
     output_dir: Path | None = None
     output_name_insert: str = "_inndata_"

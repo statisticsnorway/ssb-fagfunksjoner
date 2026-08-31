@@ -113,9 +113,10 @@ def run_kildomaten_pipeline(
         step = "write_parquet"
         if dry_run:
             logger.info(
-                "Dry-run: skipping parquet write for output with rows=%d columns=%d. Outputting changed dataframe instead of path.",
+                "Dry-run: skipping parquet write for output with rows=%d columns=%d. Outputting changed dataframe instead of path: %s",
                 len(out_df),
                 len(out_df.columns),
+                output_path,
             )
             return out_df
 
