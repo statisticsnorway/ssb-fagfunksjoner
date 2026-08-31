@@ -5,8 +5,10 @@ import pandas as pd
 from .dtypes import normalize_dtypes
 from .fileconfig import FileConfig
 from .globals import logger
-from .pii import drop_sensitive_columns
+from .pii import _drop_original_fnr_columns, drop_sensitive_columns
+from .preprocess import _apply_configured_preprocessing
 from .pseudo import pseudo_and_snr
+from .read import _load_input
 from .validate import (
     _has_person_data,
     assert_prepped_input,
@@ -18,72 +20,7 @@ from .whodat import (
     should_run_whodat,
     whodat_lookup_fnr,
 )
-from .write import build_output_name
-
-
-def _normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
-    df.columns = df.columns.str.strip()
-    return df
-
-
-def _load_input(source: pd.DataFrame | str | Path) -> tuple[pd.DataFrame, Path | None]:
-    if isinstance(source, pd.DataFrame):
-        return source.copy(), None
-
-    source_path = Path(source)
-    if source_path.suffix.lower() != ".parquet":
-        raise ValueError(f"Expected a parquet file, got: {source_path}")
-
-    df = pd.read_parquet(source_path, dtype_backend="pyarrow")
-    return df, source_path
-
-
-def _apply_configured_preprocessing(
-    df: pd.DataFrame,
-    file_config: FileConfig,
-) -> pd.DataFrame:
-    df = _normalize_column_names(df)
-    if file_config.preprocess_func:
-        df = file_config.preprocess_func(df)
-        df = _normalize_column_names(df)
-    if file_config.rename_map:
-        df = df.rename(columns=file_config.rename_map)
-        df = _normalize_column_names(df)
-    return df
-
-
-def _resolve_output_path(
-    source_path: Path | None,
-    file_config: FileConfig,
-    *,
-    dry_run: bool = False,
-) -> Path:
-    if file_config.output_path:
-        return file_config.output_path
-
-    if source_path is None:
-        if dry_run:
-            return Path("dry_run_output.parquet")
-        raise ValueError("file_config.output_path is required for DataFrame input")
-
-    output_name = build_output_name(
-        source_path.name,
-        insert=file_config.output_name_insert,
-    )
-    output_dir = file_config.output_dir or source_path.parent
-    return output_dir / output_name
-
-
-def _drop_original_fnr_columns(
-    df: pd.DataFrame,
-    file_config: FileConfig,
-) -> pd.DataFrame:
-    original_cols = [
-        f"{file_config.fnr_col}_orig" if file_config.fnr_col else "",
-    ]
-    drop_cols = [column for column in original_cols if column in df.columns]
-    return df.drop(columns=drop_cols) if drop_cols else df
+from .write import _resolve_output_path
 
 
 def run_kildomaten_pipeline(

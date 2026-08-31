@@ -86,6 +86,7 @@ class FileConfig(BaseModel):
     output_path: Path | None = None
     output_dir: Path | None = None
     output_name_insert: str = "_inndata_"
+    output_overwrite: bool = True
     chunk_size: int = Field(default=250, gt=0)
     max_whodat_share: float = Field(default=0.10, ge=0, le=1)
     max_whodat_rows: int = Field(default=50_000, ge=0)
