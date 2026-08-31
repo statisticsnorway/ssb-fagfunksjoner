@@ -23,6 +23,8 @@ dependencies = [
     "ipywidgets >=8.1.1",
     "google-cloud-secret-manager>=2.25.0",
     "gcsfs>=2026.2.0",
+    "dapla-toolbelt-pseudo >=6.2.0; python_version >= '3.11' and python_version < '4.0'",
+    "dapla-toolbelt-whodat >=1.2.1; python_version >= '3.10' and python_version < '4.0'",
 ]
 
 [project.urls]
@@ -69,7 +71,7 @@ dev = [
     "types-requests>=2.32.4.20260107",
     "types-toml>=0.10.8.20240310",
     "types-colorama>=0.4.15.20250801",
-    "pyarrow-stubs>=20.0.0.20251215",
+    "pyarrow-stubs>=20.0.0.20251215; python_version >= '3.9' and python_version < '4.0'",
     "types-python-dateutil>=2.9.0.20251115",
     "lxml >=6.0.2",
 ]
@@ -78,9 +80,6 @@ dev = [
 classifiers = ["Development Status :: 4 - Beta"]
 requires-poetry = ">=2.3"
 packages = [{ include = "fagfunksjoner", from = "src" }]
-
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.9"
