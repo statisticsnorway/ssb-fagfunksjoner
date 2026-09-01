@@ -1,6 +1,6 @@
 [project]
 name = "ssb-fagfunksjoner"
-version = "1.1.4"
+version = "1.1.5"
 description = "Fellesfunksjoner for ssb i Python"
 authors = [{ name = "SSB-pythonistas", email = "ssb-pythonistas@ssb.no" }]
 license = "MIT"
@@ -23,6 +23,9 @@ dependencies = [
     "ipywidgets >=8.1.1",
     "google-cloud-secret-manager>=2.25.0",
     "gcsfs>=2026.2.0",
+    "dapla-toolbelt-pseudo >=6.2.0; python_version >= '3.11' and python_version < '4.0'",
+    "dapla-toolbelt-whodat >=1.2.1; python_version >= '3.10' and python_version < '4.0'",
+    "pydantic (>=2.13.5,<3.0.0)",
 ]
 
 [project.urls]
@@ -57,7 +60,7 @@ dev = [
     "deptry>=0.24.0; python_version < '4.0'",
     "mypy>=1.18.2",
     "pygments>=2.19.0",
-    "pytest>=8.0.0",
+    "pytest>=8.0.0,<9.1",  # This is caused by a temporary issue with pytest-cases, try to remove this later
     "typeguard>=2.13.3",
     "xdoctest[colors]>=1.3.0",
     "ipykernel>=7.1.0",
@@ -69,7 +72,7 @@ dev = [
     "types-requests>=2.32.4.20260107",
     "types-toml>=0.10.8.20240310",
     "types-colorama>=0.4.15.20250801",
-    "pyarrow-stubs>=20.0.0.20251215",
+    "pyarrow-stubs>=20.0.0.20251215; python_version >= '3.9' and python_version < '4.0'",
     "types-python-dateutil>=2.9.0.20251115",
     "lxml >=6.0.2",
 ]
@@ -78,9 +81,6 @@ dev = [
 classifiers = ["Development Status :: 4 - Beta"]
 requires-poetry = ">=2.3"
 packages = [{ include = "fagfunksjoner", from = "src" }]
-
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.9"
