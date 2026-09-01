@@ -1,10 +1,11 @@
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from dapla_pseudo import Validator
 from dapla_whodat import Whodat
 
+from .dtypes import STRING_PYARROW_DTYPE
 from .fileconfig import FileConfig, WhodatSearchStrategy
 from .kilde_logging import logger
 
@@ -23,12 +24,36 @@ def _normalize_gender_for_whodat(
 ) -> pd.Series:
     """Convert configured gender values to WhoDat format ('mann'/'kvinne')."""
     x = (
-        gender.astype("string[pyarrow]")
+        gender.astype(STRING_PYARROW_DTYPE)
         .str.strip()
         .str.lower()
         .str.replace(r"\s+", "", regex=True)
     )
-    return x.map(file_config.gender_values).astype("string[pyarrow]")
+    return x.map(file_config.gender_values).astype(STRING_PYARROW_DTYPE)
+
+
+def _as_stripped_string(value: pd.Series) -> pd.Series:
+    return value.astype(STRING_PYARROW_DTYPE).str.strip()
+
+
+def _as_digit_string(value: pd.Series, *, datetime_format: str) -> pd.Series:
+    if pd.api.types.is_datetime64_any_dtype(value):
+        return cast(pd.Series, value.dt.strftime(datetime_format))
+    return _as_stripped_string(value).str.replace(r"\D", "", regex=True)
+
+
+def _prepare_whodat_column(
+    column: str,
+    value: pd.Series,
+    file_config: FileConfig,
+) -> pd.Series:
+    if column == "kjoenn":
+        return _normalize_gender_for_whodat(value, file_config)
+    if column == "foedselsdato":
+        return _as_digit_string(value, datetime_format="%Y%m%d")
+    if column in _DIGIT_ONLY_WHODAT_COLUMNS:
+        return _as_digit_string(value, datetime_format="%Y")
+    return _as_stripped_string(value)
 
 
 def _prepare_whodat_work_columns(
@@ -40,30 +65,7 @@ def _prepare_whodat_work_columns(
     for column in file_config.whodat_columns:
         if column not in df.columns:
             continue
-        if column == "kjoenn":
-            df[column] = _normalize_gender_for_whodat(df[column], file_config)
-        elif column == "foedselsdato":
-            value = df[column]
-            if pd.api.types.is_datetime64_any_dtype(value):
-                df[column] = value.dt.strftime("%Y%m%d")
-            else:
-                df[column] = (
-                    value.astype("string[pyarrow]")
-                    .str.strip()
-                    .str.replace(r"\D", "", regex=True)
-                )
-        elif column in _DIGIT_ONLY_WHODAT_COLUMNS:
-            value = df[column]
-            if pd.api.types.is_datetime64_any_dtype(value):
-                df[column] = value.dt.strftime("%Y")
-            else:
-                df[column] = (
-                    value.astype("string[pyarrow]")
-                    .str.strip()
-                    .str.replace(r"\D", "", regex=True)
-                )
-        else:
-            df[column] = df[column].astype("string[pyarrow]").str.strip()
+        df[column] = _prepare_whodat_column(column, df[column], file_config)
     return df
 
 
@@ -94,7 +96,7 @@ def _needs_whodat_lookup_mask(
     dry_run: bool = False,
 ) -> pd.Series:
     if dry_run:
-        fnr = df[fnr_col].astype("string[pyarrow]").str.strip()
+        fnr = df[fnr_col].astype(STRING_PYARROW_DTYPE).str.strip()
         has_bad_shape = (
             fnr.notna() & (fnr != "") & ~fnr.str.match(r"^\d{11}$").fillna(False)
         )
@@ -115,7 +117,7 @@ def _has_searchable_pii(
 ) -> pd.Series:
     has_searchable = pd.Series(False, index=df.index)
     for column in available_cols:
-        values = df[column].astype("string[pyarrow]").str.strip()
+        values = df[column].astype(STRING_PYARROW_DTYPE).str.strip()
         has_searchable = has_searchable | (values.notna() & (values != ""))
     return has_searchable
 
@@ -222,6 +224,65 @@ def _clean_whodat_mapping(mapping: Mapping[Any, Any]) -> dict[object, str]:
     return cleaned
 
 
+def _exceeds_whodat_limits(
+    stats: dict[str, int | float],
+    file_config: FileConfig,
+) -> bool:
+    return (
+        stats["to_whodat"] > file_config.max_whodat_rows
+        or stats["to_whodat_share"] > file_config.max_whodat_share
+    )
+
+
+def _run_whodat_search_chunks(
+    df: pd.DataFrame,
+    lookup_indices: list[object],
+    available_cols: list[str],
+    strategies: list[WhodatSearchStrategy],
+    file_config: FileConfig,
+) -> dict[object, str]:
+    all_mappings: dict[object, str] = {}
+    n_chunks = -(-len(lookup_indices) // file_config.chunk_size)
+
+    logger.info(
+        "WhoDat: starting lookup. Rows=%d, chunks=%d, strategies=%s.",
+        len(lookup_indices),
+        n_chunks,
+        [strategy.variables for strategy in strategies],
+    )
+
+    for i in range(0, len(lookup_indices), file_config.chunk_size):
+        chunk_no = i // file_config.chunk_size + 1
+        chunk_idx = lookup_indices[i : i + file_config.chunk_size]
+        work = df.loc[chunk_idx, available_cols].copy()
+
+        process = Whodat.from_pandas(work).search_fnr()
+        for strategy in strategies:
+            process = process.with_search_strategy(
+                variables=strategy.variables,
+                inkluder_oppholdsadresse=strategy.inkluder_oppholdsadresse,
+                soek_fonetisk=strategy.soek_fonetisk,
+                inkluder_doede=strategy.inkluder_doede,
+                opplysningsgrunnlag=strategy.opplysningsgrunnlag,
+            )
+
+        logger.info("WhoDat chunk %d/%d: rows=%d.", chunk_no, n_chunks, len(work))
+
+        try:
+            result = process.run()
+        except Exception as e:
+            logger.exception("WhoDat chunk %d/%d failed: %s", chunk_no, n_chunks, e)
+            continue
+
+        mapping = result.to_dict_from_original_indices()
+        all_mappings.update(_clean_whodat_mapping(mapping))
+        _log_whodat_step_hits(result, strategies)
+
+        logger.info("WhoDat chunk %d/%d: hits=%d.", chunk_no, n_chunks, len(mapping))
+
+    return all_mappings
+
+
 def drop_work_columns(
     df: pd.DataFrame,
     file_config: FileConfig,
@@ -300,7 +361,7 @@ def whodat_lookup_fnr(
         )
         return df, base_stats
 
-    fnr = df[file_config.fnr_col].astype("string[pyarrow]").str.strip()
+    fnr = df[file_config.fnr_col].astype(STRING_PYARROW_DTYPE).str.strip()
     missing = fnr.isna() | (fnr == "")
     needs = _needs_whodat_lookup_mask(
         df,
@@ -357,10 +418,7 @@ def whodat_lookup_fnr(
         )
         return df, stats
 
-    if (
-        stats["to_whodat"] > file_config.max_whodat_rows
-        or stats["to_whodat_share"] > file_config.max_whodat_share
-    ):
+    if _exceeds_whodat_limits(stats, file_config):
         logger.warning(
             "WhoDat: skipping lookup because too many rows qualify. "
             "to_whodat=%d, share=%.4f, max_rows=%d, max_share=%.4f.",
@@ -376,56 +434,15 @@ def whodat_lookup_fnr(
         df[original_fnr_col] = df[file_config.fnr_col]
 
     lookup_indices = df.index[mask_lookup].tolist()
-    all_mappings: dict[object, str] = {}
-    n_chunks = -(-len(lookup_indices) // file_config.chunk_size)
     strategies = _build_search_strategies(available_cols, file_config)
 
-    logger.info(
-        "WhoDat: starting lookup. Rows=%d, chunks=%d, share=%.4f, strategies=%s.",
-        stats["to_whodat"],
-        n_chunks,
-        stats["to_whodat_share"],
-        [strategy.variables for strategy in strategies],
+    all_mappings = _run_whodat_search_chunks(
+        df=df,
+        lookup_indices=lookup_indices,
+        available_cols=available_cols,
+        strategies=strategies,
+        file_config=file_config,
     )
-
-    for i in range(0, len(lookup_indices), file_config.chunk_size):
-        chunk_no = i // file_config.chunk_size + 1
-        chunk_idx = lookup_indices[i : i + file_config.chunk_size]
-        work = df.loc[chunk_idx, available_cols].copy()
-
-        process = Whodat.from_pandas(work).search_fnr()
-        for strategy in strategies:
-            process = process.with_search_strategy(
-                variables=strategy.variables,
-                inkluder_oppholdsadresse=strategy.inkluder_oppholdsadresse,
-                soek_fonetisk=strategy.soek_fonetisk,
-                inkluder_doede=strategy.inkluder_doede,
-                opplysningsgrunnlag=strategy.opplysningsgrunnlag,
-            )
-
-        logger.info(
-            "WhoDat chunk %d/%d: rows=%d.",
-            chunk_no,
-            n_chunks,
-            len(work),
-        )
-
-        try:
-            result = process.run()
-        except Exception as e:
-            logger.exception("WhoDat chunk %d/%d failed: %s", chunk_no, n_chunks, e)
-            continue
-
-        mapping = result.to_dict_from_original_indices()
-        all_mappings.update(_clean_whodat_mapping(mapping))
-        _log_whodat_step_hits(result, strategies)
-
-        logger.info(
-            "WhoDat chunk %d/%d: hits=%d.",
-            chunk_no,
-            n_chunks,
-            len(mapping),
-        )
 
     stats["whodat_hits"] = len(all_mappings)
 

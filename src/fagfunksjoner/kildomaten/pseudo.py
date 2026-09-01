@@ -1,13 +1,14 @@
 import pandas as pd
 from dapla_pseudo import Pseudonymize
 
+from .dtypes import BOOL_PYARROW_DTYPE, STRING_PYARROW_DTYPE
 from .fileconfig import FileConfig
 from .kilde_logging import logger
 from .snr_uuid import _fill_uuid_for_missing_snr
 
 
 def _valid_fnr_mask(df: pd.DataFrame, fnr_col: str) -> pd.Series:
-    fnr = df[fnr_col].astype("string[pyarrow]").str.strip()
+    fnr = df[fnr_col].astype(STRING_PYARROW_DTYPE).str.strip()
     return fnr.notna() & (fnr != "") & fnr.str.match(r"^\d{11}$")
 
 
@@ -70,17 +71,19 @@ def pseudo_and_snr(
     df[file_config.snr_col] = pd.Series(
         pd.NA,
         index=df.index,
-        dtype="string[pyarrow]",
+        dtype=STRING_PYARROW_DTYPE,
     )
     df[file_config.snr_mark_col] = pd.Series(
         False,
         index=df.index,
-        dtype="bool[pyarrow]",
+        dtype=BOOL_PYARROW_DTYPE,
     )
 
     if stats["has_fnr_11digits"]:
         df.loc[has_fnr, file_config.snr_col] = (
-            df.loc[has_fnr, file_config.fnr_col].astype("string[pyarrow]").str.strip()
+            df.loc[has_fnr, file_config.fnr_col]
+            .astype(STRING_PYARROW_DTYPE)
+            .str.strip()
         )
 
     if dry_run:
@@ -91,12 +94,12 @@ def pseudo_and_snr(
         df[file_config.snr_col] = pd.Series(
             pd.NA,
             index=df.index,
-            dtype="string[pyarrow]",
+            dtype=STRING_PYARROW_DTYPE,
         )
         df[file_config.snr_mark_col] = pd.Series(
             True,
             index=df.index,
-            dtype="bool[pyarrow]",
+            dtype=BOOL_PYARROW_DTYPE,
         )
         return df, stats
 
@@ -109,7 +112,7 @@ def pseudo_and_snr(
         df[file_config.snr_mark_col] = pd.Series(
             True,
             index=df.index,
-            dtype="bool[pyarrow]",
+            dtype=BOOL_PYARROW_DTYPE,
         )
         stats["snr_uuid_filled"] = n_uuid
         return df, stats
@@ -124,7 +127,7 @@ def pseudo_and_snr(
     stats["pseudo_ran"] = True
 
     res[file_config.snr_col] = (
-        res[file_config.snr_col].astype("string[pyarrow]").str.strip()
+        res[file_config.snr_col].astype(STRING_PYARROW_DTYPE).str.strip()
     )
     good_snr = (
         res[file_config.snr_col].notna()
@@ -140,6 +143,6 @@ def pseudo_and_snr(
         snr_col=file_config.snr_col,
     )
     stats["snr_uuid_filled"] = n_uuid
-    res[file_config.snr_mark_col] = miss_before.astype("bool[pyarrow]")
+    res[file_config.snr_mark_col] = miss_before.astype(BOOL_PYARROW_DTYPE)
 
     return res, stats

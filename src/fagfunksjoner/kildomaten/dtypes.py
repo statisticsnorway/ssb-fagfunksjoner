@@ -1,6 +1,13 @@
+from typing import Final, Literal
+
 import pandas as pd
 
 from .fileconfig import FileConfig
+
+BOOL_PYARROW_DTYPE: Final[Literal["bool[pyarrow]"]] = "bool[pyarrow]"
+DOUBLE_PYARROW_DTYPE: Final[Literal["double[pyarrow]"]] = "double[pyarrow]"
+INT64_PYARROW_DTYPE: Final[Literal["int64[pyarrow]"]] = "int64[pyarrow]"
+STRING_PYARROW_DTYPE: Final[Literal["string[pyarrow]"]] = "string[pyarrow]"
 
 
 def normalize_dtypes(
@@ -21,13 +28,13 @@ def normalize_dtypes(
     for col in out.columns:
         dtype = str(out[col].dtype)
         if col == file_config.snr_mark_col:
-            out[col] = out[col].astype("bool[pyarrow]")
+            out[col] = out[col].astype(BOOL_PYARROW_DTYPE)
         elif dtype in ("boolean", "bool"):
-            out[col] = out[col].astype("bool[pyarrow]")
+            out[col] = out[col].astype(BOOL_PYARROW_DTYPE)
         elif dtype == "Int64":
-            out[col] = out[col].astype("int64[pyarrow]")
+            out[col] = out[col].astype(INT64_PYARROW_DTYPE)
         elif dtype == "Float64":
-            out[col] = out[col].astype("double[pyarrow]")
+            out[col] = out[col].astype(DOUBLE_PYARROW_DTYPE)
         elif "object" in dtype or "string" in dtype:
-            out[col] = out[col].astype("string[pyarrow]")
+            out[col] = out[col].astype(STRING_PYARROW_DTYPE)
     return out

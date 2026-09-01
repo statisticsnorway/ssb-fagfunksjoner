@@ -173,11 +173,11 @@ def test_dataframe_dry_run_does_not_require_output_path_or_call_services(monkeyp
 
 
 def test_dataframe_non_dry_run_requires_output_path():
+    df = pd.DataFrame({"kode": ["a"]})
+    file_config = FileConfig()
+
     with pytest.raises(ValueError, match="output_path is required"):
-        run_kildomaten_pipeline(
-            pd.DataFrame({"kode": ["a"]}),
-            FileConfig(),
-        )
+        run_kildomaten_pipeline(df, file_config)
 
 
 def test_path_dry_run_reads_parquet_and_returns_derived_output_path():
@@ -201,12 +201,13 @@ def test_path_input_must_be_parquet_even_in_dry_run():
     rmtree(LOCAL_TMP, ignore_errors=True)
     LOCAL_TMP.mkdir(parents=True)
     csv_path = LOCAL_TMP / "input.csv"
+    file_config = FileConfig()
 
     try:
         csv_path.write_text("a,b\n1,2\n", encoding="utf-8")
 
         with pytest.raises(ValueError, match="Expected a parquet file"):
-            run_kildomaten_pipeline(csv_path, FileConfig(), dry_run=True)
+            run_kildomaten_pipeline(csv_path, file_config, dry_run=True)
     finally:
         rmtree(LOCAL_TMP, ignore_errors=True)
 
@@ -286,12 +287,11 @@ def test_pipeline_logs_missing_configured_action_columns_in_dry_run(caplog):
 
 def test_input_validation_logs_missing_required_pseudo_columns(caplog):
     caplog.set_level(logging.ERROR)
+    df = pd.DataFrame({"fnr": ["12345678901"]})
+    file_config = FileConfig(fnr_col="fnr", pseudo_cols=["missing_pseudo_col"])
 
     with pytest.raises(AssertionError, match="Missing configured person columns"):
-        assert_prepped_input(
-            pd.DataFrame({"fnr": ["12345678901"]}),
-            FileConfig(fnr_col="fnr", pseudo_cols=["missing_pseudo_col"]),
-        )
+        assert_prepped_input(df, file_config)
 
     assert any(
         "Configured person columns are missing from input" in record.getMessage()
