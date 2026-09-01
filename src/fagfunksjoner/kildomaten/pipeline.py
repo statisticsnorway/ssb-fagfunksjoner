@@ -5,7 +5,7 @@ import pandas as pd
 from .dtypes import normalize_dtypes
 from .fileconfig import FileConfig
 from .kilde_logging import logger
-from .pii import _drop_original_fnr_columns, drop_sensitive_columns
+from .pii import _drop_original_fnr_columns, drop_configured_columns
 from .preprocess import _apply_configured_preprocessing
 from .pseudo import pseudo_and_snr
 from .read import _load_input
@@ -98,7 +98,7 @@ def run_kildomaten_pipeline(
             step = "cleanup"
             out_df = drop_work_columns(pseudo_df, file_config)
             out_df = _drop_original_fnr_columns(out_df, file_config)
-            out_df = drop_sensitive_columns(out_df, file_config)
+            out_df = drop_configured_columns(out_df, file_config)
 
             step = "normalize_dtypes"
             out_df = normalize_dtypes(out_df, file_config)

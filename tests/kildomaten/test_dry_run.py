@@ -267,8 +267,7 @@ def test_pipeline_logs_missing_configured_action_columns_in_dry_run(caplog):
             pseudo_cols=["fnr"],
             rename_map={"missing_rename_source": "renamed"},
             copy_cols_new_old={"copied": "missing_copy_source"},
-            drop_cols=["missing_drop_col"],
-            sensitive_cols=["missing_sensitive_col"],
+            drop_cols=["missing_drop_col", "missing_extra_drop_col"],
         ),
         dry_run=True,
     )
@@ -280,11 +279,9 @@ def test_pipeline_logs_missing_configured_action_columns_in_dry_run(caplog):
     assert any("missing_rename_source" in msg for msg in messages)
     assert any("copy_cols_new_old source column is missing" in msg for msg in messages)
     assert any("missing_copy_source -> copied" in msg for msg in messages)
-    assert any(
-        "Configured drop_cols/sensitive_cols are missing" in msg for msg in messages
-    )
+    assert any("Configured drop_cols are missing" in msg for msg in messages)
     assert any("missing_drop_col" in msg for msg in messages)
-    assert any("missing_sensitive_col" in msg for msg in messages)
+    assert any("missing_extra_drop_col" in msg for msg in messages)
 
 
 def test_input_validation_logs_missing_required_pseudo_columns(caplog):

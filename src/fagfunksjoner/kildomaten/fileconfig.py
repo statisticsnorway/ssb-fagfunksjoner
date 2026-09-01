@@ -132,9 +132,6 @@ class FileConfig(BaseModel):
         drop_cols (list[str]): Columns to remove from the final output after
             WhoDat and pseudonymization have run. Missing configured columns are
             logged at runtime because this can indicate config drift.
-        sensitive_cols (list[str]): Additional sensitive columns to remove from
-            the final output. This is empty by default and behaves like
-            `drop_cols` when explicitly configured.
         preprocess_func (Callable[[pd.DataFrame], pd.DataFrame] | None):
             Optional callable that receives the input DataFrame and returns a
             modified DataFrame before `rename_map` and `copy_cols_new_old` are
@@ -180,7 +177,6 @@ class FileConfig(BaseModel):
     rename_map: dict[str, str] = Field(default_factory=dict)
     copy_cols_new_old: dict[str, str] = Field(default_factory=dict)
     drop_cols: list[str] = Field(default_factory=list)
-    sensitive_cols: list[str] = Field(default_factory=list)
     preprocess_func: Callable[[pd.DataFrame], pd.DataFrame] | None = None
     output_path: Path | None = None
     output_dir: Path | None = None
@@ -209,7 +205,6 @@ class FileConfig(BaseModel):
     @field_validator(
         "pseudo_cols",
         "drop_cols",
-        "sensitive_cols",
         mode="before",
     )
     @classmethod

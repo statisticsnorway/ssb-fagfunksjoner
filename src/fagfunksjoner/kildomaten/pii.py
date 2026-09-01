@@ -4,28 +4,27 @@ from .fileconfig import FileConfig
 from .kilde_logging import logger
 
 
-def drop_sensitive_columns(
+def drop_configured_columns(
     df: pd.DataFrame,
     file_config: FileConfig,
 ) -> pd.DataFrame:
-    """Drop sensitive personally identifying columns from output.
+    """Drop configured columns from output.
 
     Args:
-        df: DataFrame that may contain sensitive person columns.
+        df: DataFrame that may contain columns configured for removal.
         file_config: File-specific processing configuration.
 
     Returns:
-        pd.DataFrame: The DataFrame without sensitive person columns.
+        pd.DataFrame: The DataFrame without configured drop columns.
     """
-    configured_drop_cols = [*file_config.drop_cols, *file_config.sensitive_cols]
-    missing_cols = [column for column in configured_drop_cols if column not in df]
+    missing_cols = [column for column in file_config.drop_cols if column not in df]
     if missing_cols:
         logger.warning(
-            "Configured drop_cols/sensitive_cols are missing from output: %s",
+            "Configured drop_cols are missing from output: %s",
             missing_cols,
         )
 
-    drop_cols = [column for column in configured_drop_cols if column in df.columns]
+    drop_cols = [column for column in file_config.drop_cols if column in df.columns]
     return df.drop(columns=drop_cols) if drop_cols else df
 
 
