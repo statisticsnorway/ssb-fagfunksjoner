@@ -375,7 +375,8 @@ def test_whodat_dry_run_counts_rows_that_would_be_sent_and_skips_blank_pii(
     )
 
     assert out["fnr"].tolist() == df["fnr"].tolist()
-    assert pd.isna(out.loc[11, "navn"])
+    assert out.index.tolist() == [0, 1, 2, 3]
+    assert pd.isna(out.loc[1, "navn"])
     assert stats["dry_run"] == 1
     assert stats["needs_lookup"] == 3
     assert stats["missing_fnr"] == 1
