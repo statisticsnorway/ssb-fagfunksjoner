@@ -29,6 +29,14 @@ def _apply_configured_preprocessing(
         df = df.rename(columns=file_config.rename_map)
     if file_config.copy_cols_new_old:
         for new_col, old_col in file_config.copy_cols_new_old.items():
+            if new_col in df.columns:
+                logger.warning(
+                    "Configured copy_cols_new_old target column already exists; "
+                    "skipping copy to avoid overwriting: %s -> %s",
+                    old_col,
+                    new_col,
+                )
+                continue
             if old_col not in df.columns:
                 logger.warning(
                     "Configured copy_cols_new_old source column is missing from "

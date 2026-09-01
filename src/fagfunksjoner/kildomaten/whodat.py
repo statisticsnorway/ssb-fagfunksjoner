@@ -275,10 +275,16 @@ def _run_whodat_search_chunks(
             continue
 
         mapping = result.to_dict_from_original_indices()
-        all_mappings.update(_clean_whodat_mapping(mapping))
+        cleaned_mapping = _clean_whodat_mapping(mapping)
+        all_mappings.update(cleaned_mapping)
         _log_whodat_step_hits(result, strategies)
 
-        logger.info("WhoDat chunk %d/%d: hits=%d.", chunk_no, n_chunks, len(mapping))
+        logger.info(
+            "WhoDat chunk %d/%d: usable hits=%d.",
+            chunk_no,
+            n_chunks,
+            len(cleaned_mapping),
+        )
 
     return all_mappings
 
@@ -343,7 +349,7 @@ def whodat_lookup_fnr(
     Returns:
         tuple[pd.DataFrame, dict]: The updated DataFrame and lookup statistics.
     """
-    df = _prepare_whodat_work_columns(df, file_config)
+    df = _prepare_whodat_work_columns(df, file_config).reset_index(drop=True)
     base_stats = {
         "needs_lookup": 0,
         "missing_fnr": 0,

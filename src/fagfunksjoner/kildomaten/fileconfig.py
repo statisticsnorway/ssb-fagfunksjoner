@@ -145,10 +145,12 @@ class FileConfig(BaseModel):
             directory is used.
         output_name_insert (str): Text inserted into the derived output file
             name when the input is a path and `output_path` is not set.
-        output_overwrite (bool): Whether the pipeline may overwrite an existing
-            output file when writing parquet. When false, output versioning is
-            based on existing files in `output_dir`; avoid concurrent writes to
-            the same output directory because version selection is stateful.
+        output_overwrite (bool): Whether derived output paths may reuse an
+            existing filename when writing parquet. When false and `output_path`
+            is not set, output versioning is based on existing files in
+            `output_dir`; avoid concurrent writes to the same output directory
+            because version selection is stateful. Explicit `output_path`
+            values are used as provided.
         chunk_size (int): Maximum number of rows per WhoDat request chunk. Lower
             this if requests become too large for the service.
         max_whodat_share (float): Maximum share of input rows allowed to be sent
@@ -190,7 +192,17 @@ class FileConfig(BaseModel):
     )
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
 
-    @field_validator("fnr_col", "snr_col", "snr_mark_col", mode="before")
+    @field_validator("fnr_col", mode="before")
+    @classmethod
+    def _validate_optional_fnr_column(cls, value: object) -> object:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            return value
+        cleaned = _clean_column(value)
+        return cleaned or None
+
+    @field_validator("snr_col", "snr_mark_col", mode="before")
     @classmethod
     def _validate_column(cls, value: object) -> object:
         if value is None:
@@ -235,6 +247,18 @@ class FileConfig(BaseModel):
     @field_validator("rename_map", mode="before")
     @classmethod
     def _validate_rename_map(cls, value: object) -> object:
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            return value
+        return {
+            _clean_column(str(source)): _clean_column(str(target))
+            for source, target in value.items()
+        }
+
+    @field_validator("copy_cols_new_old", mode="before")
+    @classmethod
+    def _validate_copy_cols_new_old(cls, value: object) -> object:
         if value is None:
             return {}
         if not isinstance(value, dict):

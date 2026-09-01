@@ -27,7 +27,7 @@ def assert_prepped_input(df: pd.DataFrame, file_config: FileConfig) -> None:
     Raises:
         AssertionError: If required configured columns are missing.
     """
-    if not _has_person_data(df, file_config):
+    if not file_config.person_columns:
         logger.info("No configured person columns found, skipping person validation.")
         return
 

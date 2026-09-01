@@ -55,10 +55,10 @@ class FakeWhodatResult:
 
     def to_dict_from_original_indices(self):
         return {
-            10: "11111111111",
-            11: None,
-            12: "",
-            13: pd.NA,
+            0: "11111111111",
+            1: None,
+            2: "",
+            3: pd.NA,
         }
 
 
@@ -112,6 +112,13 @@ def test_file_config_validates_user_supplied_whodat_columns():
 def test_file_config_rejects_string_where_list_is_expected():
     with pytest.raises(ValidationError, match="lists, not strings"):
         FileConfig(fnr_col="fnr", pseudo_cols="fnr")
+
+
+def test_file_config_treats_blank_fnr_col_as_unconfigured():
+    config = FileConfig(fnr_col="", pseudo_cols=[])
+
+    assert config.fnr_col is None
+    assert config.person_columns == set()
 
 
 def test_file_config_rejects_unknown_field_names():
@@ -285,6 +292,48 @@ def test_pipeline_logs_missing_configured_action_columns_in_dry_run(caplog):
     assert any("missing_extra_drop_col" in msg for msg in messages)
 
 
+def test_pipeline_warns_and_skips_copy_when_target_column_exists(caplog):
+    caplog.set_level(logging.WARNING)
+
+    result = run_kildomaten_pipeline(
+        pd.DataFrame(
+            {
+                "fnr": ["existing-fnr"],
+                "source_fnr": ["source-fnr"],
+            }
+        ),
+        FileConfig(
+            fnr_col="fnr",
+            pseudo_cols=["fnr"],
+            copy_cols_new_old={"fnr": "source_fnr"},
+        ),
+        dry_run=True,
+    )
+
+    assert isinstance(result, pd.DataFrame)
+    assert result["fnr"].tolist() == ["existing-fnr"]
+    assert any(
+        "target column already exists" in record.getMessage()
+        and "source_fnr -> fnr" in record.getMessage()
+        for record in caplog.records
+    )
+
+
+def test_input_validation_fails_when_configured_fnr_col_is_missing(caplog):
+    caplog.set_level(logging.ERROR)
+    df = pd.DataFrame({"not_fnr": ["12345678901"]})
+    file_config = FileConfig(fnr_col="fnr", pseudo_cols=[])
+
+    with pytest.raises(AssertionError, match="Missing configured person columns"):
+        assert_prepped_input(df, file_config)
+
+    assert any(
+        "Configured person columns are missing from input" in record.getMessage()
+        and "fnr" in record.getMessage()
+        for record in caplog.records
+    )
+
+
 def test_input_validation_logs_missing_required_pseudo_columns(caplog):
     caplog.set_level(logging.ERROR)
     df = pd.DataFrame({"fnr": ["12345678901"]})
@@ -336,7 +385,7 @@ def test_whodat_dry_run_counts_rows_that_would_be_sent_and_skips_blank_pii(
     assert stats["whodat_hits"] == 0
 
 
-def test_whodat_keeps_original_fnr_when_lookup_has_no_usable_hit(monkeypatch):
+def test_whodat_resets_index_and_keeps_original_fnr_without_usable_hit(monkeypatch):
     monkeypatch.setattr(whodat_module, "Validator", FakeInvalidFnrValidator)
     monkeypatch.setattr(whodat_module, "Whodat", FakeWhodatProcess)
 
@@ -365,6 +414,7 @@ def test_whodat_keeps_original_fnr_when_lookup_has_no_usable_hit(monkeypatch):
         "bad-three",
         "bad-four",
     ]
+    assert out.index.tolist() == [0, 1, 2, 3]
     assert out["fnr_orig"].tolist() == df["fnr"].tolist()
     assert stats["whodat_hits"] == 1
 
