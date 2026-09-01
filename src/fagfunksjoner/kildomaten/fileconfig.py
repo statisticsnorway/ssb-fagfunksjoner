@@ -244,21 +244,9 @@ class FileConfig(BaseModel):
             raise ValueError(f"Unsupported WhoDat variables: {invalid}")
         return cleaned
 
-    @field_validator("rename_map", mode="before")
+    @field_validator("rename_map", "copy_cols_new_old", mode="before")
     @classmethod
-    def _validate_rename_map(cls, value: object) -> object:
-        if value is None:
-            return {}
-        if not isinstance(value, dict):
-            return value
-        return {
-            _clean_column(str(source)): _clean_column(str(target))
-            for source, target in value.items()
-        }
-
-    @field_validator("copy_cols_new_old", mode="before")
-    @classmethod
-    def _validate_copy_cols_new_old(cls, value: object) -> object:
+    def _validate_col_dicts(cls, value: object) -> object:
         if value is None:
             return {}
         if not isinstance(value, dict):
