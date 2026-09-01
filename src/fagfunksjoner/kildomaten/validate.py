@@ -89,9 +89,8 @@ def validate_output(
 ) -> None:
     """Validate output consistency after pseudonymization and WhoDat lookup.
 
-    The output must contain configured SNR columns when person data was
-    processed, use bool[pyarrow] for the SNR marker, exclude WhoDat work
-    columns, and avoid unexpected new columns.
+    The output must contain the configured SNR column when person data was
+    processed and avoid unexpected new columns.
 
     Args:
         df_in: Input DataFrame before processing.
@@ -105,24 +104,11 @@ def validate_output(
         AssertionError: If output columns or dtypes are not consistent.
     """
     if _has_person_data(df_in, file_config):
-        for column in (file_config.snr_col, file_config.snr_mark_col):
-            if column not in df_out.columns:
-                raise AssertionError(f"{column} is missing in output.")
-
-        if str(df_out[file_config.snr_mark_col].dtype) != "bool[pyarrow]":
-            raise AssertionError(
-                f"{file_config.snr_mark_col} must be bool[pyarrow], "
-                f"got {df_out[file_config.snr_mark_col].dtype}."
-            )
-
-    work_present = [column for column in file_config.whodat_columns if column in df_out]
-    if work_present:
-        raise AssertionError(
-            f"WhoDat work columns are present in output: {work_present}"
-        )
+        if file_config.snr_col not in df_out.columns:
+            raise AssertionError(f"{file_config.snr_col} is missing in output.")
 
     added = sorted(set(df_out.columns) - set(df_in.columns))
-    expected = {file_config.snr_col, file_config.snr_mark_col}
+    expected = {file_config.snr_col}
     unexpected = [column for column in added if column not in expected]
     if unexpected:
         raise AssertionError(f"Unexpected new columns in output: {unexpected}")

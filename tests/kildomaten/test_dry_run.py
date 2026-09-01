@@ -219,7 +219,9 @@ def test_path_input_must_be_parquet_even_in_dry_run():
         rmtree(LOCAL_TMP, ignore_errors=True)
 
 
-def test_dry_run_applies_preprocess_rename_and_drop_logic_without_writing():
+def test_dry_run_applies_preprocess_rename_and_drop_logic_without_writing(caplog):
+    caplog.set_level(logging.INFO)
+
     def preprocess(df):
         out = df.copy()
         out["navn"] = out["first"] + " " + out["last"]
@@ -253,8 +255,14 @@ def test_dry_run_applies_preprocess_rename_and_drop_logic_without_writing():
         )
 
         assert isinstance(result, pd.DataFrame)
+        assert "navn" in result.columns
         assert "sensitive_name" not in result.columns
         assert result["fnr"].tolist() == ["bad"]
+        assert any(
+            "Keeping configured fnrsearch columns in output" in record.getMessage()
+            and "navn" in record.getMessage()
+            for record in caplog.records
+        )
         assert not output_path.exists()
     finally:
         rmtree(LOCAL_TMP, ignore_errors=True)

@@ -1,7 +1,7 @@
 import pandas as pd
 from dapla_pseudo import Pseudonymize
 
-from .dtypes import BOOL_PYARROW_DTYPE, STRING_PYARROW_DTYPE
+from .dtypes import STRING_PYARROW_DTYPE
 from .fileconfig import FileConfig
 from .kilde_logging import logger
 from .snr_uuid import _fill_uuid_for_missing_snr
@@ -22,8 +22,7 @@ def pseudo_and_snr(
 
     Rows with a valid configured FNR are pseudonymized into a stable SNR. Rows
     without a valid FNR, or without a pseudonymization hit, receive a
-    UUID-filled SNR and are marked with snr_mrk=True to indicate that the SNR
-    is not stable across datasets.
+    UUID-filled SNR that is not stable across datasets.
 
     Args:
         df: Input DataFrame containing the configured FNR columns.
@@ -73,11 +72,6 @@ def pseudo_and_snr(
         index=df.index,
         dtype=STRING_PYARROW_DTYPE,
     )
-    df[file_config.snr_mark_col] = pd.Series(
-        False,
-        index=df.index,
-        dtype=BOOL_PYARROW_DTYPE,
-    )
 
     if stats["has_fnr_11digits"]:
         df.loc[has_fnr, file_config.snr_col] = (
@@ -96,11 +90,6 @@ def pseudo_and_snr(
             index=df.index,
             dtype=STRING_PYARROW_DTYPE,
         )
-        df[file_config.snr_mark_col] = pd.Series(
-            True,
-            index=df.index,
-            dtype=BOOL_PYARROW_DTYPE,
-        )
         return df, stats
 
     if not stats["has_fnr_11digits"] and not pseudo_cols:
@@ -108,11 +97,6 @@ def pseudo_and_snr(
         df, n_uuid = _fill_uuid_for_missing_snr(
             df,
             snr_col=file_config.snr_col,
-        )
-        df[file_config.snr_mark_col] = pd.Series(
-            True,
-            index=df.index,
-            dtype=BOOL_PYARROW_DTYPE,
         )
         stats["snr_uuid_filled"] = n_uuid
         return df, stats
@@ -137,12 +121,10 @@ def pseudo_and_snr(
     stats["snr_from_stable_id"] = int(good_snr.sum())
     res.loc[~good_snr, file_config.snr_col] = pd.NA
 
-    miss_before = res[file_config.snr_col].isna()
     res, n_uuid = _fill_uuid_for_missing_snr(
         res,
         snr_col=file_config.snr_col,
     )
     stats["snr_uuid_filled"] = n_uuid
-    res[file_config.snr_mark_col] = miss_before.astype(BOOL_PYARROW_DTYPE)
 
     return res, stats

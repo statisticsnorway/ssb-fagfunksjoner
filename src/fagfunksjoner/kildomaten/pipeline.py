@@ -16,11 +16,23 @@ from .validate import (
     validate_output,
 )
 from .whodat import (
-    drop_work_columns,
     should_run_whodat,
     whodat_lookup_fnr,
 )
 from .write import _resolve_output_path
+
+
+def _log_retained_whodat_columns(
+    df: pd.DataFrame,
+    file_config: FileConfig,
+) -> None:
+    retained = sorted(column for column in file_config.whodat_columns if column in df)
+    if retained:
+        logger.info(
+            "Keeping configured fnrsearch columns in output because they are not "
+            "listed in drop_cols: %s",
+            retained,
+        )
 
 
 def run_kildomaten_pipeline(
@@ -96,9 +108,9 @@ def run_kildomaten_pipeline(
             logger.info("Pseudo stats: %s", pseudo_stats)
 
             step = "cleanup"
-            out_df = drop_work_columns(pseudo_df, file_config)
-            out_df = _drop_original_fnr_columns(out_df, file_config)
+            out_df = _drop_original_fnr_columns(pseudo_df, file_config)
             out_df = drop_configured_columns(out_df, file_config)
+            _log_retained_whodat_columns(out_df, file_config)
 
             step = "normalize_dtypes"
             out_df = normalize_dtypes(out_df, file_config)

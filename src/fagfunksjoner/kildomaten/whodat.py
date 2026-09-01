@@ -289,25 +289,6 @@ def _run_whodat_search_chunks(
     return all_mappings
 
 
-def drop_work_columns(
-    df: pd.DataFrame,
-    file_config: FileConfig,
-) -> pd.DataFrame:
-    """Drop WhoDat work columns from a DataFrame.
-
-    Args:
-        df: DataFrame that may contain WhoDat work columns.
-        file_config: File-specific processing configuration.
-
-    Returns:
-        pd.DataFrame: The DataFrame without WhoDat work columns.
-    """
-    drop_cols = [
-        column for column in file_config.whodat_columns if column in df.columns
-    ]
-    return df.drop(columns=drop_cols) if drop_cols else df
-
-
 def should_run_whodat(
     df: pd.DataFrame,
     file_config: FileConfig,
