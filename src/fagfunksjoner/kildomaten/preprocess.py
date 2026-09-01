@@ -18,6 +18,9 @@ def _apply_configured_preprocessing(
     if file_config.preprocess_func:
         df = file_config.preprocess_func(df)
     if file_config.rename_map:
+        file_config.rename_map = {
+            k.strip(): v.strip() for k, v in file_config.rename_map.items()
+        }
         missing_sources = [
             column for column in file_config.rename_map if column not in df.columns
         ]

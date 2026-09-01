@@ -27,9 +27,7 @@ def normalize_dtypes(
     out = out.convert_dtypes(dtype_backend="pyarrow")
     for col in out.columns:
         dtype = str(out[col].dtype)
-        if col == file_config.snr_mark_col:
-            out[col] = out[col].astype(BOOL_PYARROW_DTYPE)
-        elif dtype in ("boolean", "bool"):
+        if dtype in ("boolean", "bool"):
             out[col] = out[col].astype(BOOL_PYARROW_DTYPE)
         elif dtype == "Int64":
             out[col] = out[col].astype(INT64_PYARROW_DTYPE)
