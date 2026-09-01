@@ -1,5 +1,7 @@
+import logging
 from pathlib import Path
 from shutil import rmtree
+from typing import ClassVar
 
 import pandas as pd
 import pytest
@@ -13,6 +15,7 @@ from fagfunksjoner.kildomaten import (
     run_kildomaten_pipeline,
 )
 from fagfunksjoner.kildomaten.fileconfig import WHODAT_VARIABLES
+from fagfunksjoner.kildomaten.validate import assert_prepped_input
 from fagfunksjoner.kildomaten.whodat import should_run_whodat, whodat_lookup_fnr
 
 LOCAL_TMP = Path("tests/kildomaten/.tmp")
@@ -26,6 +29,52 @@ class ExplodingService:
     @classmethod
     def from_pandas(cls, *args, **kwargs):
         raise ServiceCallError("External service should not be called in dry-run")
+
+
+class FakeInvalidFnrValidator:
+    def __init__(self, df):
+        """Store the DataFrame that the fake validator should return."""
+        self.df = df
+
+    @classmethod
+    def from_pandas(cls, df):
+        return cls(df)
+
+    def on_field(self, field):
+        return self
+
+    def validate_map_to_stable_id(self):
+        return self
+
+    def to_pandas(self):
+        return self.df.copy()
+
+
+class FakeWhodatResult:
+    details: ClassVar[list[object]] = []
+
+    def to_dict_from_original_indices(self):
+        return {
+            10: "11111111111",
+            11: None,
+            12: "",
+            13: pd.NA,
+        }
+
+
+class FakeWhodatProcess:
+    @classmethod
+    def from_pandas(cls, df):
+        return cls()
+
+    def search_fnr(self):
+        return self
+
+    def with_search_strategy(self, **kwargs):
+        return self
+
+    def run(self):
+        return FakeWhodatResult()
 
 
 def test_file_config_validates_user_supplied_whodat_columns():
@@ -117,8 +166,10 @@ def test_dataframe_dry_run_does_not_require_output_path_or_call_services(monkeyp
         dry_run=True,
     )
 
-    assert result == Path("dry_run_output.parquet")
-    assert not result.exists()
+    assert isinstance(result, pd.DataFrame)
+    assert result.loc[0, "fnr"] == "not-valid"
+    assert pd.isna(result.loc[1, "fnr"])
+    assert not Path("dry_run_output.parquet").exists()
 
 
 def test_dataframe_non_dry_run_requires_output_path():
@@ -139,8 +190,9 @@ def test_path_dry_run_reads_parquet_and_returns_derived_output_path():
 
         result = run_kildomaten_pipeline(source_path, FileConfig(), dry_run=True)
 
-        assert result == LOCAL_TMP / "resultat_inndata_p2024.parquet"
-        assert not result.exists()
+        assert isinstance(result, pd.DataFrame)
+        assert result["kode"].tolist() == ["a"]
+        assert not (LOCAL_TMP / "resultat_inndata_p2024.parquet").exists()
     finally:
         rmtree(LOCAL_TMP, ignore_errors=True)
 
@@ -192,10 +244,63 @@ def test_dry_run_applies_preprocess_rename_and_drop_logic_without_writing():
             dry_run=True,
         )
 
-        assert result == output_path
+        assert isinstance(result, pd.DataFrame)
+        assert "sensitive_name" not in result.columns
+        assert result["fnr"].tolist() == ["bad"]
         assert not output_path.exists()
     finally:
         rmtree(LOCAL_TMP, ignore_errors=True)
+
+
+def test_pipeline_logs_missing_configured_action_columns_in_dry_run(caplog):
+    caplog.set_level(logging.WARNING)
+
+    result = run_kildomaten_pipeline(
+        pd.DataFrame(
+            {
+                "fnr": ["12345678901"],
+                "navn": ["Test Person"],
+            }
+        ),
+        FileConfig(
+            fnr_col="fnr",
+            pseudo_cols=["fnr"],
+            rename_map={"missing_rename_source": "renamed"},
+            copy_cols_new_old={"copied": "missing_copy_source"},
+            drop_cols=["missing_drop_col"],
+            sensitive_cols=["missing_sensitive_col"],
+        ),
+        dry_run=True,
+    )
+
+    assert isinstance(result, pd.DataFrame)
+    assert "copied" not in result.columns
+    messages = [record.getMessage() for record in caplog.records]
+    assert any("rename_map source columns are missing" in msg for msg in messages)
+    assert any("missing_rename_source" in msg for msg in messages)
+    assert any("copy_cols_new_old source column is missing" in msg for msg in messages)
+    assert any("missing_copy_source -> copied" in msg for msg in messages)
+    assert any(
+        "Configured drop_cols/sensitive_cols are missing" in msg for msg in messages
+    )
+    assert any("missing_drop_col" in msg for msg in messages)
+    assert any("missing_sensitive_col" in msg for msg in messages)
+
+
+def test_input_validation_logs_missing_required_pseudo_columns(caplog):
+    caplog.set_level(logging.ERROR)
+
+    with pytest.raises(AssertionError, match="Missing configured person columns"):
+        assert_prepped_input(
+            pd.DataFrame({"fnr": ["12345678901"]}),
+            FileConfig(fnr_col="fnr", pseudo_cols=["missing_pseudo_col"]),
+        )
+
+    assert any(
+        "Configured person columns are missing from input" in record.getMessage()
+        and "missing_pseudo_col" in record.getMessage()
+        for record in caplog.records
+    )
 
 
 def test_whodat_dry_run_counts_rows_that_would_be_sent_and_skips_blank_pii(
@@ -232,6 +337,39 @@ def test_whodat_dry_run_counts_rows_that_would_be_sent_and_skips_blank_pii(
     assert stats["skipped_no_searchable"] == 1
     assert stats["to_whodat"] == 2
     assert stats["whodat_hits"] == 0
+
+
+def test_whodat_keeps_original_fnr_when_lookup_has_no_usable_hit(monkeypatch):
+    monkeypatch.setattr(whodat_module, "Validator", FakeInvalidFnrValidator)
+    monkeypatch.setattr(whodat_module, "Whodat", FakeWhodatProcess)
+
+    df = pd.DataFrame(
+        {
+            "fnr": ["bad-one", "bad-two", "bad-three", "bad-four"],
+            "navn": ["One", "Two", "Three", "Four"],
+        },
+        index=[10, 11, 12, 13],
+    )
+
+    out, stats = whodat_lookup_fnr(
+        df,
+        FileConfig(
+            fnr_col="fnr",
+            pseudo_cols=["fnr"],
+            use_fnrsearch=True,
+            fnrsearch_cols=["navn"],
+            max_whodat_share=1.0,
+        ),
+    )
+
+    assert out["fnr"].tolist() == [
+        "11111111111",
+        "bad-two",
+        "bad-three",
+        "bad-four",
+    ]
+    assert out["fnr_orig"].tolist() == df["fnr"].tolist()
+    assert stats["whodat_hits"] == 1
 
 
 def test_whodat_dry_run_normalizes_configured_helper_columns():

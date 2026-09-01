@@ -1,3 +1,6 @@
+from collections.abc import Mapping
+from typing import Any
+
 import pandas as pd
 from dapla_pseudo import Validator
 from dapla_whodat import Whodat
@@ -208,6 +211,17 @@ def _log_whodat_step_hits(
         logger.info("Could not log WhoDat search step distribution: %s", e)
 
 
+def _clean_whodat_mapping(mapping: Mapping[Any, Any]) -> dict[object, str]:
+    cleaned = {}
+    for index, fnr in mapping.items():
+        if pd.isna(fnr):
+            continue
+        value = str(fnr).strip()
+        if value:
+            cleaned[index] = value
+    return cleaned
+
+
 def drop_work_columns(
     df: pd.DataFrame,
     file_config: FileConfig,
@@ -362,7 +376,7 @@ def whodat_lookup_fnr(
         df[original_fnr_col] = df[file_config.fnr_col]
 
     lookup_indices = df.index[mask_lookup].tolist()
-    all_mappings: dict[int, str] = {}
+    all_mappings: dict[object, str] = {}
     n_chunks = -(-len(lookup_indices) // file_config.chunk_size)
     strategies = _build_search_strategies(available_cols, file_config)
 
@@ -403,7 +417,7 @@ def whodat_lookup_fnr(
             continue
 
         mapping = result.to_dict_from_original_indices()
-        all_mappings.update(mapping)
+        all_mappings.update(_clean_whodat_mapping(mapping))
         _log_whodat_step_hits(result, strategies)
 
         logger.info(

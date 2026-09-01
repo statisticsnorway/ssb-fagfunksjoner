@@ -45,6 +45,14 @@ def pseudo_and_snr(
 
     df = df.copy()
     has_fnr = _valid_fnr_mask(df, file_config.fnr_col)
+    missing_pseudo_cols = [
+        column for column in file_config.pseudo_cols if column not in df.columns
+    ]
+    if missing_pseudo_cols:
+        logger.warning(
+            "Configured pseudo_cols are missing from input: %s",
+            missing_pseudo_cols,
+        )
     pseudo_cols = [column for column in file_config.pseudo_cols if column in df.columns]
 
     stats = {

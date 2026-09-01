@@ -67,9 +67,107 @@ class WhodatSearchStrategy(BaseModel):
 
 
 class FileConfig(BaseModel):
-    """Configuration for processing one source file type."""
+    """Configuration for processing one source file type.
 
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+    `FileConfig` is the user-facing control object for
+    `run_kildomaten_pipeline`. It describes how incoming columns should be
+    prepared, which columns contain person identifiers, whether missing or
+    invalid FNR values should be searched for in WhoDat, how pseudonymization
+    should run, and where the final parquet file should be written.
+
+    Column names in this model are stripped when the config is created. Unknown
+    config fields are rejected so misspelled settings fail early instead of
+    being silently ignored. WhoDat variable names and WhoDat option names are
+    intentionally kept in the spelling expected by WhoDat, such as `navn`,
+    `kjoenn`, `inkluder_doede`, and `soek_fonetisk`.
+
+    Attributes:
+        fnr_col (str | None): Name of the main FNR column. When
+            `use_fnrsearch=True`, this column is validated and rows with missing
+            or invalid values may be sent to WhoDat. During pseudonymization,
+            valid values from this column are used to create stable SNR values.
+            If WhoDat finds a replacement FNR, that value replaces the original
+            in this column; otherwise the original value is kept, including
+            invalid values.
+        pseudo_cols (list[str]): Columns that should be encrypted with
+            Papis-compatible pseudonymization. The main `fnr_col` can be
+            included here when the original FNR column should also be
+            pseudonymized. Missing configured columns are logged during runtime
+            because they usually indicate that the input data or config has
+            changed.
+        use_fnrsearch (bool): Enables WhoDat FNR search. Requires `fnr_col` and
+            at least one of `fnrsearch_cols` or `fnrsearch_strategies`. When
+            false, the pipeline skips WhoDat and proceeds directly to
+            pseudonymization when person data is present.
+        fnrsearch_cols (list[str]): Ordered list of WhoDat helper variables
+            available in the input data. If no explicit `fnrsearch_strategies`
+            are configured, the pipeline builds incremental strategies from
+            this list, adding one more available helper column at each step.
+            Values are normalized to string formats expected by WhoDat before
+            lookup.
+        fnrsearch_strategies (list[WhodatSearchStrategy]): Explicit WhoDat
+            search attempts to run, in order. Use this when the default
+            incremental strategy is too broad or too narrow. Strategy variables
+            that are not present in the input are omitted at runtime, and
+            configured missing helper columns are logged.
+        add_relaxed_fnrsearch_strategy (bool): Adds a final broader fallback
+            strategy using all available helper columns with
+            `inkluder_doede=True` and `soek_fonetisk=True`. This can increase
+            hits, but may also widen the search more than desired for some
+            datasets.
+        snr_col (str): Output column for SNR values. Valid FNR values are mapped
+            to stable SNR through the pseudonymization service. Rows without a
+            usable stable SNR are filled with UUID-based SNR values.
+        snr_mark_col (str): Output boolean marker column. True means the row
+            received a UUID-filled SNR rather than a stable SNR from
+            pseudonymization.
+        rename_map (dict[str, str]): Mapping from existing input column names to
+            pipeline column names. This runs after `preprocess_func` and before
+            copying columns. Missing source columns are logged at runtime.
+        copy_cols_new_old (dict[str, str]): Mapping from new column name to
+            existing column name. This is useful when a source column must be
+            preserved while also copied into a pipeline-specific name. The
+            mapping direction is `{new_col: old_col}`. Missing source columns
+            are logged and skipped.
+        drop_cols (list[str]): Columns to remove from the final output after
+            WhoDat and pseudonymization have run. Missing configured columns are
+            logged at runtime because this can indicate config drift.
+        sensitive_cols (list[str]): Additional sensitive columns to remove from
+            the final output. This is empty by default and behaves like
+            `drop_cols` when explicitly configured.
+        preprocess_func (Callable[[pd.DataFrame], pd.DataFrame] | None):
+            Optional callable that receives the input DataFrame and returns a
+            modified DataFrame before `rename_map` and `copy_cols_new_old` are
+            applied. Use this for dataset-specific cleanup that cannot be
+            expressed as simple config.
+        output_path (Path | None): Explicit parquet output path. Required for
+            DataFrame input in non-dry-runs. In dry-runs, the pipeline returns
+            the processed DataFrame and does not write this path.
+        output_dir (Path | None): Optional output directory used when the input
+            is a path and `output_path` is not set. If omitted, the source file
+            directory is used.
+        output_name_insert (str): Text inserted into the derived output file
+            name when the input is a path and `output_path` is not set.
+        output_overwrite (bool): Whether the pipeline may overwrite an existing
+            output file when writing parquet. When false, output versioning is
+            based on existing files in `output_dir`; avoid concurrent writes to
+            the same output directory because version selection is stateful.
+        chunk_size (int): Maximum number of rows per WhoDat request chunk. Lower
+            this if requests become too large for the service.
+        max_whodat_share (float): Maximum share of input rows allowed to be sent
+            to WhoDat. If more rows qualify, lookup is skipped as a safety
+            measure.
+        max_whodat_rows (int): Maximum absolute number of input rows allowed to
+            be sent to WhoDat. If more rows qualify, lookup is skipped as a
+            safety measure.
+        gender_values (dict[str, Literal["mann", "kvinne"]]): Mapping from
+            dataset-specific gender values to the WhoDat-required values `mann`
+            and `kvinne`. Keys are normalized by stripping spaces and
+            lowercasing before use.
+        model_config (ConfigDict): Pydantic model settings. Arbitrary callable
+            types are allowed for fields such as `preprocess_func`, and unknown
+            config fields are rejected.
+    """
 
     fnr_col: str | None = None
     pseudo_cols: list[str] = Field(default_factory=list)
@@ -82,7 +180,7 @@ class FileConfig(BaseModel):
     rename_map: dict[str, str] = Field(default_factory=dict)
     copy_cols_new_old: dict[str, str] = Field(default_factory=dict)
     drop_cols: list[str] = Field(default_factory=list)
-    sensitive_cols: list[str] = Field(default_factory=lambda: ["pers_personnummer"])
+    sensitive_cols: list[str] = Field(default_factory=list)
     preprocess_func: Callable[[pd.DataFrame], pd.DataFrame] | None = None
     output_path: Path | None = None
     output_dir: Path | None = None
@@ -94,6 +192,7 @@ class FileConfig(BaseModel):
     gender_values: dict[str, Literal["mann", "kvinne"]] = Field(
         default_factory=lambda: DEFAULT_GENDER_VALUES.copy()
     )
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
 
     @field_validator("fnr_col", "snr_col", "snr_mark_col", mode="before")
     @classmethod

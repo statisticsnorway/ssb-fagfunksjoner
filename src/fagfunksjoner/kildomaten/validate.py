@@ -37,6 +37,7 @@ def assert_prepped_input(df: pd.DataFrame, file_config: FileConfig) -> None:
 
     missing = sorted({column for column in required if column not in df.columns})
     if missing:
+        logger.error("Configured person columns are missing from input: %s", missing)
         raise AssertionError(
             f"Missing configured person columns: {missing}. "
             f"Found {len(df.columns)} columns in total."

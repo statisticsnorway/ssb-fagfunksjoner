@@ -28,7 +28,7 @@ def run_kildomaten_pipeline(
     file_config: FileConfig,
     *,
     dry_run: bool = False,
-) -> Path:
+) -> Path | pd.DataFrame:
     """Run the Kildomaten processing pipeline for one DataFrame or parquet file.
 
     Args:
@@ -37,8 +37,8 @@ def run_kildomaten_pipeline(
         dry_run: Whether to skip environment-dependent services and writing.
 
     Returns:
-        Path: Path to the written parquet output, or the would-be output path
-            during dry-runs.
+        Path | pd.DataFrame: Path to the written parquet output, or the
+            processed DataFrame during dry-runs.
 
     Raises:
         Exception: Re-raises any exception from the processing step that fails.

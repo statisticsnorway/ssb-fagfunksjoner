@@ -1,6 +1,7 @@
 import pandas as pd
 
 from .fileconfig import FileConfig
+from .kilde_logging import logger
 
 
 def drop_sensitive_columns(
@@ -16,11 +17,15 @@ def drop_sensitive_columns(
     Returns:
         pd.DataFrame: The DataFrame without sensitive person columns.
     """
-    drop_cols = [
-        c
-        for c in [*file_config.drop_cols, *file_config.sensitive_cols]
-        if c in df.columns
-    ]
+    configured_drop_cols = [*file_config.drop_cols, *file_config.sensitive_cols]
+    missing_cols = [column for column in configured_drop_cols if column not in df]
+    if missing_cols:
+        logger.warning(
+            "Configured drop_cols/sensitive_cols are missing from output: %s",
+            missing_cols,
+        )
+
+    drop_cols = [column for column in configured_drop_cols if column in df.columns]
     return df.drop(columns=drop_cols) if drop_cols else df
 
 
