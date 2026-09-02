@@ -10,11 +10,11 @@ from pydantic import ValidationError
 import fagfunksjoner.kildomaten.pseudo as pseudo_module
 import fagfunksjoner.kildomaten.whodat as whodat_module
 from fagfunksjoner.kildomaten import (
-    FileConfig,
+    KildomatConfig,
     WhodatSearchStrategy,
     run_kildomaten_pipeline,
 )
-from fagfunksjoner.kildomaten.fileconfig import WHODAT_VARIABLES
+from fagfunksjoner.kildomaten.config import WHODAT_VARIABLES
 from fagfunksjoner.kildomaten.validate import assert_prepped_input
 from fagfunksjoner.kildomaten.whodat import should_run_whodat, whodat_lookup_fnr
 
@@ -77,7 +77,7 @@ class FakeWhodatProcess:
         return FakeWhodatResult()
 
 
-def test_file_config_validates_user_supplied_whodat_columns():
+def test_kild_config_validates_user_supplied_whodat_columns():
     documented_variables = {
         "navn",
         "kjoenn",
@@ -92,7 +92,7 @@ def test_file_config_validates_user_supplied_whodat_columns():
     }
 
     assert WHODAT_VARIABLES == documented_variables
-    config = FileConfig(
+    config = KildomatConfig(
         fnr_col="fnr",
         pseudo_cols=["fnr"],
         use_fnrsearch=True,
@@ -101,7 +101,7 @@ def test_file_config_validates_user_supplied_whodat_columns():
     assert config.whodat_columns == documented_variables
 
     with pytest.raises(ValidationError, match="Unsupported WhoDat variables"):
-        FileConfig(
+        KildomatConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
             use_fnrsearch=True,
@@ -109,21 +109,21 @@ def test_file_config_validates_user_supplied_whodat_columns():
         )
 
 
-def test_file_config_rejects_string_where_list_is_expected():
+def test_kild_config_rejects_string_where_list_is_expected():
     with pytest.raises(ValidationError, match="lists, not strings"):
-        FileConfig(fnr_col="fnr", pseudo_cols="fnr")
+        KildomatConfig(fnr_col="fnr", pseudo_cols="fnr")
 
 
-def test_file_config_treats_blank_fnr_col_as_unconfigured():
-    config = FileConfig(fnr_col="", pseudo_cols=[])
+def test_kild_config_treats_blank_fnr_col_as_unconfigured():
+    config = KildomatConfig(fnr_col="", pseudo_cols=[])
 
     assert config.fnr_col is None
     assert config.person_columns == set()
 
 
-def test_file_config_rejects_unknown_field_names():
+def test_kild_config_rejects_unknown_field_names():
     with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
-        FileConfig(
+        KildomatConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
             unknown_setting=True,
@@ -164,7 +164,7 @@ def test_dataframe_dry_run_does_not_require_output_path_or_call_services(monkeyp
                 "navn": ["Test Person", None],
             }
         ),
-        FileConfig(
+        KildomatConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
             use_fnrsearch=True,
@@ -181,10 +181,10 @@ def test_dataframe_dry_run_does_not_require_output_path_or_call_services(monkeyp
 
 def test_dataframe_non_dry_run_requires_output_path():
     df = pd.DataFrame({"kode": ["a"]})
-    file_config = FileConfig()
+    kild_config = KildomatConfig()
 
     with pytest.raises(ValueError, match="output_path is required"):
-        run_kildomaten_pipeline(df, file_config)
+        run_kildomaten_pipeline(df, kild_config)
 
 
 def test_path_dry_run_reads_parquet_and_returns_derived_output_path():
@@ -195,7 +195,7 @@ def test_path_dry_run_reads_parquet_and_returns_derived_output_path():
     try:
         pd.DataFrame({"kode": ["a"], "verdi": [1]}).to_parquet(source_path)
 
-        result = run_kildomaten_pipeline(source_path, FileConfig(), dry_run=True)
+        result = run_kildomaten_pipeline(source_path, KildomatConfig(), dry_run=True)
 
         assert isinstance(result, pd.DataFrame)
         assert result["kode"].tolist() == ["a"]
@@ -208,18 +208,20 @@ def test_path_input_must_be_parquet_even_in_dry_run():
     rmtree(LOCAL_TMP, ignore_errors=True)
     LOCAL_TMP.mkdir(parents=True)
     csv_path = LOCAL_TMP / "input.csv"
-    file_config = FileConfig()
+    kild_config = KildomatConfig()
 
     try:
         csv_path.write_text("a,b\n1,2\n", encoding="utf-8")
 
         with pytest.raises(ValueError, match="Expected a parquet file"):
-            run_kildomaten_pipeline(csv_path, file_config, dry_run=True)
+            run_kildomaten_pipeline(csv_path, kild_config, dry_run=True)
     finally:
         rmtree(LOCAL_TMP, ignore_errors=True)
 
 
-def test_dry_run_applies_preprocess_rename_and_drop_logic_without_writing():
+def test_dry_run_applies_preprocess_rename_and_drop_logic_without_writing(caplog):
+    caplog.set_level(logging.INFO)
+
     def preprocess(df):
         out = df.copy()
         out["navn"] = out["first"] + " " + out["last"]
@@ -239,7 +241,7 @@ def test_dry_run_applies_preprocess_rename_and_drop_logic_without_writing():
                     "sensitive_name": ["Ada Lovelace"],
                 }
             ),
-            FileConfig(
+            KildomatConfig(
                 fnr_col="fnr",
                 pseudo_cols=["fnr"],
                 use_fnrsearch=True,
@@ -253,8 +255,14 @@ def test_dry_run_applies_preprocess_rename_and_drop_logic_without_writing():
         )
 
         assert isinstance(result, pd.DataFrame)
+        assert "navn" in result.columns
         assert "sensitive_name" not in result.columns
         assert result["fnr"].tolist() == ["bad"]
+        assert any(
+            "Keeping configured fnrsearch columns in output" in record.getMessage()
+            and "navn" in record.getMessage()
+            for record in caplog.records
+        )
         assert not output_path.exists()
     finally:
         rmtree(LOCAL_TMP, ignore_errors=True)
@@ -270,7 +278,7 @@ def test_pipeline_logs_missing_configured_action_columns_in_dry_run(caplog):
                 "navn": ["Test Person"],
             }
         ),
-        FileConfig(
+        KildomatConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
             rename_map={"missing_rename_source": "renamed"},
@@ -302,7 +310,7 @@ def test_pipeline_warns_and_skips_copy_when_target_column_exists(caplog):
                 "source_fnr": ["source-fnr"],
             }
         ),
-        FileConfig(
+        KildomatConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
             copy_cols_new_old={"fnr": "source_fnr"},
@@ -322,10 +330,10 @@ def test_pipeline_warns_and_skips_copy_when_target_column_exists(caplog):
 def test_input_validation_fails_when_configured_fnr_col_is_missing(caplog):
     caplog.set_level(logging.ERROR)
     df = pd.DataFrame({"not_fnr": ["12345678901"]})
-    file_config = FileConfig(fnr_col="fnr", pseudo_cols=[])
+    kild_config = KildomatConfig(fnr_col="fnr", pseudo_cols=[])
 
     with pytest.raises(AssertionError, match="Missing configured person columns"):
-        assert_prepped_input(df, file_config)
+        assert_prepped_input(df, kild_config)
 
     assert any(
         "Configured person columns are missing from input" in record.getMessage()
@@ -337,10 +345,10 @@ def test_input_validation_fails_when_configured_fnr_col_is_missing(caplog):
 def test_input_validation_logs_missing_required_pseudo_columns(caplog):
     caplog.set_level(logging.ERROR)
     df = pd.DataFrame({"fnr": ["12345678901"]})
-    file_config = FileConfig(fnr_col="fnr", pseudo_cols=["missing_pseudo_col"])
+    kild_config = KildomatConfig(fnr_col="fnr", pseudo_cols=["missing_pseudo_col"])
 
     with pytest.raises(AssertionError, match="Missing configured person columns"):
-        assert_prepped_input(df, file_config)
+        assert_prepped_input(df, kild_config)
 
     assert any(
         "Configured person columns are missing from input" in record.getMessage()
@@ -365,7 +373,7 @@ def test_whodat_dry_run_counts_rows_that_would_be_sent_and_skips_blank_pii(
 
     out, stats = whodat_lookup_fnr(
         df,
-        FileConfig(
+        KildomatConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
             use_fnrsearch=True,
@@ -400,7 +408,7 @@ def test_whodat_resets_index_and_keeps_original_fnr_without_usable_hit(monkeypat
 
     out, stats = whodat_lookup_fnr(
         df,
-        FileConfig(
+        KildomatConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
             use_fnrsearch=True,
@@ -439,7 +447,7 @@ def test_whodat_dry_run_normalizes_configured_helper_columns():
 
     out, stats = whodat_lookup_fnr(
         df,
-        FileConfig(
+        KildomatConfig(
             fnr_col="fnr",
             pseudo_cols=["fnr"],
             use_fnrsearch=True,
@@ -486,7 +494,7 @@ def test_whodat_strategy_only_config_uses_documented_helper_columns_in_dry_run(
             "postnummer": ["0123"],
         }
     )
-    config = FileConfig(
+    config = KildomatConfig(
         fnr_col="fnr",
         pseudo_cols=["fnr"],
         use_fnrsearch=True,

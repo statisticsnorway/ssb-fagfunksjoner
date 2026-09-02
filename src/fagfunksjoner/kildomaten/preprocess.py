@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .fileconfig import FileConfig
+from .config import KildomatConfig
 from .kilde_logging import logger
 
 
@@ -12,23 +12,26 @@ def _normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
 
 def _apply_configured_preprocessing(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    kild_config: KildomatConfig,
 ) -> pd.DataFrame:
     df = _normalize_column_names(df)
-    if file_config.preprocess_func:
-        df = file_config.preprocess_func(df)
-    if file_config.rename_map:
+    if kild_config.preprocess_func:
+        df = kild_config.preprocess_func(df)
+    if kild_config.rename_map:
+        kild_config.rename_map = {
+            k.strip(): v.strip() for k, v in kild_config.rename_map.items()
+        }
         missing_sources = [
-            column for column in file_config.rename_map if column not in df.columns
+            column for column in kild_config.rename_map if column not in df.columns
         ]
         if missing_sources:
             logger.warning(
                 "Configured rename_map source columns are missing from input: %s",
                 missing_sources,
             )
-        df = df.rename(columns=file_config.rename_map)
-    if file_config.copy_cols_new_old:
-        for new_col, old_col in file_config.copy_cols_new_old.items():
+        df = df.rename(columns=kild_config.rename_map)
+    if kild_config.copy_cols_new_old:
+        for new_col, old_col in kild_config.copy_cols_new_old.items():
             if new_col in df.columns:
                 logger.warning(
                     "Configured copy_cols_new_old target column already exists; "

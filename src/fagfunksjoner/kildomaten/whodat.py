@@ -5,8 +5,8 @@ import pandas as pd
 from dapla_pseudo import Validator
 from dapla_whodat import Whodat
 
+from .config import KildomatConfig, WhodatSearchStrategy
 from .dtypes import STRING_PYARROW_DTYPE
-from .fileconfig import FileConfig, WhodatSearchStrategy
 from .kilde_logging import logger
 
 _DIGIT_ONLY_WHODAT_COLUMNS = {
@@ -20,7 +20,7 @@ _DIGIT_ONLY_WHODAT_COLUMNS = {
 
 def _normalize_gender_for_whodat(
     gender: pd.Series,
-    file_config: FileConfig,
+    kild_config: KildomatConfig,
 ) -> pd.Series:
     """Convert configured gender values to WhoDat format ('mann'/'kvinne')."""
     x = (
@@ -29,7 +29,7 @@ def _normalize_gender_for_whodat(
         .str.lower()
         .str.replace(r"\s+", "", regex=True)
     )
-    return x.map(file_config.gender_values).astype(STRING_PYARROW_DTYPE)
+    return x.map(kild_config.gender_values).astype(STRING_PYARROW_DTYPE)
 
 
 def _as_stripped_string(value: pd.Series) -> pd.Series:
@@ -45,10 +45,10 @@ def _as_digit_string(value: pd.Series, *, datetime_format: str) -> pd.Series:
 def _prepare_whodat_column(
     column: str,
     value: pd.Series,
-    file_config: FileConfig,
+    kild_config: KildomatConfig,
 ) -> pd.Series:
     if column == "kjoenn":
-        return _normalize_gender_for_whodat(value, file_config)
+        return _normalize_gender_for_whodat(value, kild_config)
     if column == "foedselsdato":
         return _as_digit_string(value, datetime_format="%Y%m%d")
     if column in _DIGIT_ONLY_WHODAT_COLUMNS:
@@ -58,23 +58,23 @@ def _prepare_whodat_column(
 
 def _prepare_whodat_work_columns(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    kild_config: KildomatConfig,
 ) -> pd.DataFrame:
     """Normalize configured WhoDat columns to the formats expected by WhoDat."""
     df = df.copy()
-    for column in file_config.whodat_columns:
+    for column in kild_config.whodat_columns:
         if column not in df.columns:
             continue
-        df[column] = _prepare_whodat_column(column, df[column], file_config)
+        df[column] = _prepare_whodat_column(column, df[column], kild_config)
     return df
 
 
 def _available_whodat_columns(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    kild_config: KildomatConfig,
 ) -> list[str]:
-    configured_columns = [*file_config.fnrsearch_cols]
-    for strategy in file_config.fnrsearch_strategies:
+    configured_columns = [*kild_config.fnrsearch_cols]
+    for strategy in kild_config.fnrsearch_strategies:
         configured_columns.extend(strategy.variables)
 
     return [
@@ -84,9 +84,9 @@ def _available_whodat_columns(
 
 def _missing_whodat_columns(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    kild_config: KildomatConfig,
 ) -> list[str]:
-    return sorted(column for column in file_config.whodat_columns if column not in df)
+    return sorted(column for column in kild_config.whodat_columns if column not in df)
 
 
 def _needs_whodat_lookup_mask(
@@ -144,11 +144,11 @@ def _dedupe_strategies(
 
 def _build_search_strategies(
     available_cols: list[str],
-    file_config: FileConfig,
+    kild_config: KildomatConfig,
 ) -> list[WhodatSearchStrategy]:
     strategies = []
-    if file_config.fnrsearch_strategies:
-        for strategy in file_config.fnrsearch_strategies:
+    if kild_config.fnrsearch_strategies:
+        for strategy in kild_config.fnrsearch_strategies:
             variables = [
                 column for column in strategy.variables if column in available_cols
             ]
@@ -160,7 +160,7 @@ def _build_search_strategies(
             for i in range(1, len(available_cols) + 1)
         )
 
-    if file_config.add_relaxed_fnrsearch_strategy and available_cols:
+    if kild_config.add_relaxed_fnrsearch_strategy and available_cols:
         strategies.append(
             WhodatSearchStrategy(
                 variables=available_cols,
@@ -226,11 +226,11 @@ def _clean_whodat_mapping(mapping: Mapping[Any, Any]) -> dict[object, str]:
 
 def _exceeds_whodat_limits(
     stats: dict[str, int | float],
-    file_config: FileConfig,
+    kild_config: KildomatConfig,
 ) -> bool:
     return (
-        stats["to_whodat"] > file_config.max_whodat_rows
-        or stats["to_whodat_share"] > file_config.max_whodat_share
+        stats["to_whodat"] > kild_config.max_whodat_rows
+        or stats["to_whodat_share"] > kild_config.max_whodat_share
     )
 
 
@@ -239,10 +239,10 @@ def _run_whodat_search_chunks(
     lookup_indices: list[object],
     available_cols: list[str],
     strategies: list[WhodatSearchStrategy],
-    file_config: FileConfig,
+    kild_config: KildomatConfig,
 ) -> dict[object, str]:
     all_mappings: dict[object, str] = {}
-    n_chunks = -(-len(lookup_indices) // file_config.chunk_size)
+    n_chunks = -(-len(lookup_indices) // kild_config.chunk_size)
 
     logger.info(
         "WhoDat: starting lookup. Rows=%d, chunks=%d, strategies=%s.",
@@ -251,9 +251,9 @@ def _run_whodat_search_chunks(
         [strategy.variables for strategy in strategies],
     )
 
-    for i in range(0, len(lookup_indices), file_config.chunk_size):
-        chunk_no = i // file_config.chunk_size + 1
-        chunk_idx = lookup_indices[i : i + file_config.chunk_size]
+    for i in range(0, len(lookup_indices), kild_config.chunk_size):
+        chunk_no = i // kild_config.chunk_size + 1
+        chunk_idx = lookup_indices[i : i + kild_config.chunk_size]
         work = df.loc[chunk_idx, available_cols].copy()
 
         process = Whodat.from_pandas(work).search_fnr()
@@ -289,48 +289,29 @@ def _run_whodat_search_chunks(
     return all_mappings
 
 
-def drop_work_columns(
-    df: pd.DataFrame,
-    file_config: FileConfig,
-) -> pd.DataFrame:
-    """Drop WhoDat work columns from a DataFrame.
-
-    Args:
-        df: DataFrame that may contain WhoDat work columns.
-        file_config: File-specific processing configuration.
-
-    Returns:
-        pd.DataFrame: The DataFrame without WhoDat work columns.
-    """
-    drop_cols = [
-        column for column in file_config.whodat_columns if column in df.columns
-    ]
-    return df.drop(columns=drop_cols) if drop_cols else df
-
-
 def should_run_whodat(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    kild_config: KildomatConfig,
 ) -> bool:
     """Return whether WhoDat lookup should run for a DataFrame.
 
     Args:
         df: DataFrame to inspect for configured FNR lookup input.
-        file_config: File-specific processing configuration.
+        kild_config: File-specific processing configuration.
 
     Returns:
         bool: True when WhoDat lookup is configured and has usable inputs.
     """
     return (
-        file_config.use_fnrsearch
-        and file_config.fnr_col in df.columns
-        and bool(_available_whodat_columns(df, file_config))
+        kild_config.use_fnrsearch
+        and kild_config.fnr_col in df.columns
+        and bool(_available_whodat_columns(df, kild_config))
     )
 
 
 def whodat_lookup_fnr(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    kild_config: KildomatConfig,
     *,
     dry_run: bool = False,
 ) -> tuple[pd.DataFrame, dict[str, int | float]]:
@@ -343,13 +324,13 @@ def whodat_lookup_fnr(
 
     Args:
         df: Input data with configured WhoDat columns.
-        file_config: File-specific processing configuration.
+        kild_config: File-specific processing configuration.
         dry_run: Whether to skip external Validator and WhoDat calls.
 
     Returns:
         tuple[pd.DataFrame, dict]: The updated DataFrame and lookup statistics.
     """
-    df = _prepare_whodat_work_columns(df, file_config).reset_index(drop=True)
+    df = _prepare_whodat_work_columns(df, kild_config).reset_index(drop=True)
     base_stats = {
         "needs_lookup": 0,
         "missing_fnr": 0,
@@ -361,17 +342,17 @@ def whodat_lookup_fnr(
         "dry_run": int(dry_run),
     }
 
-    if not file_config.fnr_col or file_config.fnr_col not in df.columns:
+    if not kild_config.fnr_col or kild_config.fnr_col not in df.columns:
         logger.info(
             "WhoDat: skipping lookup because the configured FNR column is missing."
         )
         return df, base_stats
 
-    fnr = df[file_config.fnr_col].astype(STRING_PYARROW_DTYPE).str.strip()
+    fnr = df[kild_config.fnr_col].astype(STRING_PYARROW_DTYPE).str.strip()
     missing = fnr.isna() | (fnr == "")
     needs = _needs_whodat_lookup_mask(
         df,
-        file_config.fnr_col,
+        kild_config.fnr_col,
         dry_run=dry_run,
     )
 
@@ -391,8 +372,8 @@ def whodat_lookup_fnr(
             )
         return df, stats
 
-    available_cols = _available_whodat_columns(df, file_config)
-    missing_cols = _missing_whodat_columns(df, file_config)
+    available_cols = _available_whodat_columns(df, kild_config)
+    missing_cols = _missing_whodat_columns(df, kild_config)
     if missing_cols:
         logger.warning(
             "WhoDat: configured helper columns not found in input: %s",
@@ -424,35 +405,35 @@ def whodat_lookup_fnr(
         )
         return df, stats
 
-    if _exceeds_whodat_limits(stats, file_config):
+    if _exceeds_whodat_limits(stats, kild_config):
         logger.warning(
             "WhoDat: skipping lookup because too many rows qualify. "
             "to_whodat=%d, share=%.4f, max_rows=%d, max_share=%.4f.",
             stats["to_whodat"],
             stats["to_whodat_share"],
-            file_config.max_whodat_rows,
-            file_config.max_whodat_share,
+            kild_config.max_whodat_rows,
+            kild_config.max_whodat_share,
         )
         return df, stats
 
-    original_fnr_col = f"{file_config.fnr_col}_orig"
+    original_fnr_col = f"{kild_config.fnr_col}_orig"
     if original_fnr_col not in df.columns:
-        df[original_fnr_col] = df[file_config.fnr_col]
+        df[original_fnr_col] = df[kild_config.fnr_col]
 
     lookup_indices = df.index[mask_lookup].tolist()
-    strategies = _build_search_strategies(available_cols, file_config)
+    strategies = _build_search_strategies(available_cols, kild_config)
 
     all_mappings = _run_whodat_search_chunks(
         df=df,
         lookup_indices=lookup_indices,
         available_cols=available_cols,
         strategies=strategies,
-        file_config=file_config,
+        kild_config=kild_config,
     )
 
     stats["whodat_hits"] = len(all_mappings)
 
-    df.loc[mask_lookup, file_config.fnr_col] = (
+    df.loc[mask_lookup, kild_config.fnr_col] = (
         df.loc[mask_lookup]
         .index.to_series()
         .map(all_mappings)

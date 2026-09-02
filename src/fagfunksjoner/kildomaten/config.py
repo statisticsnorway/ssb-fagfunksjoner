@@ -66,10 +66,10 @@ class WhodatSearchStrategy(BaseModel):
         return cleaned
 
 
-class FileConfig(BaseModel):
-    """Configuration for processing one source file type.
+class KildomatConfig(BaseModel):
+    """Configuration for processing one source file type through the Kildomat-pipeline.
 
-    `FileConfig` is the user-facing control object for
+    `KildomatConfig` is the user-facing control object for
     `run_kildomaten_pipeline`. It describes how incoming columns should be
     prepared, which columns contain person identifiers, whether missing or
     invalid FNR values should be searched for in WhoDat, how pseudonymization
@@ -118,9 +118,6 @@ class FileConfig(BaseModel):
         snr_col (str): Output column for SNR values. Valid FNR values are mapped
             to stable SNR through the pseudonymization service. Rows without a
             usable stable SNR are filled with UUID-based SNR values.
-        snr_mark_col (str): Output boolean marker column. True means the row
-            received a UUID-filled SNR rather than a stable SNR from
-            pseudonymization.
         rename_map (dict[str, str]): Mapping from existing input column names to
             pipeline column names. This runs after `preprocess_func` and before
             copying columns. Missing source columns are logged at runtime.
@@ -175,7 +172,6 @@ class FileConfig(BaseModel):
     fnrsearch_strategies: list[WhodatSearchStrategy] = Field(default_factory=list)
     add_relaxed_fnrsearch_strategy: bool = True
     snr_col: str = "snr"
-    snr_mark_col: str = "snr_mrk"
     rename_map: dict[str, str] = Field(default_factory=dict)
     copy_cols_new_old: dict[str, str] = Field(default_factory=dict)
     drop_cols: list[str] = Field(default_factory=list)
@@ -202,7 +198,7 @@ class FileConfig(BaseModel):
         cleaned = _clean_column(value)
         return cleaned or None
 
-    @field_validator("snr_col", "snr_mark_col", mode="before")
+    @field_validator("snr_col", mode="before")
     @classmethod
     def _validate_column(cls, value: object) -> object:
         if value is None:
@@ -269,7 +265,7 @@ class FileConfig(BaseModel):
         }
 
     @model_validator(mode="after")
-    def _validate_config(self) -> "FileConfig":
+    def _validate_config(self) -> "KildomatConfig":
         if self.use_fnrsearch and not self.fnr_col:
             raise ValueError("fnr_col is required when use_fnrsearch=True")
         if self.use_fnrsearch and not (
@@ -279,10 +275,8 @@ class FileConfig(BaseModel):
                 "fnrsearch_cols or fnrsearch_strategies is required "
                 "when use_fnrsearch=True"
             )
-        if self.fnr_col and self.fnr_col in {self.snr_col, self.snr_mark_col}:
+        if self.fnr_col and self.fnr_col in {self.snr_col}:
             raise ValueError("fnr_col cannot be the same as an output SNR column")
-        if self.snr_col == self.snr_mark_col:
-            raise ValueError("snr_col and snr_mark_col must be different")
         return self
 
     @property
