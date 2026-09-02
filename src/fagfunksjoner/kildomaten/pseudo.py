@@ -14,7 +14,7 @@ def _valid_fnr_mask(df: pd.DataFrame, fnr_col: str) -> pd.Series:
 
 def pseudo_and_snr(
     df: pd.DataFrame,
-    file_config: KildomatConfig,
+    kild_config: KildomatConfig,
     *,
     dry_run: bool = False,
 ) -> tuple[pd.DataFrame, dict[str, object]]:
@@ -26,13 +26,13 @@ def pseudo_and_snr(
 
     Args:
         df: Input DataFrame containing the configured FNR columns.
-        file_config: File-specific processing configuration.
+        kild_config: File-specific processing configuration.
         dry_run: Whether to skip external pseudonymization calls.
 
     Returns:
         tuple[pd.DataFrame, dict]: The pseudonymized DataFrame and processing statistics.
     """
-    if not file_config.fnr_col:
+    if not kild_config.fnr_col:
         return df.copy(), {
             "has_fnr_11digits": 0,
             "fnr_missing_or_invalid": len(df),
@@ -44,16 +44,16 @@ def pseudo_and_snr(
         }
 
     df = df.copy()
-    has_fnr = _valid_fnr_mask(df, file_config.fnr_col)
+    has_fnr = _valid_fnr_mask(df, kild_config.fnr_col)
     missing_pseudo_cols = [
-        column for column in file_config.pseudo_cols if column not in df.columns
+        column for column in kild_config.pseudo_cols if column not in df.columns
     ]
     if missing_pseudo_cols:
         logger.warning(
             "Configured pseudo_cols are missing from input: %s",
             missing_pseudo_cols,
         )
-    pseudo_cols = [column for column in file_config.pseudo_cols if column in df.columns]
+    pseudo_cols = [column for column in kild_config.pseudo_cols if column in df.columns]
 
     stats = {
         "has_fnr_11digits": int(has_fnr.sum()),
@@ -67,15 +67,15 @@ def pseudo_and_snr(
         "dry_run": dry_run,
     }
 
-    df[file_config.snr_col] = pd.Series(
+    df[kild_config.snr_col] = pd.Series(
         pd.NA,
         index=df.index,
         dtype=STRING_PYARROW_DTYPE,
     )
 
     if stats["has_fnr_11digits"]:
-        df.loc[has_fnr, file_config.snr_col] = (
-            df.loc[has_fnr, file_config.fnr_col]
+        df.loc[has_fnr, kild_config.snr_col] = (
+            df.loc[has_fnr, kild_config.fnr_col]
             .astype(STRING_PYARROW_DTYPE)
             .str.strip()
         )
@@ -85,7 +85,7 @@ def pseudo_and_snr(
             "Pseudo dry-run: skipping Pseudonymize service calls for columns=%s.",
             pseudo_cols,
         )
-        df[file_config.snr_col] = pd.Series(
+        df[kild_config.snr_col] = pd.Series(
             pd.NA,
             index=df.index,
             dtype=STRING_PYARROW_DTYPE,
@@ -96,34 +96,34 @@ def pseudo_and_snr(
         logger.info("Pseudo: no valid FNR values found, filling SNR with UUIDs.")
         df, n_uuid = _fill_uuid_for_missing_snr(
             df,
-            snr_col=file_config.snr_col,
+            snr_col=kild_config.snr_col,
         )
         stats["snr_uuid_filled"] = n_uuid
         return df, stats
 
     process = Pseudonymize.from_pandas(df)
     if stats["has_fnr_11digits"]:
-        process = process.on_fields(file_config.snr_col).with_stable_id()
+        process = process.on_fields(kild_config.snr_col).with_stable_id()
     for column in pseudo_cols:
         process = process.on_fields(column).with_papis_compatible_encryption()
 
     res = process.run().to_pandas()
     stats["pseudo_ran"] = True
 
-    res[file_config.snr_col] = (
-        res[file_config.snr_col].astype(STRING_PYARROW_DTYPE).str.strip()
+    res[kild_config.snr_col] = (
+        res[kild_config.snr_col].astype(STRING_PYARROW_DTYPE).str.strip()
     )
     good_snr = (
-        res[file_config.snr_col].notna()
-        & (res[file_config.snr_col] != "")
-        & (res[file_config.snr_col].str.len() == 7)
+        res[kild_config.snr_col].notna()
+        & (res[kild_config.snr_col] != "")
+        & (res[kild_config.snr_col].str.len() == 7)
     )
     stats["snr_from_stable_id"] = int(good_snr.sum())
-    res.loc[~good_snr, file_config.snr_col] = pd.NA
+    res.loc[~good_snr, kild_config.snr_col] = pd.NA
 
     res, n_uuid = _fill_uuid_for_missing_snr(
         res,
-        snr_col=file_config.snr_col,
+        snr_col=kild_config.snr_col,
     )
     stats["snr_uuid_filled"] = n_uuid
 

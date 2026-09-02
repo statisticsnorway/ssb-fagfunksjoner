@@ -77,7 +77,7 @@ class FakeWhodatProcess:
         return FakeWhodatResult()
 
 
-def test_file_config_validates_user_supplied_whodat_columns():
+def test_kild_config_validates_user_supplied_whodat_columns():
     documented_variables = {
         "navn",
         "kjoenn",
@@ -109,19 +109,19 @@ def test_file_config_validates_user_supplied_whodat_columns():
         )
 
 
-def test_file_config_rejects_string_where_list_is_expected():
+def test_kild_config_rejects_string_where_list_is_expected():
     with pytest.raises(ValidationError, match="lists, not strings"):
         KildomatConfig(fnr_col="fnr", pseudo_cols="fnr")
 
 
-def test_file_config_treats_blank_fnr_col_as_unconfigured():
+def test_kild_config_treats_blank_fnr_col_as_unconfigured():
     config = KildomatConfig(fnr_col="", pseudo_cols=[])
 
     assert config.fnr_col is None
     assert config.person_columns == set()
 
 
-def test_file_config_rejects_unknown_field_names():
+def test_kild_config_rejects_unknown_field_names():
     with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
         KildomatConfig(
             fnr_col="fnr",
@@ -181,10 +181,10 @@ def test_dataframe_dry_run_does_not_require_output_path_or_call_services(monkeyp
 
 def test_dataframe_non_dry_run_requires_output_path():
     df = pd.DataFrame({"kode": ["a"]})
-    file_config = KildomatConfig()
+    kild_config = KildomatConfig()
 
     with pytest.raises(ValueError, match="output_path is required"):
-        run_kildomaten_pipeline(df, file_config)
+        run_kildomaten_pipeline(df, kild_config)
 
 
 def test_path_dry_run_reads_parquet_and_returns_derived_output_path():
@@ -208,13 +208,13 @@ def test_path_input_must_be_parquet_even_in_dry_run():
     rmtree(LOCAL_TMP, ignore_errors=True)
     LOCAL_TMP.mkdir(parents=True)
     csv_path = LOCAL_TMP / "input.csv"
-    file_config = KildomatConfig()
+    kild_config = KildomatConfig()
 
     try:
         csv_path.write_text("a,b\n1,2\n", encoding="utf-8")
 
         with pytest.raises(ValueError, match="Expected a parquet file"):
-            run_kildomaten_pipeline(csv_path, file_config, dry_run=True)
+            run_kildomaten_pipeline(csv_path, kild_config, dry_run=True)
     finally:
         rmtree(LOCAL_TMP, ignore_errors=True)
 
@@ -330,10 +330,10 @@ def test_pipeline_warns_and_skips_copy_when_target_column_exists(caplog):
 def test_input_validation_fails_when_configured_fnr_col_is_missing(caplog):
     caplog.set_level(logging.ERROR)
     df = pd.DataFrame({"not_fnr": ["12345678901"]})
-    file_config = KildomatConfig(fnr_col="fnr", pseudo_cols=[])
+    kild_config = KildomatConfig(fnr_col="fnr", pseudo_cols=[])
 
     with pytest.raises(AssertionError, match="Missing configured person columns"):
-        assert_prepped_input(df, file_config)
+        assert_prepped_input(df, kild_config)
 
     assert any(
         "Configured person columns are missing from input" in record.getMessage()
@@ -345,10 +345,10 @@ def test_input_validation_fails_when_configured_fnr_col_is_missing(caplog):
 def test_input_validation_logs_missing_required_pseudo_columns(caplog):
     caplog.set_level(logging.ERROR)
     df = pd.DataFrame({"fnr": ["12345678901"]})
-    file_config = KildomatConfig(fnr_col="fnr", pseudo_cols=["missing_pseudo_col"])
+    kild_config = KildomatConfig(fnr_col="fnr", pseudo_cols=["missing_pseudo_col"])
 
     with pytest.raises(AssertionError, match="Missing configured person columns"):
-        assert_prepped_input(df, file_config)
+        assert_prepped_input(df, kild_config)
 
     assert any(
         "Configured person columns are missing from input" in record.getMessage()

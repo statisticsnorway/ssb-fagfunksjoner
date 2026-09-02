@@ -27,23 +27,23 @@ def build_output_name(source_filename: str, insert: str = "_inndata_") -> str:
 
 def _resolve_output_path(
     source_path: Path | None,
-    file_config: KildomatConfig,
+    kild_config: KildomatConfig,
     *,
     dry_run: bool = False,
 ) -> Path:
-    if file_config.output_path:
-        return file_config.output_path
+    if kild_config.output_path:
+        return kild_config.output_path
 
     if source_path is None:
         if dry_run:
             return Path("dry_run_output.parquet")
-        raise ValueError("file_config.output_path is required for DataFrame input")
+        raise ValueError("kild_config.output_path is required for DataFrame input")
 
     output_name = build_output_name(
         source_path.name,
-        insert=file_config.output_name_insert,
+        insert=kild_config.output_name_insert,
     )
-    output_dir = file_config.output_dir or source_path.parent
-    if not file_config.output_overwrite:
+    output_dir = kild_config.output_dir or source_path.parent
+    if not kild_config.output_overwrite:
         return Path(next_version_path(output_dir / output_name))
     return output_dir / output_name

@@ -24,9 +24,9 @@ from .write import _resolve_output_path
 
 def _log_retained_whodat_columns(
     df: pd.DataFrame,
-    file_config: KildomatConfig,
+    kild_config: KildomatConfig,
 ) -> None:
-    retained = sorted(column for column in file_config.whodat_columns if column in df)
+    retained = sorted(column for column in kild_config.whodat_columns if column in df)
     if retained:
         logger.info(
             "Keeping configured fnrsearch columns in output because they are not "
@@ -37,7 +37,7 @@ def _log_retained_whodat_columns(
 
 def run_kildomaten_pipeline(
     df: pd.DataFrame | str | Path,
-    file_config: KildomatConfig,
+    kild_config: KildomatConfig,
     *,
     dry_run: bool = False,
 ) -> Path | pd.DataFrame:
@@ -45,7 +45,7 @@ def run_kildomaten_pipeline(
 
     Args:
         df: Input DataFrame or path to a parquet file.
-        file_config: File-specific processing configuration.
+        kild_config: File-specific processing configuration.
         dry_run: Whether to skip environment-dependent services and writing.
 
     Returns:
@@ -63,7 +63,7 @@ def run_kildomaten_pipeline(
         input_df, source_path = _load_input(df)
 
         step = "preprocess"
-        input_df = _apply_configured_preprocessing(input_df, file_config)
+        input_df = _apply_configured_preprocessing(input_df, kild_config)
         logger.info(
             "Read input: rows=%d columns=%d", len(input_df), len(input_df.columns)
         )
@@ -71,28 +71,28 @@ def run_kildomaten_pipeline(
         step = "resolve_output_path"
         output_path = _resolve_output_path(
             source_path,
-            file_config,
+            kild_config,
             dry_run=dry_run,
         )
         logger.info("Output: %s", output_path)
 
         step = "assert_prepped_input"
-        assert_prepped_input(input_df, file_config)
+        assert_prepped_input(input_df, kild_config)
 
         step = "summarize_input"
-        logger.info("Input summary: %s", summarize_input(input_df, file_config))
+        logger.info("Input summary: %s", summarize_input(input_df, kild_config))
 
         working_df = input_df
 
-        if not _has_person_data(working_df, file_config):
+        if not _has_person_data(working_df, kild_config):
             logger.info("No configured person data found, writing data unchanged.")
             out_df = normalize_dtypes(working_df)
         else:
             step = "whodat"
-            if should_run_whodat(working_df, file_config):
+            if should_run_whodat(working_df, kild_config):
                 working_df, whodat_stats = whodat_lookup_fnr(
                     working_df,
-                    file_config,
+                    kild_config,
                     dry_run=dry_run,
                 )
                 logger.info("WhoDat stats: %s", whodat_stats)
@@ -102,15 +102,15 @@ def run_kildomaten_pipeline(
             step = "pseudo_and_snr"
             pseudo_df, pseudo_stats = pseudo_and_snr(
                 working_df,
-                file_config,
+                kild_config,
                 dry_run=dry_run,
             )
             logger.info("Pseudo stats: %s", pseudo_stats)
 
             step = "cleanup"
-            out_df = _drop_original_fnr_columns(pseudo_df, file_config)
-            out_df = drop_configured_columns(out_df, file_config)
-            _log_retained_whodat_columns(out_df, file_config)
+            out_df = _drop_original_fnr_columns(pseudo_df, kild_config)
+            out_df = drop_configured_columns(out_df, kild_config)
+            _log_retained_whodat_columns(out_df, kild_config)
 
             step = "normalize_dtypes"
             out_df = normalize_dtypes(out_df)
@@ -119,7 +119,7 @@ def run_kildomaten_pipeline(
             validate_output(
                 df_in=working_df,
                 df_out=out_df,
-                file_config=file_config,
+                kild_config=kild_config,
             )
 
         step = "write_parquet"
