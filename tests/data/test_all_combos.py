@@ -400,3 +400,76 @@ def test_combos_inclusive():
                 n_predicted = 0 if math.isnan(n_predicted) else n_predicted
 
                 assert n_observed == n_predicted
+
+
+def test_combos_inclusive_issue226():
+    # Create test data
+    n = 500
+    df = pd.DataFrame(
+        {
+            "invkatlandbak_statbank": np.random.choice(
+                ["1", "2", "3", "4", "5", "6", "7"], n
+            ),
+            "kjoenn_statbank": np.random.choice(["1", "2"], n),
+            "lavinntekt_statbank": np.random.choice(["1", "2", "3", "4"], n),
+            "elever": np.random.choice([5, 10, 20, 30, 50, 100], n),
+            "gr_grunnskolepoeng": np.random.choice([20.2, 30.1, 45.5, 50.1, 59.8], n),
+        }
+    )
+
+    # Define the categorical bins based on the metadata
+    category_mappings = {
+        "invkatlandbak_statbank": {
+            "1": ["2", "3"],  # innvandrere
+            "2": ["2"],
+            "3": ["3"],
+            "4": ["5", "6"],  # norskfødte med innvandrerforeldre
+            "5": ["5"],
+            "6": ["6"],
+            "7": ["7"],  # øvrig befolkning
+        }
+    }
+
+    df["grunnskolepoeng_sum"] = df["gr_grunnskolepoeng"] * df["elever"]
+
+    groupvars = {
+        "invkatlandbak_statbank": "0",
+        "kjoenn_statbank": "0",
+        "lavinntekt_statbank": "000",
+    }
+
+    statvar = {"grunnskolepoeng_sum": "sum", "elever": "sum"}
+
+    tbl0 = all_combos_agg_inclusive(
+        df,
+        groupcols=list(groupvars.keys()),
+        category_mappings=category_mappings,
+        valuecols=list(statvar.keys()),
+        aggargs=statvar,
+        totalcodes=groupvars,
+        keep_empty=True,
+        grand_total=False,
+    )
+
+    assert (
+        (tbl0["invkatlandbak_statbank"] == "0")
+        & (tbl0["kjoenn_statbank"] == "0")
+        & (tbl0["lavinntekt_statbank"] == "000")
+    ).sum() == 0
+
+    tbl1 = all_combos_agg_inclusive(
+        df,
+        groupcols=list(groupvars.keys()),
+        category_mappings=category_mappings,
+        valuecols=list(statvar.keys()),
+        aggargs=statvar,
+        totalcodes=groupvars,
+        keep_empty=True,
+        grand_total=True,
+    )
+
+    assert (
+        (tbl1["invkatlandbak_statbank"] == "0")
+        & (tbl1["kjoenn_statbank"] == "0")
+        & (tbl1["lavinntekt_statbank"] == "000")
+    ).sum() == 1

@@ -564,16 +564,6 @@ def all_combos_agg_inclusive(
 
     tbl = tbl.groupby(pivot_vars).agg(aggargs).reset_index()
 
-    if grand_total:
-        total_df: pd.DataFrame = df.copy()
-
-        for var in pivot_vars:
-            total_df[var] = totalcodes[var]
-        tbl = pd.concat((tbl, total_df.groupby(pivot_vars).agg(aggargs).reset_index()))
-        tbl = tbl.reset_index(
-            drop=True
-        ).drop_duplicates()  # drop duplicates if grand_total is already in the data
-
     if keep_empty:
         all_combos: list[Any] = list(product(*[tbl[v].unique() for v in pivot_vars]))
         all_combos_df: pd.DataFrame = pd.DataFrame(
@@ -581,5 +571,25 @@ def all_combos_agg_inclusive(
         )
 
         tbl = pd.merge(all_combos_df, tbl, on=pivot_vars, how="left")
+
+    # keep_emtpy might have generated a grand_total for us
+    totalcodes_list = [totalcodes[var] for var in pivot_vars]
+    is_grandtotal = tbl.loc[:, pivot_vars].eq(totalcodes_list).all(axis=1)
+    has_grandtotal = is_grandtotal.any()
+
+    if grand_total and not has_grandtotal:
+        total_df: pd.DataFrame = df.copy()
+
+        for var in pivot_vars:
+            total_df[var] = totalcodes[var]
+
+        tbl = pd.concat((tbl, total_df.groupby(pivot_vars).agg(aggargs).reset_index()))
+        tbl = tbl.reset_index(
+            drop=True
+        ).drop_duplicates()  # drop duplicates if grand_total is already in the data
+
+    elif not grand_total and has_grandtotal:
+        # drop potential grand total if grand_total=False
+        tbl = tbl.loc[~is_grandtotal, :]
 
     return tbl
