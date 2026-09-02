@@ -86,7 +86,7 @@ def run_kildomaten_pipeline(
 
         if not _has_person_data(working_df, file_config):
             logger.info("No configured person data found, writing data unchanged.")
-            out_df = normalize_dtypes(working_df, file_config)
+            out_df = normalize_dtypes(working_df)
         else:
             step = "whodat"
             if should_run_whodat(working_df, file_config):
@@ -113,7 +113,7 @@ def run_kildomaten_pipeline(
             _log_retained_whodat_columns(out_df, file_config)
 
             step = "normalize_dtypes"
-            out_df = normalize_dtypes(out_df, file_config)
+            out_df = normalize_dtypes(out_df)
 
             step = "validate_output"
             validate_output(
