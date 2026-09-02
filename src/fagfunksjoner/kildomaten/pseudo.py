@@ -1,8 +1,8 @@
 import pandas as pd
 from dapla_pseudo import Pseudonymize
 
+from .config import KildomatConfig
 from .dtypes import STRING_PYARROW_DTYPE
-from .fileconfig import FileConfig
 from .kilde_logging import logger
 from .snr_uuid import _fill_uuid_for_missing_snr
 
@@ -14,7 +14,7 @@ def _valid_fnr_mask(df: pd.DataFrame, fnr_col: str) -> pd.Series:
 
 def pseudo_and_snr(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
     *,
     dry_run: bool = False,
 ) -> tuple[pd.DataFrame, dict[str, object]]:

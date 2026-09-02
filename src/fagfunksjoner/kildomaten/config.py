@@ -66,10 +66,10 @@ class WhodatSearchStrategy(BaseModel):
         return cleaned
 
 
-class FileConfig(BaseModel):
-    """Configuration for processing one source file type.
+class KildomatConfig(BaseModel):
+    """Configuration for processing one source file type through the Kildomat-pipeline.
 
-    `FileConfig` is the user-facing control object for
+    `KildomatConfig` is the user-facing control object for
     `run_kildomaten_pipeline`. It describes how incoming columns should be
     prepared, which columns contain person identifiers, whether missing or
     invalid FNR values should be searched for in WhoDat, how pseudonymization
@@ -265,7 +265,7 @@ class FileConfig(BaseModel):
         }
 
     @model_validator(mode="after")
-    def _validate_config(self) -> "FileConfig":
+    def _validate_config(self) -> "KildomatConfig":
         if self.use_fnrsearch and not self.fnr_col:
             raise ValueError("fnr_col is required when use_fnrsearch=True")
         if self.use_fnrsearch and not (

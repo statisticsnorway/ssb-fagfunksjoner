@@ -1,12 +1,12 @@
 import pandas as pd
 
-from .fileconfig import FileConfig
+from .config import KildomatConfig
 from .kilde_logging import logger
 
 
 def drop_configured_columns(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> pd.DataFrame:
     """Drop configured columns from output.
 
@@ -30,7 +30,7 @@ def drop_configured_columns(
 
 def _drop_original_fnr_columns(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> pd.DataFrame:
     original_cols = [
         f"{file_config.fnr_col}_orig" if file_config.fnr_col else "",

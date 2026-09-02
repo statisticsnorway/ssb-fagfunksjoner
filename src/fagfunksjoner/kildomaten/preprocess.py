@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .fileconfig import FileConfig
+from .config import KildomatConfig
 from .kilde_logging import logger
 
 
@@ -12,7 +12,7 @@ def _normalize_column_names(df: pd.DataFrame) -> pd.DataFrame:
 
 def _apply_configured_preprocessing(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> pd.DataFrame:
     df = _normalize_column_names(df)
     if file_config.preprocess_func:

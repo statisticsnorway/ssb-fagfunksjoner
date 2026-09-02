@@ -3,7 +3,7 @@ from pathlib import Path
 
 from fagfunksjoner.paths.versions import next_version_path
 
-from .fileconfig import FileConfig
+from .config import KildomatConfig
 
 
 def build_output_name(source_filename: str, insert: str = "_inndata_") -> str:
@@ -27,7 +27,7 @@ def build_output_name(source_filename: str, insert: str = "_inndata_") -> str:
 
 def _resolve_output_path(
     source_path: Path | None,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
     *,
     dry_run: bool = False,
 ) -> Path:

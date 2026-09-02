@@ -5,8 +5,8 @@ import pandas as pd
 from dapla_pseudo import Validator
 from dapla_whodat import Whodat
 
+from .config import KildomatConfig, WhodatSearchStrategy
 from .dtypes import STRING_PYARROW_DTYPE
-from .fileconfig import FileConfig, WhodatSearchStrategy
 from .kilde_logging import logger
 
 _DIGIT_ONLY_WHODAT_COLUMNS = {
@@ -20,7 +20,7 @@ _DIGIT_ONLY_WHODAT_COLUMNS = {
 
 def _normalize_gender_for_whodat(
     gender: pd.Series,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> pd.Series:
     """Convert configured gender values to WhoDat format ('mann'/'kvinne')."""
     x = (
@@ -45,7 +45,7 @@ def _as_digit_string(value: pd.Series, *, datetime_format: str) -> pd.Series:
 def _prepare_whodat_column(
     column: str,
     value: pd.Series,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> pd.Series:
     if column == "kjoenn":
         return _normalize_gender_for_whodat(value, file_config)
@@ -58,7 +58,7 @@ def _prepare_whodat_column(
 
 def _prepare_whodat_work_columns(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> pd.DataFrame:
     """Normalize configured WhoDat columns to the formats expected by WhoDat."""
     df = df.copy()
@@ -71,7 +71,7 @@ def _prepare_whodat_work_columns(
 
 def _available_whodat_columns(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> list[str]:
     configured_columns = [*file_config.fnrsearch_cols]
     for strategy in file_config.fnrsearch_strategies:
@@ -84,7 +84,7 @@ def _available_whodat_columns(
 
 def _missing_whodat_columns(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> list[str]:
     return sorted(column for column in file_config.whodat_columns if column not in df)
 
@@ -144,7 +144,7 @@ def _dedupe_strategies(
 
 def _build_search_strategies(
     available_cols: list[str],
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> list[WhodatSearchStrategy]:
     strategies = []
     if file_config.fnrsearch_strategies:
@@ -226,7 +226,7 @@ def _clean_whodat_mapping(mapping: Mapping[Any, Any]) -> dict[object, str]:
 
 def _exceeds_whodat_limits(
     stats: dict[str, int | float],
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> bool:
     return (
         stats["to_whodat"] > file_config.max_whodat_rows
@@ -239,7 +239,7 @@ def _run_whodat_search_chunks(
     lookup_indices: list[object],
     available_cols: list[str],
     strategies: list[WhodatSearchStrategy],
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> dict[object, str]:
     all_mappings: dict[object, str] = {}
     n_chunks = -(-len(lookup_indices) // file_config.chunk_size)
@@ -291,7 +291,7 @@ def _run_whodat_search_chunks(
 
 def should_run_whodat(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> bool:
     """Return whether WhoDat lookup should run for a DataFrame.
 
@@ -311,7 +311,7 @@ def should_run_whodat(
 
 def whodat_lookup_fnr(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
     *,
     dry_run: bool = False,
 ) -> tuple[pd.DataFrame, dict[str, int | float]]:

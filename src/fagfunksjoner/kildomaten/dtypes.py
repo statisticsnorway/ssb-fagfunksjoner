@@ -2,7 +2,7 @@ from typing import Final, Literal
 
 import pandas as pd
 
-from .fileconfig import FileConfig
+from .config import KildomatConfig
 
 BOOL_PYARROW_DTYPE: Final[Literal["bool[pyarrow]"]] = "bool[pyarrow]"
 DOUBLE_PYARROW_DTYPE: Final[Literal["double[pyarrow]"]] = "double[pyarrow]"
@@ -12,7 +12,7 @@ STRING_PYARROW_DTYPE: Final[Literal["string[pyarrow]"]] = "string[pyarrow]"
 
 def normalize_dtypes(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> pd.DataFrame:
     """Normalize DataFrame columns to canonical pyarrow dtypes.
 

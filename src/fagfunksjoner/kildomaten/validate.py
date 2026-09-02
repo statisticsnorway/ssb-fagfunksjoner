@@ -1,15 +1,15 @@
 import pandas as pd
 
-from .fileconfig import FileConfig
+from .config import KildomatConfig
 from .kilde_logging import logger
 
 
-def _has_person_data(df: pd.DataFrame, file_config: FileConfig) -> bool:
+def _has_person_data(df: pd.DataFrame, file_config: KildomatConfig) -> bool:
     """Return True if the file contains at least one configured person column."""
     return any(column in df.columns for column in file_config.person_columns)
 
 
-def assert_prepped_input(df: pd.DataFrame, file_config: FileConfig) -> None:
+def assert_prepped_input(df: pd.DataFrame, file_config: KildomatConfig) -> None:
     """Validate that input has expected columns from the file configuration.
 
     Files without configured person data pass without person validation. Files
@@ -52,7 +52,9 @@ def assert_prepped_input(df: pd.DataFrame, file_config: FileConfig) -> None:
         logger.info("Available WhoDat variables: %s", available_whodat)
 
 
-def summarize_input(df: pd.DataFrame, file_config: FileConfig) -> dict[str, int | None]:
+def summarize_input(
+    df: pd.DataFrame, file_config: KildomatConfig
+) -> dict[str, int | None]:
     """Summarize basic input dimensions and missing configured person values.
 
     Args:
@@ -85,7 +87,7 @@ def summarize_input(df: pd.DataFrame, file_config: FileConfig) -> dict[str, int 
 def validate_output(
     df_in: pd.DataFrame,
     df_out: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> None:
     """Validate output consistency after pseudonymization and WhoDat lookup.
 

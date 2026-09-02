@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from .config import KildomatConfig
 from .dtypes import normalize_dtypes
-from .fileconfig import FileConfig
 from .kilde_logging import logger
 from .pii import _drop_original_fnr_columns, drop_configured_columns
 from .preprocess import _apply_configured_preprocessing
@@ -24,7 +24,7 @@ from .write import _resolve_output_path
 
 def _log_retained_whodat_columns(
     df: pd.DataFrame,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
 ) -> None:
     retained = sorted(column for column in file_config.whodat_columns if column in df)
     if retained:
@@ -37,7 +37,7 @@ def _log_retained_whodat_columns(
 
 def run_kildomaten_pipeline(
     df: pd.DataFrame | str | Path,
-    file_config: FileConfig,
+    file_config: KildomatConfig,
     *,
     dry_run: bool = False,
 ) -> Path | pd.DataFrame:
