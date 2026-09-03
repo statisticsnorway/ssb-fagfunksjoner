@@ -6,7 +6,7 @@ It passes data through a pandas DataFrame from a list of codes and names, to an 
 import pandas as pd
 from dateutil import parser
 
-PARAM_COLS = {  # Order is important?
+CODELIST_PARAM_COLS = {  # Order is important?
     "codes": "kode",
     "parent": "forelder",
     "names_bokmaal": "navn_bokmål",
@@ -21,6 +21,94 @@ PARAM_COLS = {  # Order is important?
     "valid_from": "gyldig_fra",
     "valid_to": "gyldig_til",
 }
+
+VARIANT_PARAM_COLS = {
+    "codes": "kode",
+    "names_bokmaal": "navn_bokmål",
+    "names_nynorsk": "navn_nynorsk",
+    "names_engelsk": "navn_engelsk",
+    "source_codes": "kilde_kode",
+    "parent": "forelder",
+}
+
+CORRESPONDENCE_PARAM_COLS = {
+    "source_codes": "kilde_kode",
+    "source_titles": "kilde_tittel",
+    "target_codes": "mål_kode",
+    "target_titles": "mål_tittel",
+}
+
+CODELIST_NAMESPACE = "https://klass.ssb.no/version"
+VARIANT_NAMESPACE = "http://klass.ssb.no/variant"
+CORRESPONDENCE_NAMESPACE = "http://klass.ssb.no/correspondenceTable"
+
+
+def _prepare_klass_dataframe(
+    df: pd.DataFrame,
+    param_cols: dict[str, str],
+) -> pd.DataFrame:
+    """Return a DataFrame with the expected KLASS columns in the correct order."""
+    df = df.rename(columns=str.lower)
+    expected_cols = list(param_cols.values())
+
+    for col in df.columns:
+        if col not in expected_cols:
+            raise ValueError(
+                f"Column name: {col} is not among the expected column names: "
+                f"{param_cols.values()}"
+            )
+
+    output_df = pd.DataFrame(
+        {
+            col: (
+                df[col]
+                if col in df.columns
+                else pd.Series([None] * len(df), index=df.index)
+            )
+            for col in expected_cols
+        }
+    )
+
+    for col in output_df.select_dtypes(["object", "string"]).columns:
+        output_df[col] = output_df[col].fillna("")
+
+    return output_df
+
+
+def _has_value(series: pd.Series) -> pd.Series:
+    """Return whether values contain non-whitespace content."""
+    return series.astype("string").fillna("").str.strip().ne("")
+
+
+def _validate_variant_dataframe(df: pd.DataFrame) -> None:
+    """Validate the structural requirements KLASS applies to variant elements."""
+    has_code = _has_value(df["kode"])
+    has_source_code = _has_value(df["kilde_kode"])
+    has_content = pd.concat([_has_value(df[col]) for col in df.columns], axis=1).any(
+        axis=1
+    )
+
+    missing_code = has_content & ~(has_code | has_source_code)
+    if missing_code.any():
+        rows = df.index[missing_code].tolist()
+        raise ValueError(
+            "Variant elements must have content in 'kode' or 'kilde_kode'. "
+            f"Invalid rows: {rows}"
+        )
+
+    name_cols = ["navn_bokmål", "navn_nynorsk", "navn_engelsk"]
+    has_name = pd.concat([_has_value(df[col]) for col in name_cols], axis=1).any(
+        axis=1
+    )
+    is_reference = has_source_code & ~has_code
+    missing_name = has_content & ~is_reference & ~has_name
+
+    if missing_name.any():
+        rows = df.index[missing_name].tolist()
+        raise ValueError(
+            "Variant elements with 'kode' must have a name in at least one language. "
+            f"Invalid rows: {rows}"
+        )
 
 
 def format_dates(dates: list[str | None] | None) -> list[str]:
@@ -53,40 +141,74 @@ def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame
     Raises:
         ValueError: If a column sent in is not among the known column names.
     """
-    # Lower column names
-    df = df.rename(columns=str.lower)
-
-    # Check the user has not used column names we dont expect
-    for col in df.columns:
-        if col not in PARAM_COLS.values():
-            raise ValueError(
-                f"Column name: {col} is not among the expected column names: {PARAM_COLS.values()}"
-            )
-
-    # Check that the columns are in the correct order and exist
-    filled_dict = {}
-    for eng, nor in PARAM_COLS.items():
-        if nor in df.columns:
-            filled_dict[nor] = df[nor]
-        elif eng in df.columns:
-            filled_dict[nor] = df[eng]
-        else:
-            filled_dict[nor] = pd.Series([None] * len(df))
-
-    output_df = pd.DataFrame(filled_dict)
-
-    # Replace all nones with empty strings?
-    for col in output_df.select_dtypes(["object", "string"]).columns:
-        output_df[col] = output_df[col].fillna("")
+    output_df = _prepare_klass_dataframe(df, CODELIST_PARAM_COLS)
 
     output_df.to_xml(
         path,
         root_name="versjon",
         row_name="element",
         namespaces={
-            "ns1": "https://klass.ssb.no/version",
+            "ns1": CODELIST_NAMESPACE,
         },
         prefix="ns1",
+    )
+    return output_df
+
+
+def klass_dataframe_to_xml_variant(df: pd.DataFrame, path: str) -> pd.DataFrame:
+    """Write a klass-xml for a classification variant down to a path.
+
+    Args:
+        df: The klass-dataframe with variant column names.
+        path: The path to write the XML to.
+
+    Returns:
+        pd.DataFrame: The dataframe written to XML with all expected columns.
+
+    Raises:
+        ValueError: If a column is unknown or the variant structure is invalid.
+    """
+    output_df = _prepare_klass_dataframe(df, VARIANT_PARAM_COLS)
+    _validate_variant_dataframe(output_df)
+
+    output_df.to_xml(
+        path,
+        index=False,
+        root_name="variant",
+        row_name="element",
+        namespaces={"": VARIANT_NAMESPACE},
+        xml_declaration=True,
+        encoding="UTF-8",
+    )
+    return output_df
+
+
+def klass_dataframe_to_xml_correspondence(
+    df: pd.DataFrame,
+    path: str,
+) -> pd.DataFrame:
+    """Write a klass-xml for a correspondence table down to a path.
+
+    Args:
+        df: The klass-dataframe with correspondence column names.
+        path: The path to write the XML to.
+
+    Returns:
+        pd.DataFrame: The dataframe written to XML with all expected columns.
+
+    Raises:
+        ValueError: If a column sent in is not among the known column names.
+    """
+    output_df = _prepare_klass_dataframe(df, CORRESPONDENCE_PARAM_COLS)
+
+    output_df.to_xml(
+        path,
+        index=False,
+        root_name="Korrespondansetabell",
+        row_name="Korrespondanse",
+        namespaces={"": CORRESPONDENCE_NAMESPACE},
+        xml_declaration=True,
+        encoding="UTF-8",
     )
     return output_df
 
@@ -108,7 +230,7 @@ def make_klass_xml_codelist(
     valid_to: list[str | None] | None = None,
 ) -> pd.DataFrame:
     """Make a klass xml file and pandas Dataframe from a list of codes and names.
-
+    
     This XML can be loaded into the old KLASS UI under version -> import to the top right.
 
     Args:
@@ -139,7 +261,6 @@ def make_klass_xml_codelist(
     # Normalize date formats to dd.MM.yyyy which is what KLASS prefers
     valid_from_str = format_dates(valid_from)
     valid_to_str = format_dates(valid_to)
-
     cols_names = {
         "codes": codes,
         "names_bokmaal": names_bokmaal,
@@ -160,7 +281,11 @@ def make_klass_xml_codelist(
             raise ValueError(
                 "Length of the entered names must match the length of codes."
             )
-    filled_cols = {PARAM_COLS[k]: v for k, v in cols_names.items() if v}
-    data = {col: [None] * len(codes) for col in PARAM_COLS.values()} | filled_cols
+    filled_cols = {
+        CODELIST_PARAM_COLS[k]: v for k, v in cols_names.items() if v
+    }
+    data = {
+        col: [None] * len(codes) for col in CODELIST_PARAM_COLS.values()
+    } | filled_cols
     df = pd.DataFrame(data)
     return klass_dataframe_to_xml_codelist(df, path)
