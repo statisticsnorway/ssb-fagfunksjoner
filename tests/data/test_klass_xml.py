@@ -3,7 +3,7 @@ from xml.etree import ElementTree
 import pandas as pd
 import pytest
 
-from src.fagfunksjoner.data.klass_xml import (
+from fagfunksjoner.data.klass_xml import (
     CORRESPONDENCE_NAMESPACE,
     CORRESPONDENCE_PARAM_COLS,
     VARIANT_NAMESPACE,
