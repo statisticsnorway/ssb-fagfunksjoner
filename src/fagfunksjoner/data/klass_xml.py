@@ -128,7 +128,7 @@ def format_dates(dates: list[str | None] | None) -> list[str]:
 
 def klass_dataframe_to_xml_codelist(
     df: pd.DataFrame, path: str
-) -> pd.DataFrame:  # noqa: DOC502
+) -> pd.DataFrame:
     """Write a klass-xml for a codelist down to a path.
 
     Args:
@@ -140,7 +140,7 @@ def klass_dataframe_to_xml_codelist(
 
     Raises:
         ValueError: If a column sent in is not among the known column names.
-    """
+    """  # noqa: DOC502
     output_df = _prepare_klass_dataframe(df, CODELIST_PARAM_COLS)
 
     output_df.to_xml(
@@ -157,7 +157,7 @@ def klass_dataframe_to_xml_codelist(
 
 def klass_dataframe_to_xml_variant(
     df: pd.DataFrame, path: str
-) -> pd.DataFrame:  # noqa: DOC502
+) -> pd.DataFrame:
     """Write a klass-xml for a classification variant down to a path.
 
     Args:
@@ -169,7 +169,7 @@ def klass_dataframe_to_xml_variant(
 
     Raises:
         ValueError: If a column is unknown or the variant structure is invalid.
-    """
+    """  # noqa: DOC502
     output_df = _prepare_klass_dataframe(df, VARIANT_PARAM_COLS)
     _validate_variant_dataframe(output_df)
 
@@ -188,7 +188,7 @@ def klass_dataframe_to_xml_variant(
 def klass_dataframe_to_xml_correspondence(
     df: pd.DataFrame,
     path: str,
-) -> pd.DataFrame:  # noqa: DOC502
+) -> pd.DataFrame:
     """Write a klass-xml for a correspondence table down to a path.
 
     Args:
@@ -200,7 +200,7 @@ def klass_dataframe_to_xml_correspondence(
 
     Raises:
         ValueError: If a column sent in is not among the known column names.
-    """
+    """  # noqa: DOC502
     output_df = _prepare_klass_dataframe(df, CORRESPONDENCE_PARAM_COLS)
 
     output_df.to_xml(
