@@ -190,7 +190,6 @@ def test_make_klass_xml_field_length_mismatch(tmp_path):
         )
 
 
-
 def test_klass_dataframe_to_xml_correspondence(tmp_path):
     df = pd.DataFrame(
         {

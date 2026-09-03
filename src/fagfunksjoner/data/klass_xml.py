@@ -97,9 +97,7 @@ def _validate_variant_dataframe(df: pd.DataFrame) -> None:
         )
 
     name_cols = ["navn_bokmål", "navn_nynorsk", "navn_engelsk"]
-    has_name = pd.concat([_has_value(df[col]) for col in name_cols], axis=1).any(
-        axis=1
-    )
+    has_name = pd.concat([_has_value(df[col]) for col in name_cols], axis=1).any(axis=1)
     is_reference = has_source_code & ~has_code
     missing_name = has_content & ~is_reference & ~has_name
 
@@ -128,7 +126,9 @@ def format_dates(dates: list[str | None] | None) -> list[str]:
     return formatted
 
 
-def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame:
+def klass_dataframe_to_xml_codelist(
+    df: pd.DataFrame, path: str
+) -> pd.DataFrame:  # noqa: DOC502
     """Write a klass-xml for a codelist down to a path.
 
     Args:
@@ -155,7 +155,9 @@ def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame
     return output_df
 
 
-def klass_dataframe_to_xml_variant(df: pd.DataFrame, path: str) -> pd.DataFrame:
+def klass_dataframe_to_xml_variant(
+    df: pd.DataFrame, path: str
+) -> pd.DataFrame:  # noqa: DOC502
     """Write a klass-xml for a classification variant down to a path.
 
     Args:
@@ -186,7 +188,7 @@ def klass_dataframe_to_xml_variant(df: pd.DataFrame, path: str) -> pd.DataFrame:
 def klass_dataframe_to_xml_correspondence(
     df: pd.DataFrame,
     path: str,
-) -> pd.DataFrame:
+) -> pd.DataFrame:  # noqa: DOC502
     """Write a klass-xml for a correspondence table down to a path.
 
     Args:
@@ -230,7 +232,7 @@ def make_klass_xml_codelist(
     valid_to: list[str | None] | None = None,
 ) -> pd.DataFrame:
     """Make a klass xml file and pandas Dataframe from a list of codes and names.
-    
+
     This XML can be loaded into the old KLASS UI under version -> import to the top right.
 
     Args:
@@ -281,9 +283,7 @@ def make_klass_xml_codelist(
             raise ValueError(
                 "Length of the entered names must match the length of codes."
             )
-    filled_cols = {
-        CODELIST_PARAM_COLS[k]: v for k, v in cols_names.items() if v
-    }
+    filled_cols = {CODELIST_PARAM_COLS[k]: v for k, v in cols_names.items() if v}
     data = {
         col: [None] * len(codes) for col in CODELIST_PARAM_COLS.values()
     } | filled_cols

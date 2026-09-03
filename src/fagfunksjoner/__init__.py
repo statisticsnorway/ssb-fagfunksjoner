@@ -9,6 +9,8 @@ import importlib.metadata
 import toml
 
 from fagfunksjoner.fagfunksjoner_logger import logger
+
+
 # Split into function for testing
 def _try_getting_pyproject_toml(e: Exception | None = None) -> str:
     if e is None:
@@ -31,6 +33,8 @@ def _try_getting_pyproject_toml(e: Exception | None = None) -> str:
             str(e),
         )
     return version
+
+
 # Gets the installed version from pyproject.toml, then there is no need to update this file
 try:
     __version__ = importlib.metadata.version("ssb-fagfunksjoner")
@@ -66,6 +70,7 @@ from fagfunksjoner.paths.versions import (
 )
 from fagfunksjoner.prodsone.check_env import check_env, linux_shortcuts
 from fagfunksjoner.prodsone.saspy_ssb import saspy_df_from_path, saspy_session
+
 __all__ = [
     "ProjectRoot",
     "SsbFormat",
