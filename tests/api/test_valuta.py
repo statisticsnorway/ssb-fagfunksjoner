@@ -36,7 +36,7 @@ mock_json = {
                 "action": "Information",
                 "series": {
                     "0:0:0:0": {
-                        "attributes": [0, 0, 0, 0],
+                        "attributes": [2, 0, 1, 0],
                         "observations": {"0": ["100.19"], "1": ["95.03"]},
                     }
                 },
@@ -130,7 +130,13 @@ mock_json = {
                             "dimensions": ["BASE_CUR", "QUOTE_CUR", "TENOR"]
                         },
                         "role": None,
-                        "values": [{"id": "2", "name": "2"}],
+                        "values": [
+                            {"id": "4", "name": "4"},
+                            {"id": "3", "name": "3"},
+                            {"id": "2", "name": "2"},
+                            {"id": "6", "name": "6"},
+                            {"id": "5", "name": "5"},
+                        ],
                     },
                     {
                         "id": "CALCULATED",
@@ -150,7 +156,10 @@ mock_json = {
                             "dimensions": ["BASE_CUR", "QUOTE_CUR", "TENOR"]
                         },
                         "role": None,
-                        "values": [{"id": "2", "name": "Hundre"}],
+                        "values": [
+                            {"id": "0", "name": "Enheter"},
+                            {"id": "2", "name": "Hundre"},
+                        ],
                     },
                     {
                         "id": "COLLECTION",
@@ -227,3 +236,6 @@ def test_parse_response():
             "COLLECTION_id",
         }
     )
+    data = valuta_data.df.loc[0]
+    assert data["DECIMALS"] == "2"
+    assert data["UNIT_MULT"] == "Hundre"
