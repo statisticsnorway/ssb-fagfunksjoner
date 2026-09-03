@@ -126,9 +126,7 @@ def format_dates(dates: list[str | None] | None) -> list[str]:
     return formatted
 
 
-def klass_dataframe_to_xml_codelist(
-    df: pd.DataFrame, path: str
-) -> pd.DataFrame:
+def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame:
     """Write a klass-xml for a codelist down to a path.
 
     Args:
@@ -155,9 +153,7 @@ def klass_dataframe_to_xml_codelist(
     return output_df
 
 
-def klass_dataframe_to_xml_variant(
-    df: pd.DataFrame, path: str
-) -> pd.DataFrame:
+def klass_dataframe_to_xml_variant(df: pd.DataFrame, path: str) -> pd.DataFrame:
     """Write a klass-xml for a classification variant down to a path.
 
     Args:
