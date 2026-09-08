@@ -6,12 +6,18 @@ It passes data through a pandas DataFrame from a list of codes and names, to an 
 import pandas as pd
 from dateutil import parser
 
-CODELIST_PARAM_COLS = {  # Order is important?
-    "codes": "kode",
+CODE_COL = "kode"
+SOURCE_CODE_COL = "kilde_kode"
+BOKMAAL_NAME_COL = "navn_bokmål"
+NYNORSK_NAME_COL = "navn_nynorsk"
+ENGLISH_NAME_COL = "navn_engelsk"
+
+CODELIST_PARAM_COLS = {  # Order defines XML element order.
+    "codes": CODE_COL,
     "parent": "forelder",
-    "names_bokmaal": "navn_bokmål",
-    "names_nynorsk": "navn_nynorsk",
-    "names_engelsk": "navn_engelsk",
+    "names_bokmaal": BOKMAAL_NAME_COL,
+    "names_nynorsk": NYNORSK_NAME_COL,
+    "names_engelsk": ENGLISH_NAME_COL,
     "shortname_bokmaal": "kortnavn_bokmål",
     "shortname_nynorsk": "kortnavn_nynorsk",
     "shortname_engelsk": "kortnavn_engelsk",
@@ -22,17 +28,17 @@ CODELIST_PARAM_COLS = {  # Order is important?
     "valid_to": "gyldig_til",
 }
 
-VARIANT_PARAM_COLS = {
-    "codes": "kode",
-    "names_bokmaal": "navn_bokmål",
-    "names_nynorsk": "navn_nynorsk",
-    "names_engelsk": "navn_engelsk",
-    "source_codes": "kilde_kode",
+VARIANT_PARAM_COLS = {  # Order defines XML element order.
+    "codes": CODE_COL,
+    "names_bokmaal": BOKMAAL_NAME_COL,
+    "names_nynorsk": NYNORSK_NAME_COL,
+    "names_engelsk": ENGLISH_NAME_COL,
+    "source_codes": SOURCE_CODE_COL,
     "parent": "forelder",
 }
 
-CORRESPONDENCE_PARAM_COLS = {
-    "source_codes": "kilde_kode",
+CORRESPONDENCE_PARAM_COLS = {  # Order defines XML element order.
+    "source_codes": SOURCE_CODE_COL,
     "source_titles": "kilde_tittel",
     "target_codes": "mål_kode",
     "target_titles": "mål_tittel",
@@ -82,8 +88,8 @@ def _has_value(series: pd.Series) -> pd.Series:
 
 def _validate_variant_dataframe(df: pd.DataFrame) -> None:
     """Validate the structural requirements KLASS applies to variant elements."""
-    has_code = _has_value(df["kode"])
-    has_source_code = _has_value(df["kilde_kode"])
+    has_code = _has_value(df[CODE_COL])
+    has_source_code = _has_value(df[SOURCE_CODE_COL])
     has_content = pd.concat([_has_value(df[col]) for col in df.columns], axis=1).any(
         axis=1
     )
