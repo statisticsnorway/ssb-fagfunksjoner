@@ -12,7 +12,8 @@ BOKMAAL_NAME_COL = "navn_bokmål"
 NYNORSK_NAME_COL = "navn_nynorsk"
 ENGLISH_NAME_COL = "navn_engelsk"
 
-CODELIST_PARAM_COLS = {  # Order defines XML element order.
+# Order defines XML element order.
+CODELIST_PARAM_COLS = {
     "codes": CODE_COL,
     "parent": "forelder",
     "names_bokmaal": BOKMAAL_NAME_COL,
@@ -28,7 +29,7 @@ CODELIST_PARAM_COLS = {  # Order defines XML element order.
     "valid_to": "gyldig_til",
 }
 
-VARIANT_PARAM_COLS = {  # Order defines XML element order.
+VARIANT_PARAM_COLS = {
     "codes": CODE_COL,
     "names_bokmaal": BOKMAAL_NAME_COL,
     "names_nynorsk": NYNORSK_NAME_COL,
@@ -37,16 +38,17 @@ VARIANT_PARAM_COLS = {  # Order defines XML element order.
     "parent": "forelder",
 }
 
-CORRESPONDENCE_PARAM_COLS = {  # Order defines XML element order.
+CORRESPONDENCE_PARAM_COLS = {
     "source_codes": SOURCE_CODE_COL,
     "source_titles": "kilde_tittel",
     "target_codes": "mål_kode",
     "target_titles": "mål_tittel",
 }
 
-CODELIST_NAMESPACE = "https://klass.ssb.no/version"
-VARIANT_NAMESPACE = "https://klass.ssb.no/variant"
-CORRESPONDENCE_NAMESPACE = "https://klass.ssb.no/correspondenceTable"
+# KLASS XML namespace identifiers. `http` is intentional and must not be changed.
+CODELIST_NAMESPACE = "http://klass.ssb.no/version"  # NOSONAR
+VARIANT_NAMESPACE = "http://klass.ssb.no/variant"  # NOSONAR
+CORRESPONDENCE_NAMESPACE = "http://klass.ssb.no/correspondenceTable"  # NOSONAR
 
 
 def _prepare_klass_dataframe(
