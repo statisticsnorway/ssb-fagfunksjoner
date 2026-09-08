@@ -39,8 +39,8 @@ CORRESPONDENCE_PARAM_COLS = {
 }
 
 CODELIST_NAMESPACE = "https://klass.ssb.no/version"
-VARIANT_NAMESPACE = "http://klass.ssb.no/variant"
-CORRESPONDENCE_NAMESPACE = "http://klass.ssb.no/correspondenceTable"
+VARIANT_NAMESPACE = "https://klass.ssb.no/variant"
+CORRESPONDENCE_NAMESPACE = "https://klass.ssb.no/correspondenceTable"
 
 
 def _prepare_klass_dataframe(
