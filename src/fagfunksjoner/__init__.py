@@ -41,12 +41,16 @@ try:
 except importlib.metadata.PackageNotFoundError as e:
     __version__ = _try_getting_pyproject_toml(e)
 
-
 from fagfunksjoner.data.datadok_extract import (
     open_path_datadok,
     open_path_metapath_datadok,
 )
-from fagfunksjoner.data.klass_xml import make_klass_xml_codelist
+from fagfunksjoner.data.klass_xml import (
+    klass_dataframe_to_xml_codelist,
+    klass_dataframe_to_xml_correspondence,
+    klass_dataframe_to_xml_variant,
+    make_klass_xml_codelist,
+)
 from fagfunksjoner.data.pandas_combinations import (
     all_combos_agg,
     all_combos_agg_inclusive,
@@ -77,6 +81,9 @@ __all__ = [
     "check_env",
     "check_shared_files",
     "get_latest_fileversions",
+    "klass_dataframe_to_xml_codelist",
+    "klass_dataframe_to_xml_correspondence",
+    "klass_dataframe_to_xml_variant",
     "latest_version_path",
     "linux_shortcuts",
     "make_klass_xml_codelist",

@@ -1,9 +1,17 @@
+from xml.etree import ElementTree
+
 import pandas as pd
 import pytest
 
-from src.fagfunksjoner.data.klass_xml import (
+from fagfunksjoner.data.klass_xml import (
+    CORRESPONDENCE_NAMESPACE,
+    CORRESPONDENCE_PARAM_COLS,
+    VARIANT_NAMESPACE,
+    VARIANT_PARAM_COLS,
     format_dates,
     klass_dataframe_to_xml_codelist,
+    klass_dataframe_to_xml_correspondence,
+    klass_dataframe_to_xml_variant,
     make_klass_xml_codelist,
 )
 
@@ -20,7 +28,6 @@ def test_make_klass_xml_codelist_success(tmp_path):
     names_engelsk = ["Name1_EN", "Name2_EN", "Name3_EN"]
 
     xml_path = tmp_path / "klass.xml"
-
     df = make_klass_xml_codelist(
         path=str(xml_path),
         codes=codes,
@@ -35,7 +42,6 @@ def test_make_klass_xml_codelist_success(tmp_path):
     assert list(df["navn_bokmål"]) == names_bokmaal
     assert list(df["navn_nynorsk"]) == names_nynorsk
     assert list(df["navn_engelsk"]) == names_engelsk
-
     # Check that the XML file was created
     assert xml_path.exists()
     with open(xml_path, encoding="utf-8") as f:
@@ -51,7 +57,6 @@ def test_make_klass_xml_codelist_missing_required_names(tmp_path):
     """Test that a ValueError is raised when both names_bokmaal and names_nynorsk are None."""
     codes = [1, 2, 3]
     xml_path = tmp_path / "klass.xml"
-
     with pytest.raises(
         ValueError, match="Must have content in names_bokmaal or names_nynorsk"
     ):
@@ -66,7 +71,6 @@ def test_make_klass_xml_codelist_missing_required_names(tmp_path):
 
 def test_make_klass_xml_codelist_all_fields(tmp_path):
     xml_output_path = tmp_path / "full_klass_codelist.xml"
-
     df = make_klass_xml_codelist(
         path=str(xml_output_path),
         codes=["100", "110", "120"],
@@ -95,7 +99,6 @@ def test_make_klass_xml_codelist_all_fields(tmp_path):
         ],  # ISO format to test parsing
         valid_to=["2030-12-31", "2030-12-31", "2030-12-31"],
     )
-
     assert xml_output_path.exists()
     assert isinstance(df, pd.DataFrame)
     assert list(df["gyldig_fra"].unique()) == ["01.01.2025"]
@@ -108,7 +111,6 @@ def test_make_klass_xml_with_empty_optional_lists(tmp_path):
     codes = ["A"]
     names_bokmaal = ["A"]
     xml_path = tmp_path / "empty_lists.xml"
-
     df = make_klass_xml_codelist(
         path=str(xml_path),
         codes=codes,
@@ -186,3 +188,133 @@ def test_make_klass_xml_field_length_mismatch(tmp_path):
             codes=codes,
             names_bokmaal=names_bokmaal,
         )
+
+
+def test_klass_dataframe_to_xml_correspondence(tmp_path):
+    df = pd.DataFrame(
+        {
+            "kilde_kode": ["1739", None],
+            "kilde_tittel": ["Raarvihke Røyrvik", None],
+            "mål_kode": ["1739", "1939"],
+            "mål_tittel": ["Røyrvik", "Storfjord"],
+        }
+    )
+    xml_path = tmp_path / "correspondence.xml"
+
+    output_df = klass_dataframe_to_xml_correspondence(df, str(xml_path))
+
+    assert list(output_df.columns) == list(CORRESPONDENCE_PARAM_COLS.values())
+    root = ElementTree.parse(xml_path).getroot()
+    assert root.tag == f"{{{CORRESPONDENCE_NAMESPACE}}}Korrespondansetabell"
+    rows = list(root)
+    assert len(rows) == 2
+    assert rows[0].tag == f"{{{CORRESPONDENCE_NAMESPACE}}}Korrespondanse"
+    assert [child.tag for child in rows[0]] == [
+        f"{{{CORRESPONDENCE_NAMESPACE}}}kilde_kode",
+        f"{{{CORRESPONDENCE_NAMESPACE}}}kilde_tittel",
+        f"{{{CORRESPONDENCE_NAMESPACE}}}mål_kode",
+        f"{{{CORRESPONDENCE_NAMESPACE}}}mål_tittel",
+    ]
+
+    xml_content = xml_path.read_text(encoding="utf-8")
+    assert "<kilde_kode/>" in xml_content
+    assert "<kilde_tittel/>" in xml_content
+    assert "<index>" not in xml_content
+
+
+def test_klass_dataframe_to_xml_correspondence_adds_missing_columns(tmp_path):
+    df = pd.DataFrame({"kilde_kode": ["01"], "mål_kode": ["02"]})
+    xml_path = tmp_path / "correspondence.xml"
+
+    output_df = klass_dataframe_to_xml_correspondence(df, str(xml_path))
+
+    assert list(output_df.columns) == list(CORRESPONDENCE_PARAM_COLS.values())
+    xml_content = xml_path.read_text(encoding="utf-8")
+    assert "<kilde_tittel/>" in xml_content
+    assert "<mål_tittel/>" in xml_content
+
+
+def test_klass_dataframe_to_xml_correspondence_missing_values_are_empty_tags(tmp_path):
+    df = pd.DataFrame(
+        {
+            "kilde_kode": [None, pd.NA, ""],
+            "mål_kode": ["01", "02", "03"],
+        }
+    )
+    xml_path = tmp_path / "correspondence.xml"
+
+    klass_dataframe_to_xml_correspondence(df, str(xml_path))
+
+    xml_content = xml_path.read_text(encoding="utf-8")
+    assert xml_content.count("<kilde_kode/>") == 3
+
+
+def test_klass_dataframe_to_xml_variant(tmp_path):
+    df = pd.DataFrame(
+        {
+            "kode": ["A", None],
+            "navn_bokmål": ["Gruppe A", None],
+            "kilde_kode": [None, "1.1"],
+            "forelder": [None, "A"],
+        }
+    )
+    xml_path = tmp_path / "variant.xml"
+
+    output_df = klass_dataframe_to_xml_variant(df, str(xml_path))
+
+    assert list(output_df.columns) == list(VARIANT_PARAM_COLS.values())
+    root = ElementTree.parse(xml_path).getroot()
+    assert root.tag == f"{{{VARIANT_NAMESPACE}}}variant"
+    rows = list(root)
+    assert len(rows) == 2
+    assert rows[0].tag == f"{{{VARIANT_NAMESPACE}}}element"
+    assert [child.tag for child in rows[0]] == [
+        f"{{{VARIANT_NAMESPACE}}}kode",
+        f"{{{VARIANT_NAMESPACE}}}navn_bokmål",
+        f"{{{VARIANT_NAMESPACE}}}navn_nynorsk",
+        f"{{{VARIANT_NAMESPACE}}}navn_engelsk",
+        f"{{{VARIANT_NAMESPACE}}}kilde_kode",
+        f"{{{VARIANT_NAMESPACE}}}forelder",
+    ]
+
+    xml_content = xml_path.read_text(encoding="utf-8")
+    assert "<kilde_kode/>" in xml_content
+    assert "<kode/>" in xml_content
+    assert "<index>" not in xml_content
+
+
+def test_klass_dataframe_to_xml_variant_requires_code_or_source_code(tmp_path):
+    df = pd.DataFrame({"navn_bokmål": ["Gruppe A"]})
+
+    with pytest.raises(ValueError, match=r"kode.*kilde_kode"):
+        klass_dataframe_to_xml_variant(df, str(tmp_path / "variant.xml"))
+
+
+def test_klass_dataframe_to_xml_variant_requires_name_for_own_code(tmp_path):
+    df = pd.DataFrame({"kode": ["A"]})
+
+    with pytest.raises(ValueError, match="name in at least one language"):
+        klass_dataframe_to_xml_variant(df, str(tmp_path / "variant.xml"))
+
+
+def test_klass_dataframe_to_xml_variant_reference_does_not_require_name(tmp_path):
+    df = pd.DataFrame({"kilde_kode": ["1.1"]})
+    xml_path = tmp_path / "variant.xml"
+
+    output_df = klass_dataframe_to_xml_variant(df, str(xml_path))
+
+    assert output_df.loc[0, "kilde_kode"] == "1.1"
+    assert xml_path.exists()
+
+
+def test_klass_dataframe_to_xml_rejects_unknown_column(tmp_path):
+    df = pd.DataFrame(
+        {
+            "kilde_kode": ["1739"],
+            "mål_kode": ["1739"],
+            "kommentar": ["helper"],
+        }
+    )
+
+    with pytest.raises(ValueError, match="kommentar"):
+        klass_dataframe_to_xml_correspondence(df, str(tmp_path / "correspondence.xml"))
