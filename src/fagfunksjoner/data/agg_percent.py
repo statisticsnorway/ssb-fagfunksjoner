@@ -29,7 +29,7 @@ def make_percentage(
     pd.DataFrame
         DataFrame with percentage column added.
     """
-    total_label = f
+    total_label = fillna_dict[percent_col]
     result = df.copy()
 
     group_cols = [
