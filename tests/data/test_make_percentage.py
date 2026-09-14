@@ -1,5 +1,6 @@
 import pandas as pd
 from pandas.testing import assert_series_equal
+from fagfunksjoner.data.agg_percent import make_percentage
 
 
 def test_make_percentage():
