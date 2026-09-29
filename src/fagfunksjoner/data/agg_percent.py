@@ -8,41 +8,28 @@ def make_percentage(
     value_col: str = "antall",
     decimals: int = 1,
 ) -> pd.DataFrame:
-    """
-    Calculate percentages using Total rows as denominators.
+    """Calculate percentages using Total rows as denominators.
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Aggregated dataframe containing Total rows.
-    percent_col : str
-        Dimension to calculate percentages for.
-    fillna_dict : dict[str, str]
-        Mapping from dimension names to their total labels.
-    value_col : str, default="antall"
-        Value column.
-    decimals : int, default=1
-        Number of decimals in percentage column.
+    Args:
+        df: pd.DataFrame. Aggregated dataframe containing Total rows.
+        percent_col: str. Dimension to calculate percentages for.
+        fillna_dict: dict[str, str]. Mapping from dimension names to their total labels.
+        value_col: str, default="antall". Value column.
+        decimals: int, default=1. Number of decimals in percentage column.
 
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with percentage column added.
+    Returns:
+        pd.DataFrame. DataFrame with percentage column added.
     """
     total_label = fillna_dict[percent_col]
     result = df.copy()
 
     group_cols = [
-        c
-        for c in result.columns
-        if c not in {percent_col, value_col, "level", "ways"}
+        c for c in result.columns if c not in {percent_col, value_col, "level", "ways"}
     ]
 
-    totals = (
-        result.loc[result[percent_col] == total_label]
-        .rename(columns={value_col: "_total"})
-        [group_cols + ["_total"]]
-    )
+    totals = result.loc[result[percent_col] == total_label].rename(
+        columns={value_col: "_total"}
+    )[[*group_cols, "_total"]]
 
     result = result.merge(
         totals,

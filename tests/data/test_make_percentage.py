@@ -1,5 +1,6 @@
 import pandas as pd
 from pandas.testing import assert_series_equal
+
 from fagfunksjoner.data.agg_percent import make_percentage
 
 
@@ -32,6 +33,7 @@ def test_make_percentage():
         expected,
         check_dtype=False,
     )
+
 
 def test_make_percentage_multiple_groups():
     df = pd.DataFrame(
@@ -81,4 +83,3 @@ def test_make_percentage_rounding():
     )
 
     assert result["andel"].tolist() == [33.3, 66.7, 100.0]
-
