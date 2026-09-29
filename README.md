@@ -187,30 +187,29 @@ all_combos_agg_inclusive(
     grand_total=True)
 ```
 
-Add percent column to aggregated table, after all_combos_agg or all_combos_agg_inclusive. 
+Add percent column to aggregated table, after all_combos_agg or all_combos_agg_inclusive.
 ```python
-from fagfunksjoner import all_combos_agg
-from fagfunksjoner import make_percentage
+from fagfunksjoner import all_combos_agg, make_percentage
 
 groupvars = {"grunnskolepoeng_9_statbank": "01-09",
-             "kjoenn_statbank": "0", 
+             "kjoenn_statbank": "0",
              "region": "0"
             }
 statvar =  {"elever": "sum"}
 
 tab = all_combos_agg(
     df,
-    groupcols=list(groupvars.keys()), 
-    aggargs=statvar, 
+    groupcols=list(groupvars.keys()),
+    aggargs=statvar,
     fillna_dict=groupvars,
     keep_empty=True,
     grand_total=groupvars)
-    
+
 tab_percent = make_percentage(
     tab,
     percent_col="grunnskolepoeng_9_statbank",
-    fillna_dict=groupvars, 
-    value_col="elever", 
+    fillna_dict=groupvars,
+    value_col="elever",
     decimals=2)
 ```
 
