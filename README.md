@@ -61,6 +61,33 @@ with ProjectRoot():
     ... # Do your local imports here...
 ```
 
+
+### Get data from APIs
+
+#### Dapla-api
+
+```python
+from fagfunksjoner import get_from_dapla_api
+
+query = """
+{
+  teams(first: 2) {
+    nodes {
+      slug
+      displayName
+      section {
+        name
+        code
+      }
+    }
+  }
+}
+"""
+result = get_from_dapla_api(query)
+print(result)
+```
+
+
 ### Sasfiles
 
 Setting up password with saspy
