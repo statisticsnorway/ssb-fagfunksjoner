@@ -1,4 +1,4 @@
-from fagfunksjoner.api import dapla_team
+from fagfunksjoner.api import dapla_api
 
 
 class MockResponse:
@@ -26,7 +26,7 @@ def test_unwrap_nodes_replaces_nodes_wrappers():
         }
     }
 
-    assert dapla_team._unwrap_nodes(value) == {
+    assert dapla_api._unwrap_nodes(value) == {
         "data": {
             "teams": [
                 {"name": "team-a", "members": [{"name": "Ola"}]},
@@ -44,10 +44,10 @@ def test_unwrap_nodes_leaves_scalars_and_non_wrapper_dicts():
         "empty": None,
     }
 
-    assert dapla_team._unwrap_nodes(value) == value
+    assert dapla_api._unwrap_nodes(value) == value
 
 
-def test_get_from_dapla_team_api_posts_query_with_token(monkeypatch):
+def test_get_from_dapla_api_posts_query_with_token(monkeypatch):
     query = "query { teams { nodes { name } } }"
     response = MockResponse(
         {"data": {"teams": {"nodes": [{"name": "team-a"}]}}},
@@ -63,36 +63,34 @@ def test_get_from_dapla_team_api_posts_query_with_token(monkeypatch):
         return response
 
     monkeypatch.setattr(
-        dapla_team.AuthClient,
+        dapla_api.AuthClient,
         "fetch_personal_token",
         mock_fetch_personal_token,
     )
-    monkeypatch.setattr(dapla_team.requests, "post", mock_post)
+    monkeypatch.setattr(dapla_api.requests, "post", mock_post)
 
-    result = dapla_team.get_from_dapla_team_api(query)
+    result = dapla_api.get_from_dapla_api(query)
 
     assert result == {"data": {"teams": [{"name": "team-a"}]}}
     assert response.raise_for_status_called is True
     assert post_calls == [
         {
-            "url": dapla_team.DAPLA_CTRL_API_URI,
+            "url": dapla_api.DAPLA_CTRL_API_URI,
             "headers": {"Authorization": "Bearer test-token"},
             "json": {"query": query},
         }
     ]
 
 
-def test_get_from_dapla_team_api_can_return_raw_response(monkeypatch):
+def test_get_from_dapla_api_can_return_raw_response(monkeypatch):
     raw_response = {"data": {"teams": {"nodes": [{"name": "team-a"}]}}}
     response = MockResponse(raw_response)
 
     monkeypatch.setattr(
-        dapla_team.AuthClient,
+        dapla_api.AuthClient,
         "fetch_personal_token",
         lambda audiences: "test-token",
     )
-    monkeypatch.setattr(dapla_team.requests, "post", lambda *args, **kwargs: response)
+    monkeypatch.setattr(dapla_api.requests, "post", lambda *args, **kwargs: response)
 
-    assert (
-        dapla_team.get_from_dapla_team_api("query", unwrap_nodes=False) == raw_response
-    )
+    assert dapla_api.get_from_dapla_api("query", unwrap_nodes=False) == raw_response

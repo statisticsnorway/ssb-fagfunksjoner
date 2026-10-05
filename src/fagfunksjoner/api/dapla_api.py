@@ -6,8 +6,8 @@ from dapla_auth_client import AuthClient
 DAPLA_CTRL_API_URI = "https://dapla-ctrl.intern.ssb.no/graphql/"
 
 
-def get_from_dapla_team_api(query: str, unwrap_nodes: bool = True) -> dict[str, Any]:
-    """Send a query to the Dapla Team API, test your queries at: https://dapla-ctrl.intern.ssb.no/api-docs, send them as a string here.
+def get_from_dapla_api(query: str, unwrap_nodes: bool = True) -> dict[str, Any]:
+    """Send a query to the Dapla API, test your queries at: https://dapla-ctrl.intern.ssb.no/api-docs, send them as a string here.
 
     Args:
         query: The full query as a string. Remember that line shifts are important in a graphql query.
