@@ -317,7 +317,7 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
     """
     name = parse_name_single(root["navn"])
     short_name = root["kortnavn"][TEXT]
-    old_subjectcodes = root["gamleEmnekoder"]
+    old_subjectcodes = root.get("gamleEmnekoder", "")
     firstpublishing = root["forstegangspublisering"]
     try:
         firstpublishing = dateutil.parser.parse(firstpublishing).date()
