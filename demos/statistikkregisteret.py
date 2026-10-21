@@ -1,57 +1,29 @@
-# ---
-# jupyter:
-#   jupytext:
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.15.2
-#   kernelspec:
-#     display_name: ssb-fagfunksjoner
-#     language: python
-#     name: ssb-fagfunksjoner
-# ---
-
 # %%
+"""Shortcode examples against the configured Statreg test environment."""
+
+from itertools import islice
+
 from fagfunksjoner.api import statistikkregisteret as reg
 
 # %%
-shortcode = "vgu"
+reg.configure(base_url="https://statistikkregisteret.intern.test.ssb.no/api")
+statistic = reg.get_statistic_shortcode("hugjen")
+contacts = reg.get_contacts_shortcode("hugjen")
+next_publish_date = reg.get_next_publish_date_shortcode("hugjen")
 
 # %%
-single = reg.single_stat()
+variant = reg.select_variant_shortcode("kargrs", terms=["nasj", "prøv"])
+variant_name = reg.get_variant_name(variant)
+next_variant_date = reg.get_next_publish_date_shortcode("kargrs", variant_id=variant.id)
+latest_past_date = reg.get_last_publish_date_shortcode(
+    "kargrs", terms=["avslutt", "grunnskol"], include_future=False
+)
 
 # %%
-print(single.navn.navn[0].text)
-print(single.eierseksjon.statid)
-for kontaktinfo in single.kontakter:
-    for kontakt in kontaktinfo.navn:
-        if kontakt.lang == "no":
-            print(kontakt.text)
+# A partial iteration only fetches the pages needed; later iterations reuse them.
+first_five = list(islice(reg.get_statistics_register(), 5))
+reg.clear_cache()
 
 # %%
-reg.find_stat_shortcode(shortcode)
-
-# %%
-reg.find_latest_publishing(shortcode)
-
-# %%
-reg.find_publishings()
-
-# %%
-reg.specific_publishing()
-
-# %%
-reg.time_until_publishing("vgu")
-
-# %%
-import datetime
-
-from fagfunksjoner.api import statistikkregisteret as reg
-
-kortkode = "vgu"
-
-if not datetime.timedelta(0) < reg.time_until_publishing(kortkode):
-    raise ValueError("HAR DU IKKE MELDT PUBLISERING!?!?!?")
-
+print(first_five)
 # %%

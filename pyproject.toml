@@ -18,6 +18,9 @@ dependencies = [
     "pyarrow>=20.0.0",
     "python-dateutil>=2.9.0",
     "requests>=2.31.0",
+    "httpx>=0.27,<0.29",
+    "attrs>=22.2.0",
+    "typing-extensions>=4.0",
     "saspy>=5.2.1",
     "toml>=0.10.2",
     "ipywidgets >=8.1.1",
@@ -35,6 +38,10 @@ documentation = "https://statisticsnorway.github.io/ssb-fagfunksjoner"
 Changelog = "https://github.com/statisticsnorway/ssb-fagfunksjoner/releases"
 
 [dependency-groups]
+codegen = [
+    "ruamel-yaml>=0.18.6,<0.20.0",
+    "openapi-python-client==0.29.1; python_version >= '3.11' and python_version < '4.0'",
+]
 lint = [
     "black[jupyter]>=25.11.0",
     "isort>=7.0.0",
@@ -54,6 +61,7 @@ doc = [
 
 # Type hint stubs should be placed in the dev dependency group
 dev = [
+    {include-group = "codegen"},
     {include-group = "lint"},
     {include-group = "doc"},
     "coverage[toml]>=7.11.3",
@@ -128,7 +136,11 @@ module = [
 ignore_missing_imports = true
 disable_error_code = ["import-untyped"]
 
+[tool.black]
+force-exclude = 'src/fagfunksjoner/api/statistikkregisteret/_generated/'
+
 [tool.isort]
+skip_glob = ["*/statistikkregisteret/_generated/*"]
 profile = "black"
 skip_gitignore = true
 #lines_after_imports = 2
@@ -138,7 +150,7 @@ treat_comments_as_code = ["# %%"]
 
 [tool.pydoclint]
 style = "google"
-exclude = '\.git|\.nox'
+exclude = '\.git|\.nox|statistikkregisteret[/\\]_generated'
 arg-type-hints-in-docstring = false
 check-return-types = false
 check-yield-types = false
@@ -152,6 +164,7 @@ src = ["src", "tests"]
 target-version = "py310"  # Minimum Python version supported
 include = ["*.py", "*.pyi", "**/pyproject.toml", "*.ipynb"]
 extend-exclude = [
+    "src/fagfunksjoner/api/statistikkregisteret/_generated",
     "__pycache__",
     "old",
     ".ipynb_checkpoints",

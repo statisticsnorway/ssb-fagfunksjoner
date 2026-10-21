@@ -1,0 +1,4 @@
+package_name_override: _generated
+project_name_override: statreg-client
+literal_enums: true
+post_hooks: []

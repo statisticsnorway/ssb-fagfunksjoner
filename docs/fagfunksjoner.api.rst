@@ -2,8 +2,10 @@ fagfunksjoner.api package
 =========================
 
 
-fagfunksjoner.api.statistikkregisteret module
----------------------------------------------
+fagfunksjoner.api.statistikkregisteret package
+----------------------------------------------
+
+See :doc:`statistikkregisteret` for test-environment setup and migration examples.
 
 .. automodule:: fagfunksjoner.api.statistikkregisteret
    :members:

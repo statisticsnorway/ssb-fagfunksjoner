@@ -1,0 +1,15 @@
+{
+  "generator": "openapi-python-client==0.29.1",
+  "spec_sha256": "329efe5eaabef8e6ecfb8399dc5abbd6b51883786c5bc0fdada344b8a17f8959",
+  "upstream_url": "https://raw.githubusercontent.com/statisticsnorway/ssbno-statreg/refs/heads/main/api-types/openapi/openapi.yaml",
+  "upstream_revision": null,
+  "operations": {
+    "/contacts": "get_contacts",
+    "/statistics": "get_statistics",
+    "/statistics/{shortname}": "get_statistic",
+    "/statistics/{shortname}/variants/{id}/releases": "get_variant_releases",
+    "/releases": "get_releases",
+    "/releases/{id}": "get_release"
+  },
+  "normalization": "Nullable type unions; flatten object allOf; shared statistic status; typing_extensions.Self and UTC Z parsing for Python 3.10; date fields accept observed timestamp input; read-only subset"
+}

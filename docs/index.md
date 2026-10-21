@@ -15,6 +15,7 @@ maxdepth: 1
 ---
 
 reference
+statistikkregisteret
 contributing
 Code of Conduct <codeofconduct>
 License <license>

@@ -1,4 +1,5 @@
 # This .gitignore file is based on SSB's recommended gitignore template stored
+/src/fagfunksjoner/api/openapi.yaml
 # in: https://github.com/statisticsnorway/kvakk-git-tools
 # It contains three sections: SSB specific ignores, GitHub's Python-ignore
 # template and GitHub's R-ignore template.
