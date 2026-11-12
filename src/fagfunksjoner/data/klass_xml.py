@@ -3,14 +3,27 @@
 It passes data through a pandas DataFrame from a list of codes and names, to an XML from the pandas dataframe.
 """
 
+from collections.abc import Sequence
+from datetime import datetime
+from typing import Literal
+
 import pandas as pd
 from dateutil import parser
+
+KlassType = Literal["codelist", "variant", "correspondence"]
+Language = Literal["nb", "nn", "en"]
 
 CODE_COL = "kode"
 SOURCE_CODE_COL = "kilde_kode"
 BOKMAAL_NAME_COL = "navn_bokmål"
 NYNORSK_NAME_COL = "navn_nynorsk"
 ENGLISH_NAME_COL = "navn_engelsk"
+
+LANGUAGE_SUFFIX_MAP: dict[Language, str] = {
+    "nb": "bokmål",
+    "nn": "nynorsk",
+    "en": "engelsk",
+}
 
 # Order defines XML element order.
 CODELIST_PARAM_COLS = {
@@ -45,15 +58,140 @@ CORRESPONDENCE_PARAM_COLS = {
     "target_titles": "mål_tittel",
 }
 
+PARAM_COLS_BY_TYPE: dict[KlassType, dict[str, str]] = {
+    "codelist": CODELIST_PARAM_COLS,
+    "variant": VARIANT_PARAM_COLS,
+    "correspondence": CORRESPONDENCE_PARAM_COLS,
+}
+
+KLASS_PYTHON_COLS = {
+    "code",
+    "parentcode",
+    "level",
+    "levelname",
+    "name",
+    "shortname",
+    "presentationname",
+    "validfrom",
+    "validto",
+    "validfrominrequestedrange",
+    "validtoinrequestedrange",
+    "notes",
+    "sourcecode",
+    "sourcename",
+    "sourceshortname",
+    "targetcode",
+    "targetname",
+    "targetshortname",
+}
+
 # KLASS XML namespace identifiers. `http` is intentional and must not be changed.
 CODELIST_NAMESPACE = "http://klass.ssb.no/version"  # NOSONAR
 VARIANT_NAMESPACE = "http://klass.ssb.no/variant"  # NOSONAR
 CORRESPONDENCE_NAMESPACE = "http://klass.ssb.no/correspondenceTable"  # NOSONAR
 
 
+def get_klass_xml_column_mapping(
+    klass_type: KlassType = "codelist",
+    language: Language = "nb",
+) -> dict[str, str]:
+    """Return a column mapping from ssb-klass-python names to KLASS XML names.
+
+    Args:
+        klass_type: The type of KLASS XML ('codelist', 'variant', or 'correspondence').
+        language: Language code ('nb', 'nn', or 'en') used to map language-specific
+            columns like 'name', 'shortName', and 'notes'.
+
+    Returns:
+        dict[str, str]: Mapping from standard ssb-klass-python column names to KLASS XML column names.
+
+    Raises:
+        ValueError: If klass_type or language is not supported.
+    """
+    if language not in LANGUAGE_SUFFIX_MAP:
+        raise ValueError(
+            f"Unsupported language: '{language}'. Expected one of {list(LANGUAGE_SUFFIX_MAP)}."
+        )
+    if klass_type not in PARAM_COLS_BY_TYPE:
+        raise ValueError(
+            f"Unsupported klass_type: '{klass_type}'. Expected one of {list(PARAM_COLS_BY_TYPE)}."
+        )
+
+    lang_suffix = LANGUAGE_SUFFIX_MAP[language]
+
+    if klass_type == "codelist":
+        return {
+            "code": CODE_COL,
+            "parentCode": "forelder",
+            "name": f"navn_{lang_suffix}",
+            "shortName": f"kortnavn_{lang_suffix}",
+            "notes": f"noter_{lang_suffix}",
+            "validFrom": "gyldig_fra",
+            "validTo": "gyldig_til",
+        }
+    if klass_type == "variant":
+        return {
+            "code": CODE_COL,
+            "name": f"navn_{lang_suffix}",
+            "sourceCode": SOURCE_CODE_COL,
+            "parentCode": "forelder",
+        }
+    return {
+        "sourceCode": SOURCE_CODE_COL,
+        "sourceName": "kilde_tittel",
+        "targetCode": "mål_kode",
+        "targetName": "mål_tittel",
+    }
+
+
+def rename_klass_columns(
+    df: pd.DataFrame,
+    klass_type: KlassType = "codelist",
+    language: Language = "nb",
+    drop_extra_cols: bool = True,
+    format_date_cols: bool = True,
+) -> pd.DataFrame:
+    """Rename standard columns from ssb-klass-python to the expected KLASS XML format.
+
+    Args:
+        df: DataFrame retrieved from ssb-klass-python (e.g. KlassCodes.data,
+            KlassVersion.data, KlassVariant.data, or KlassCorrespondence.data).
+        klass_type: The type of KLASS XML ('codelist', 'variant', or 'correspondence').
+        language: Language code ('nb', 'nn', or 'en') for name, shortName, and notes columns.
+        drop_extra_cols: Whether to drop columns that are not part of the KLASS XML format
+            (such as 'level', 'levelName', or 'presentationName').
+        format_date_cols: Whether to format 'gyldig_fra' and 'gyldig_til' to 'dd.MM.yyyy'.
+
+    Returns:
+        pd.DataFrame: A copy of the DataFrame with KLASS XML column names.
+    """
+    col_mapping = get_klass_xml_column_mapping(klass_type=klass_type, language=language)
+    lower_mapping = {k.lower(): v for k, v in col_mapping.items()}
+
+    rename_dict = {
+        col: lower_mapping[col.lower()]
+        for col in df.columns
+        if col.lower() in lower_mapping
+    }
+    renamed_df = df.rename(columns=rename_dict).copy()
+
+    if drop_extra_cols:
+        expected_cols = set(PARAM_COLS_BY_TYPE[klass_type].values())
+        keep_cols = [col for col in renamed_df.columns if col in expected_cols]
+        renamed_df = renamed_df[keep_cols]
+
+    if format_date_cols and klass_type == "codelist":
+        for date_col in ("gyldig_fra", "gyldig_til"):
+            if date_col in renamed_df.columns:
+                renamed_df[date_col] = format_dates(renamed_df[date_col].tolist())
+
+    return renamed_df
+
+
 def _prepare_klass_dataframe(
     df: pd.DataFrame,
     param_cols: dict[str, str],
+    klass_type: KlassType = "codelist",
 ) -> pd.DataFrame:
     """Return a DataFrame with the expected KLASS columns in the correct order."""
     df = df.rename(columns=str.lower)
@@ -61,9 +199,17 @@ def _prepare_klass_dataframe(
 
     for col in df.columns:
         if col not in expected_cols:
+            if col in KLASS_PYTHON_COLS:
+                raise ValueError(
+                    f"Column name: {col} is not among the expected column names: "
+                    f"{expected_cols}. "
+                    "It looks like the DataFrame uses column names from 'ssb-klass-python'. "
+                    f"Use 'rename_klass_columns(df, klass_type=\"{klass_type}\")' "
+                    "to prepare the DataFrame before converting to XML."
+                )
             raise ValueError(
                 f"Column name: {col} is not among the expected column names: "
-                f"{param_cols.values()}"
+                f"{expected_cols}"
             )
 
     output_df = pd.DataFrame(
@@ -117,17 +263,38 @@ def _validate_variant_dataframe(df: pd.DataFrame) -> None:
         )
 
 
-def format_dates(dates: list[str | None] | None) -> list[str]:
+def _validate_codelist_dates(df: pd.DataFrame) -> None:
+    """Validate that codelist date columns use the dd.MM.yyyy format expected by KLASS."""
+    for date_col in ("gyldig_fra", "gyldig_til"):
+        for val in df[date_col]:
+            if pd.isna(val) or not str(val).strip():
+                continue
+            date_str = str(val).strip()
+            try:
+                datetime.strptime(date_str, "%d.%m.%Y")
+            except ValueError as e:
+                raise ValueError(
+                    f"Invalid date format in column '{date_col}': '{date_str}'. "
+                    "KLASS XML requires dates in 'dd.MM.yyyy' format (e.g. '01.01.2025'). "
+                    "Use 'format_dates()' or 'rename_klass_columns()' to format dates."
+                ) from e
+
+
+def format_dates(dates: Sequence[str | None] | None) -> list[str]:
     """Ensure all dates are in dd.MM.yyyy format."""
-    if not dates:
+    if dates is None or len(dates) == 0:
         return []
     formatted: list[str] = []
     for date in dates:
-        if not date:
+        if pd.isna(date) or not str(date).strip():
             formatted.append("")
         else:
+            date_str = str(date).strip()
             try:
-                parsed_date = parser.parse(date, dayfirst=True)
+                try:
+                    parsed_date = datetime.fromisoformat(date_str)
+                except ValueError:
+                    parsed_date = parser.parse(date_str, dayfirst=True)
                 formatted.append(parsed_date.strftime("%d.%m.%Y"))
             except Exception as e:
                 raise ValueError(f"Invalid date format: {date}") from e
@@ -137,6 +304,11 @@ def format_dates(dates: list[str | None] | None) -> list[str]:
 def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame:
     """Write a klass-xml for a codelist down to a path.
 
+    Expected columns are: 'kode', 'forelder', 'navn_bokmål', 'navn_nynorsk',
+    'navn_engelsk', 'kortnavn_bokmål', 'kortnavn_nynorsk', 'kortnavn_engelsk',
+    'noter_bokmål', 'noter_nynorsk', 'noter_engelsk', 'gyldig_fra', 'gyldig_til'.
+    If your DataFrame comes from ssb-klass-python, use `rename_klass_columns(df, klass_type="codelist")` first.
+
     Args:
         df: The klass-dataframe with the correct columns, with the correct column names.
         path: The path to write the XML to.
@@ -145,9 +317,10 @@ def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame
         pd.DataFrame: The dataframe sent in, but all the columns inserted in the correct order and with correct naming.
 
     Raises:
-        ValueError: If a column sent in is not among the known column names.
+        ValueError: If a column sent in is not among the known column names or dates are not in 'dd.MM.yyyy' format.
     """  # noqa: DOC502
-    output_df = _prepare_klass_dataframe(df, CODELIST_PARAM_COLS)
+    output_df = _prepare_klass_dataframe(df, CODELIST_PARAM_COLS, klass_type="codelist")
+    _validate_codelist_dates(output_df)
 
     output_df.to_xml(
         path,
@@ -164,6 +337,10 @@ def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame
 def klass_dataframe_to_xml_variant(df: pd.DataFrame, path: str) -> pd.DataFrame:
     """Write a klass-xml for a classification variant down to a path.
 
+    Expected columns are: 'kode', 'navn_bokmål', 'navn_nynorsk', 'navn_engelsk',
+    'kilde_kode', 'forelder'.
+    If your DataFrame comes from ssb-klass-python, use `rename_klass_columns(df, klass_type="variant")` first.
+
     Args:
         df: The klass-dataframe with variant column names.
         path: The path to write the XML to.
@@ -174,7 +351,7 @@ def klass_dataframe_to_xml_variant(df: pd.DataFrame, path: str) -> pd.DataFrame:
     Raises:
         ValueError: If a column is unknown or the variant structure is invalid.
     """  # noqa: DOC502
-    output_df = _prepare_klass_dataframe(df, VARIANT_PARAM_COLS)
+    output_df = _prepare_klass_dataframe(df, VARIANT_PARAM_COLS, klass_type="variant")
     _validate_variant_dataframe(output_df)
 
     output_df.to_xml(
@@ -195,6 +372,9 @@ def klass_dataframe_to_xml_correspondence(
 ) -> pd.DataFrame:
     """Write a klass-xml for a correspondence table down to a path.
 
+    Expected columns are: 'kilde_kode', 'kilde_tittel', 'mål_kode', 'mål_tittel'.
+    If your DataFrame comes from ssb-klass-python, use `rename_klass_columns(df, klass_type="correspondence")` first.
+
     Args:
         df: The klass-dataframe with correspondence column names.
         path: The path to write the XML to.
@@ -205,7 +385,11 @@ def klass_dataframe_to_xml_correspondence(
     Raises:
         ValueError: If a column sent in is not among the known column names.
     """  # noqa: DOC502
-    output_df = _prepare_klass_dataframe(df, CORRESPONDENCE_PARAM_COLS)
+    output_df = _prepare_klass_dataframe(
+        df,
+        CORRESPONDENCE_PARAM_COLS,
+        klass_type="correspondence",
+    )
 
     output_df.to_xml(
         path,

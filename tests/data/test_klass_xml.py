@@ -9,10 +9,12 @@ from fagfunksjoner.data.klass_xml import (
     VARIANT_NAMESPACE,
     VARIANT_PARAM_COLS,
     format_dates,
+    get_klass_xml_column_mapping,
     klass_dataframe_to_xml_codelist,
     klass_dataframe_to_xml_correspondence,
     klass_dataframe_to_xml_variant,
     make_klass_xml_codelist,
+    rename_klass_columns,
 )
 
 
@@ -318,3 +320,150 @@ def test_klass_dataframe_to_xml_rejects_unknown_column(tmp_path):
 
     with pytest.raises(ValueError, match="kommentar"):
         klass_dataframe_to_xml_correspondence(df, str(tmp_path / "correspondence.xml"))
+
+
+def test_get_klass_xml_column_mapping():
+    codelist_nn = get_klass_xml_column_mapping(klass_type="codelist", language="nn")
+    assert codelist_nn["code"] == "kode"
+    assert codelist_nn["name"] == "navn_nynorsk"
+    assert codelist_nn["shortName"] == "kortnavn_nynorsk"
+    assert codelist_nn["notes"] == "noter_nynorsk"
+
+    variant_en = get_klass_xml_column_mapping(klass_type="variant", language="en")
+    assert variant_en["name"] == "navn_engelsk"
+    assert variant_en["sourceCode"] == "kilde_kode"
+
+    corr_map = get_klass_xml_column_mapping(klass_type="correspondence")
+    assert corr_map == {
+        "sourceCode": "kilde_kode",
+        "sourceName": "kilde_tittel",
+        "targetCode": "mål_kode",
+        "targetName": "mål_tittel",
+    }
+
+
+def test_get_klass_xml_column_mapping_invalid_args():
+    with pytest.raises(ValueError, match="Unsupported language"):
+        get_klass_xml_column_mapping(language="de")  # type: ignore[arg-type]
+
+    with pytest.raises(ValueError, match="Unsupported klass_type"):
+        get_klass_xml_column_mapping(klass_type="other")  # type: ignore[arg-type]
+
+
+def test_rename_klass_columns_codelist_and_export(tmp_path):
+    raw_df = pd.DataFrame(
+        {
+            "code": ["0301", "1103"],
+            "parentCode": [None, None],
+            "level": ["1", "1"],
+            "levelName": ["Kommune", "Kommune"],
+            "name": ["Oslo", "Stavanger"],
+            "shortName": ["OSL", "SVG"],
+            "presentationName": ["0301 Oslo", "1103 Stavanger"],
+            "validFrom": ["2025-01-12", None],
+            "validTo": ["2030-12-31", ""],
+            "notes": ["Hovedstad", ""],
+        }
+    )
+
+    prepared_df = rename_klass_columns(raw_df, klass_type="codelist", language="nb")
+    assert "level" not in prepared_df.columns
+    assert "presentationName" not in prepared_df.columns
+    assert list(prepared_df["kode"]) == ["0301", "1103"]
+    assert list(prepared_df["navn_bokmål"]) == ["Oslo", "Stavanger"]
+    assert list(prepared_df["gyldig_fra"]) == ["12.01.2025", ""]
+    assert list(prepared_df["gyldig_til"]) == ["31.12.2030", ""]
+
+    xml_path = tmp_path / "codelist_from_klass.xml"
+    output_df = klass_dataframe_to_xml_codelist(prepared_df, str(xml_path))
+    assert xml_path.exists()
+    assert output_df.loc[0, "gyldig_fra"] == "12.01.2025"
+
+
+def test_rename_klass_columns_keep_extra_and_unformatted_dates():
+    raw_df = pd.DataFrame(
+        {
+            "code": ["01"],
+            "name": ["Oslo"],
+            "level": ["1"],
+            "validFrom": ["2025-01-12"],
+        }
+    )
+
+    df_kept = rename_klass_columns(
+        raw_df,
+        klass_type="codelist",
+        drop_extra_cols=False,
+        format_date_cols=False,
+    )
+    assert "level" in df_kept.columns
+    assert df_kept.loc[0, "gyldig_fra"] == "2025-01-12"
+
+    df_no_dates = rename_klass_columns(
+        pd.DataFrame({"code": ["01"], "name": ["Oslo"]}),
+        klass_type="codelist",
+    )
+    assert list(df_no_dates.columns) == ["kode", "navn_bokmål"]
+
+
+def test_rename_klass_columns_variant_and_correspondence(tmp_path):
+    raw_variant = pd.DataFrame(
+        {
+            "code": ["A", None],
+            "name": ["Gruppe A", None],
+            "sourceCode": [None, "1.1"],
+            "parentCode": [None, "A"],
+            "level": ["1", "2"],
+        }
+    )
+    variant_df = rename_klass_columns(raw_variant, klass_type="variant", language="nb")
+    variant_xml = tmp_path / "variant_from_klass.xml"
+    klass_dataframe_to_xml_variant(variant_df, str(variant_xml))
+    assert variant_xml.exists()
+
+    raw_corr = pd.DataFrame(
+        {
+            "sourceCode": ["0301"],
+            "sourceName": ["Oslo"],
+            "sourceShortName": [""],
+            "targetCode": ["03"],
+            "targetName": ["Oslo fylke"],
+            "targetShortName": [""],
+            "validFrom": ["2024-01-01"],
+        }
+    )
+    corr_df = rename_klass_columns(raw_corr, klass_type="correspondence")
+    corr_xml = tmp_path / "corr_from_klass.xml"
+    klass_dataframe_to_xml_correspondence(corr_df, str(corr_xml))
+    assert corr_xml.exists()
+
+
+def test_klass_dataframe_to_xml_gives_headsup_on_klass_python_columns(tmp_path):
+    raw_codelist = pd.DataFrame({"code": ["01"], "name": ["Oslo"]})
+    with pytest.raises(
+        ValueError,
+        match=r"ssb-klass-python.*rename_klass_columns\(df, klass_type=\"codelist\"\)",
+    ):
+        klass_dataframe_to_xml_codelist(raw_codelist, str(tmp_path / "codelist.xml"))
+
+    raw_corr = pd.DataFrame({"sourceCode": ["01"], "targetCode": ["02"]})
+    with pytest.raises(
+        ValueError,
+        match=r"ssb-klass-python.*rename_klass_columns\(df, klass_type=\"correspondence\"\)",
+    ):
+        klass_dataframe_to_xml_correspondence(raw_corr, str(tmp_path / "corr.xml"))
+
+
+def test_klass_dataframe_to_xml_codelist_rejects_unformatted_date(tmp_path):
+    df = pd.DataFrame(
+        {
+            "kode": ["01"],
+            "navn_bokmål": ["Oslo"],
+            "gyldig_fra": ["2025-01-12"],
+        }
+    )
+    with pytest.raises(
+        ValueError,
+        match=r"Invalid date format in column 'gyldig_fra': '2025-01-12'.*dd\.MM\.yyyy.*rename_klass_columns",
+    ):
+        klass_dataframe_to_xml_codelist(df, str(tmp_path / "codelist.xml"))
