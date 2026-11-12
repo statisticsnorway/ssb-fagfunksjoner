@@ -324,6 +324,7 @@ def klass_dataframe_to_xml_codelist(df: pd.DataFrame, path: str) -> pd.DataFrame
 
     output_df.to_xml(
         path,
+        index=False,
         root_name="versjon",
         row_name="element",
         namespaces={

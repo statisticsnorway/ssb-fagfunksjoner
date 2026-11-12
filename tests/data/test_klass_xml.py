@@ -53,6 +53,7 @@ def test_make_klass_xml_codelist_success(tmp_path):
         assert "Name1" in xml_content
         assert "Namn1" in xml_content
         assert "Name1_EN" in xml_content
+        assert "index>" not in xml_content
 
 
 def test_make_klass_xml_codelist_missing_required_names(tmp_path):
