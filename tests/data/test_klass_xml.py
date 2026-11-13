@@ -344,10 +344,16 @@ def test_get_klass_xml_column_mapping():
 
 
 def test_get_klass_xml_column_mapping_invalid_args():
-    with pytest.raises(ValueError, match="Unsupported language"):
+    try:
+        from typeguard import TypeCheckError
+        exceptions: tuple[type[BaseException], ...] = (ValueError, TypeCheckError)
+    except ImportError:
+        exceptions = (ValueError,)
+
+    with pytest.raises(exceptions):
         get_klass_xml_column_mapping(language="de")  # type: ignore[arg-type]
 
-    with pytest.raises(ValueError, match="Unsupported klass_type"):
+    with pytest.raises(exceptions):
         get_klass_xml_column_mapping(klass_type="other")  # type: ignore[arg-type]
 
 

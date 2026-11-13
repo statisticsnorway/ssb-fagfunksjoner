@@ -142,7 +142,7 @@ def decode_bytes(
     # Find columns containing bytes
     if len(df) < check_row_len:
         check_row_len = len(df)
-    to_check = df.select_dtypes(include="object").head(check_row_len)
+    to_check = df.select_dtypes(include="object", exclude="str").head(check_row_len)
     byte_cols = []
     for col in to_check.columns:
         for row in to_check[col]:
