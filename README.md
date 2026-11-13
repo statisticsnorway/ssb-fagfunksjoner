@@ -61,6 +61,33 @@ with ProjectRoot():
     ... # Do your local imports here...
 ```
 
+
+### Get data from APIs
+
+#### Dapla-api
+
+```python
+from fagfunksjoner import get_from_dapla_api
+
+query = """
+{
+  teams(first: 2) {
+    nodes {
+      slug
+      displayName
+      section {
+        name
+        code
+      }
+    }
+  }
+}
+"""
+result = get_from_dapla_api(query)
+print(result)
+```
+
+
 ### Sasfiles
 
 Setting up password with saspy
@@ -185,6 +212,32 @@ all_combos_agg_inclusive(
     valuecols = ["n"],
     aggargs={"n": "sum"},
     grand_total=True)
+```
+
+Add percent column to aggregated table, after all_combos_agg or all_combos_agg_inclusive.
+```python
+from fagfunksjoner import all_combos_agg, make_percentage
+
+groupvars = {"grunnskolepoeng_9_statbank": "01-09",
+             "kjoenn_statbank": "0",
+             "region": "0"
+            }
+statvar =  {"elever": "sum"}
+
+tab = all_combos_agg(
+    df,
+    groupcols=list(groupvars.keys()),
+    aggargs=statvar,
+    fillna_dict=groupvars,
+    keep_empty=True,
+    grand_total=groupvars)
+
+tab_percent = make_percentage(
+    tab,
+    percent_col="grunnskolepoeng_9_statbank",
+    fillna_dict=groupvars,
+    value_col="elever",
+    decimals=2)
 ```
 
 ### "Formats" like in SAS

@@ -317,7 +317,7 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
     """
     name = parse_name_single(root["navn"])
     short_name = root["kortnavn"][TEXT]
-    old_subjectcodes = root["gamleEmnekoder"]
+    old_subjectcodes = root.get("gamleEmnekoder", "")
     firstpublishing = root["forstegangspublisering"]
     try:
         firstpublishing = dateutil.parser.parse(firstpublishing).date()
@@ -325,7 +325,10 @@ def parse_data_single(root: dict[str, Any]) -> SinglePublishing:
         pass
     status = STATUS_MAP.get(root["status"]["@kode"], root["status"]["@kode"])
     owningsection = parse_eierseksjon_single(root["eierseksjon"])
-    contacts = [parse_contact_single(e) for e in root["kontakter"]["kontakt"]]
+    if isinstance(root["kontakter"]["kontakt"], list):
+        contacts = [parse_contact_single(e) for e in root["kontakter"]["kontakt"]]
+    else:
+        contacts = [parse_contact_single(root["kontakter"]["kontakt"])]
     triggerwords = {
         k: [parse_triggerord_single(e) for e in v]
         for k, v in root["triggerord"].items()

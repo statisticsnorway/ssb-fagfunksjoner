@@ -41,6 +41,7 @@ try:
 except importlib.metadata.PackageNotFoundError as e:
     __version__ = _try_getting_pyproject_toml(e)
 
+from fagfunksjoner.api import get_from_dapla_api
 from fagfunksjoner.data.datadok_extract import (
     open_path_datadok,
     open_path_metapath_datadok,
@@ -82,6 +83,7 @@ __all__ = [
     "auto_dtype",
     "check_env",
     "check_shared_files",
+    "get_from_dapla_api",
     "get_klass_xml_column_mapping",
     "get_latest_fileversions",
     "klass_dataframe_to_xml_codelist",
