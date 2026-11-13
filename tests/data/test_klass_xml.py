@@ -346,6 +346,7 @@ def test_get_klass_xml_column_mapping():
 def test_get_klass_xml_column_mapping_invalid_args():
     try:
         from typeguard import TypeCheckError
+
         exceptions: tuple[type[BaseException], ...] = (ValueError, TypeCheckError)
     except ImportError:
         exceptions = (ValueError,)
